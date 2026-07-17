@@ -1,12 +1,11 @@
-# OpenAI Build Week submission draft
+# OpenAI Build Week submission
 
-Live Devpost project `1342394` is now published as `MakeYour` at
-`https://devpost.com/software/makeyour`, but it has not yet been submitted to the
-hackathon. The public repository is
-`https://github.com/gn00295120/make-your-ios`; the YouTube URL and required
-submission answers still need to be attached.
+Devpost project `1342394` is submitted to OpenAI Build Week as submission
+`1094239` at `https://devpost.com/software/makeyour`. The public demo is
+`https://youtu.be/gIKuI1H-lH4`, and the judging repository is
+`https://github.com/gn00295120/make-your-ios`.
 
-## Working project name — owner must make the final choice
+## Project name
 
 MakeYour
 
@@ -149,17 +148,19 @@ task state, and switching among distinct mini apps. The generation wait is
 shortened and labeled; no credential is exposed. The Codex credit and closing
 line use a held frame from the real app library rather than concept mockups.
 
-## Before submission
+## Submission status
 
 - [x] Add the public repository URL and MIT license.
 - [x] Record and verify a clear, narrated 1:35.30 video covering Codex and GPT-5.6.
-- Upload it publicly to YouTube and verify the submitted link.
+- [x] Upload it publicly to YouTube and verify the submitted link.
 - [x] Show Codex and GPT-5.6 usage explicitly in the voiceover.
-- Run `/feedback` and enter the resulting Codex Session ID.
+- [x] Enter Codex Session ID `019f6ea0-c425-7813-b991-2cccb37d8c1e`.
 - [x] Publish the judging repository at
   `https://github.com/gn00295120/make-your-ios`.
-- Select a submission category and confirm all invited team members accepted.
-- Run the clean-clone build instructions.
+- [x] Submit as `Individual` from `Taiwan` to `Apps for Your Life`.
+- [x] Clone the public repository, regenerate the Xcode project, and pass all 43
+  tests using the README instructions.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
-- Review the Devpost text and publish manually.
+- [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at
+  `2026-07-17T19:37:24.389-04:00`.

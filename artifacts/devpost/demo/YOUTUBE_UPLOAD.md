@@ -2,6 +2,7 @@
 
 ## Files
 
+- Public video: `https://youtu.be/gIKuI1H-lH4`
 - Video: `MakeYour-OpenAI-Build-Week-Demo.mp4`
 - Thumbnail: `MakeYour-YouTube-Thumbnail.jpg`
 - English subtitles: `MakeYour-OpenAI-Build-Week-Demo.en.srt`
@@ -67,3 +68,12 @@ YouTube chapters must be at least ten seconds long.
 After publishing, open the public watch URL in a signed-out/private window and
 confirm the video, audio, 1080p rendition, thumbnail, chapters, and embedding all
 work. Paste that URL into Devpost project `1342394`.
+
+## Post-publish audit — 2026-07-18
+
+- [x] Public availability, title, 95-second duration, description, five chapters,
+  custom thumbnail, and video language verified.
+- [x] Devpost project `1342394` links to the public video.
+- [ ] Change YouTube category from `Gaming` to `Science & Technology`.
+- [ ] Change the uploaded manual caption track language from `Traditional Chinese
+  (Taiwan)` to `English`; the caption text and timing are already correct.
