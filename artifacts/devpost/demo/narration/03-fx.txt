@@ -1,0 +1,1 @@
+This is Live FX Watch, generated inside MakeYour. Choose a base currency, add countries, refresh reference rates, and set a threshold alert. The Test Alert button demonstrates the complete native interaction without waiting for the market to move.

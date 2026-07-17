@@ -1,0 +1,41 @@
+:root {
+  color-scheme: light dark;
+  --accent: #6157e7;
+  --surface: color-mix(in srgb, Canvas 94%, var(--accent) 6%);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: Canvas;
+  color: CanvasText;
+  line-height: 1.6;
+}
+
+main {
+  width: min(760px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 64px 0 80px;
+}
+
+.mark {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: white;
+  background: linear-gradient(145deg, #7568ff, #4138b7);
+  font-size: 24px;
+  margin-bottom: 18px;
+}
+
+h1 { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.05; margin: 0 0 12px; }
+h2 { margin-top: 40px; font-size: 1.25rem; }
+p, li { max-width: 70ch; }
+a { color: var(--accent); }
+.lede { font-size: 1.1rem; color: color-mix(in srgb, CanvasText 70%, transparent); }
+.card { padding: 18px 20px; background: var(--surface); border-radius: 18px; }
+footer { margin-top: 56px; color: color-mix(in srgb, CanvasText 55%, transparent); font-size: .9rem; }

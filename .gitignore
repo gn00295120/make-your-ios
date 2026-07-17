@@ -1,0 +1,45 @@
+.DS_Store
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+.swiftpm/
+
+# Local credentials and Apple signing artifacts
+.env
+.env.*
+*.p8
+*.p12
+*.mobileprovision
+*.ipa
+*.xcarchive
+*.xcarchive.zip
+
+# Generated release and automation output
+artifacts/app-store/build/
+artifacts/app-store/screenshots/*
+!artifacts/app-store/screenshots/upload/
+!artifacts/app-store/screenshots/upload/*.jpg
+artifacts/app-store/videos/*
+!artifacts/app-store/videos/final-ai-generation-polished.mp4
+!artifacts/app-store/videos/live-fx-runtime-final.mp4
+!artifacts/app-store/videos/new-app-from-scratch-final.mp4
+artifacts/design/makeyour-icon-v2*
+artifacts/devpost/demo/audio/*.aiff
+artifacts/devpost/demo/phones/
+artifacts/devpost/demo/segments/
+artifacts/devpost/demo/slides/
+artifacts/videos/
+fastlane/report.xml
+
+# Keep only the four compact screenshots used by README.
+artifacts/screenshots/*
+!artifacts/screenshots/library.png
+!artifacts/screenshots/builder.png
+!artifacts/screenshots/converter.png
+!artifacts/screenshots/reminder-scheduled.png
+
+# Deployed separately; its checkout and dependencies are not part of the iOS repo.
+docs/app-store/site-host/

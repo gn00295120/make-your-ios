@@ -1,0 +1,1 @@
+Codex was the coding agent behind the product, helping turn the thesis into the document schema, validator, visual system, record runtime, live data, AI confirmation flow, privacy manifest, and release pipeline. We used Codex to test real API generation, refactor Swift, pass all forty-three tests, clear strict lint, and upload build one to App Store Connect.

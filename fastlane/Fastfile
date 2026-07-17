@@ -1,0 +1,123 @@
+default_platform(:ios)
+
+def fenced_text(section, heading)
+  match = section.match(/#{Regexp.escape(heading)}\s+```text\s*\n(.*?)\n```/m)
+  UI.user_error!("Missing metadata block: #{heading}") unless match
+  match[1].strip
+end
+
+platform :ios do
+  desc "Upload MakeYour 1.0 metadata and screenshots"
+  lane :upload_store_metadata do
+    root = File.expand_path("..", __dir__)
+    release_sheet = File.read(File.join(root, "docs/app-store/APP_STORE_CONNECT.md"))
+    review_sheet = File.read(File.join(root, "docs/app-store/REVIEW_NOTES.md"))
+
+    english = release_sheet.split("## Traditional Chinese metadata", 2).first
+    traditional_chinese = release_sheet.split("## Traditional Chinese metadata", 2).last
+    review_notes = review_sheet.match(/```text\s*\n(.*?)\n```/m)&.captures&.first
+    UI.user_error!("Missing review notes") unless review_notes
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_KEY_FILE"),
+      duration: 1_200
+    )
+
+    deliver(
+      api_key: api_key,
+      app_identifier: "com.longweiwang.makeyourios",
+      app_version: "1.0.0",
+      build_number: "1",
+      platform: "ios",
+      skip_binary_upload: true,
+      skip_metadata: false,
+      skip_screenshots: false,
+      screenshots_path: File.join(root, "fastlane/screenshots"),
+      overwrite_screenshots: true,
+      screenshot_processing_timeout: 1_200,
+      force: true,
+      submit_for_review: false,
+      automatic_release: true,
+      phased_release: false,
+      languages: ["en-US", "zh-Hant"],
+      name: {
+        "en-US" => "MakeYour",
+        "zh-Hant" => "MakeYour"
+      },
+      subtitle: {
+        "en-US" => fenced_text(english, "### Subtitle"),
+        "zh-Hant" => fenced_text(traditional_chinese, "### Subtitle")
+      },
+      promotional_text: {
+        "en-US" => fenced_text(english, "### Promotional text"),
+        "zh-Hant" => fenced_text(traditional_chinese, "### Promotional text")
+      },
+      keywords: {
+        "en-US" => fenced_text(english, "### Keywords"),
+        "zh-Hant" => fenced_text(traditional_chinese, "### Keywords")
+      },
+      description: {
+        "en-US" => fenced_text(english, "### Description"),
+        "zh-Hant" => fenced_text(traditional_chinese, "### Description")
+      },
+      support_url: {
+        "en-US" => ENV.fetch("MAKEYOUR_SUPPORT_URL"),
+        "zh-Hant" => ENV.fetch("MAKEYOUR_SUPPORT_URL")
+      },
+      privacy_url: {
+        "en-US" => ENV.fetch("MAKEYOUR_PRIVACY_URL"),
+        "zh-Hant" => ENV.fetch("MAKEYOUR_PRIVACY_URL")
+      },
+      copyright: "2026 Longwei Wang",
+      primary_category: "Productivity",
+      app_review_information: {
+        first_name: "Longwei",
+        last_name: "Wang",
+        phone_number: "+886 987432061",
+        email_address: "support@claude-world.com",
+        notes: review_notes
+      },
+      app_review_attachment_file: File.join(
+        root,
+        "artifacts/app-store/videos/final-ai-generation-polished.mp4"
+      ),
+      submission_information: {
+        export_compliance_uses_encryption: false
+      },
+      run_precheck_before_submit: false,
+      precheck_include_in_app_purchases: false
+    )
+  end
+
+  desc "Select build 1 and submit MakeYour 1.0.0 for App Review"
+  lane :submit_store_review do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_KEY_FILE"),
+      duration: 1_200
+    )
+
+    deliver(
+      api_key: api_key,
+      app_identifier: "com.longweiwang.makeyourios",
+      app_version: "1.0.0",
+      build_number: "1",
+      platform: "ios",
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true,
+      submit_for_review: true,
+      automatic_release: true,
+      phased_release: false,
+      submission_information: {
+        export_compliance_uses_encryption: false
+      },
+      run_precheck_before_submit: false,
+      precheck_include_in_app_purchases: false
+    )
+  end
+end
