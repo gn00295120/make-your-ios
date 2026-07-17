@@ -100,6 +100,9 @@ the native runtime's control.
 - A coherent, runnable product rather than a static concept prototype.
 - Four functional native mini apps available on first launch, including two
   examples generated through MakeYour's own Builder: Live FX Watch and Use It First.
+- A real GPT-5.6 demo that creates both Travel Budget and Daily Focus from
+  prompts, then evolves Daily Focus from Version 2 to Version 3 while preserving
+  the user's completed task.
 - Real Responses API Structured Outputs integration.
 - Real in-mini-app Responses API text completion with per-request review.
 - Real Keychain round-trip and local-notification scheduling.
@@ -125,32 +128,36 @@ the execution boundary.
   allowlisted HTTPS data sources.
 - Early App Review guidance before broadening runtime programmability.
 
-## Final demo storyboard (1:14.97)
+## Final demo storyboard (1:15.30)
 
-- **0:00** — Real AI Key screen: the user's key is saved but hidden, GPT-5.6 is
-  selected, and direct OpenAI requests are enabled.
-- **0:08** — Real iOS operation: create a blank canvas, ask for a travel budget
-  converter, wait for GPT-5.6, open the generated native app, use it, and return
-  to the multi-app library.
-- **0:41** — Brief breadth proof: the same generated runtime supports a live
-  currency watchlist, native alerts, local records, reminders, photos, and
-  reviewed AI.
-- **0:54** — How Codex shaped, implemented, tested, and prepared the App Store build.
-- **1:08** — Closing product thesis: your key, your apps, one native home.
+- **0:00** — Core concept and real AI Key screen: MakeYour is a personal app
+  workshop built for OpenAI Build Week; the user's key is hidden and GPT-5.6 is
+  selected.
+- **0:13** — Prompt 01: create a Travel Budget converter, open the generated
+  native app, enter 2,500 USD, and use the 2,300 EUR result.
+- **0:32** — Prompt 02: create a different Daily Focus app with three tasks,
+  persistent data, and local reminder actions.
+- **0:43** — Evolve that same app: complete a task, return to Builder, ask for a
+  calm green design and an evening reflection, then open Version 3 with the
+  completed task still intact.
+- **0:59** — How Codex shaped and verified the schema, validator, SwiftUI runtime,
+  safety boundary, tests, and App Store release pipeline.
+- **1:08** — Closing product thesis: make a tiny app once, then keep improving it
+  whenever life changes.
 
 The final recording shows the AI Key screen so the BYOK product model is clear,
-but the saved value remains hidden and no credential is exposed. The generated
-app flow is a real Simulator capture, not a mocked animation; 54.07 of 74.97
-seconds (72.1%) show moving Simulator footage. The complete key-and-generation
-story occupies the first 40.57 seconds; example apps are only a short breadth
-proof after the main workflow.
+but the saved value remains hidden and no credential is exposed. The first 59.1
+seconds are built around real Simulator workflows; short end-frame holds only
+give the narration room. The footage demonstrates two separate prompt-to-app
+flows and a real Version 2 → Version 3 update rather than relying on a feature
+montage or static screenshots.
 
 ## Before submission
 
 - [x] Add the public repository URL and MIT license.
-- [x] Record and verify a clear, narrated 1:14.97 video covering Codex and GPT-5.6.
+- [x] Record and verify a clear, narrated 1:15.30 video covering Codex and GPT-5.6.
 - Upload it publicly to YouTube and verify the submitted link.
-- Show Codex and GPT-5.6 usage explicitly in the voiceover.
+- [x] Show Codex and GPT-5.6 usage explicitly in the voiceover.
 - Run `/feedback` and enter the resulting Codex Session ID.
 - [x] Publish the judging repository at
   `https://github.com/gn00295120/make-your-ios`.

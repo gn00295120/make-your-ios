@@ -1,38 +1,39 @@
 # MakeYour — OpenAI Build Week demo narration
 
-Target: English, about seventy-five seconds, public YouTube upload. The product
-story is BYOK → describe any app → GPT-5.6 generation → native runtime. The first
-three sections are real iOS Simulator operation; only the Codex proof and close
-are static.
+Target: English, 1:15.30, public YouTube upload. The product story is OpenAI
+Build Week → BYOK GPT-5.6 → two different tiny apps → evolve one without
+rebuilding → Codex. The first four chapters use real iOS Simulator operation;
+only the Codex proof and close are static.
 
-## 1. Connect GPT-5.6
+## 1. Core concept — 0:00
 
-Connect your OpenAI key and select GPT-5.6. It stays in Keychain and talks
-directly to OpenAI.
+Built for OpenAI Build Week, MakeYour turns GPT-5.6 into a personal app workshop
+on iPhone. Connect your own OpenAI key, then describe the tiny tool you need.
 
-## 2. Generate an app from one sentence
+## 2. Prompt 01: Travel Budget — 0:13
 
-Now describe any app you want. I create a blank project and type, “Make a travel
-budget converter.” GPT-5.6 turns that sentence into a strict, versioned app
-document. MakeYour validates every page, component, action, and capability, then
-opens a working native app immediately. This is the real iOS Simulator, not a
-screenshot or generated binary. I enter twenty-five hundred dollars, get
-twenty-three hundred euros, open the small MakeYour menu, and return to a library
-where every personal app lives.
+First, I ask for a travel budget converter. GPT-5.6 turns the prompt into a
+validated, versioned app, then MakeYour opens it as a working native interface.
+I can enter twenty-five hundred dollars and use the result immediately.
 
-## 3. The same system makes very different apps
+## 3. Prompt 02: Daily Focus — 0:32
 
-The same prompt-to-app system can make a currency watchlist with native alerts,
-or a private pantry app with records, reminders, photos, and reviewed AI.
-Different designs and capabilities, all generated inside MakeYour.
+Now, a completely different idea: a daily focus checklist with three tasks and
+a local reminder. GPT-5.6 builds a second tiny app with its own data and native
+actions.
 
-## 4. Built and verified with Codex
+## 4. Evolve the same app — 0:43
 
-Codex helped build and test the schema, validator, native SwiftUI runtime,
-Keychain security, and release pipeline. We passed forty-three tests, cleared
-lint, and submitted Build One for App Store review.
+The first version is only the beginning. I ask for a calm green design and an
+evening reflection. GPT-5.6 updates the same app to version three, while the
+completed task stays intact. No rebuilding from scratch.
 
-## 5. Close
+## 5. Built and verified with Codex — 0:59
 
-Your OpenAI key. Any personal app you can describe. Make it and evolve it inside
-MakeYour.
+Codex helped us design, build, test, and verify the schema, SwiftUI runtime,
+safety boundary, and App Store release pipeline.
+
+## 6. Close — 1:08
+
+Stop rebuilding the same tiny apps. Make yours once, then keep making it better
+whenever your life changes.

@@ -4,41 +4,45 @@
 
 - Video: `MakeYour-OpenAI-Build-Week-Demo.mp4`
 - Thumbnail: `MakeYour-YouTube-Thumbnail.jpg`
-- Verified duration: 1:14.97
-- Video: H.264, 1920 × 1080, 30 fps
-- Audio: AAC, 48 kHz, mono, approximately -16 LUFS integrated
+- Verified duration: 1:15.30
+- Video: H.264, 1920 × 1080, constant 30 fps, 2,259 frames
+- Audio: AAC, 48 kHz, mono, -16.1 LUFS integrated, -1.5 dBFS true peak
 
 ## Title
 
 ```text
-MakeYour — Use Your OpenAI Key to Build Any iPhone App with GPT-5.6 + Codex
+MakeYour — Build Any Tiny iPhone App with Your OpenAI Key | GPT-5.6 + Codex
 ```
 
 ## Description
 
 ```text
-MakeYour turns your own OpenAI API key into a factory for personal iPhone apps.
+MakeYour turns GPT-5.6 into a personal app workshop on iPhone.
 
-Connect your key, select GPT-5.6, and describe any app you need. GPT-5.6 produces a strict, versioned AppDocument; MakeYour validates it and renders only precompiled SwiftUI components and allowlisted native capabilities. Every generated app lives inside one trusted iPhone host and can be changed with another prompt.
+Connect your own OpenAI API key, describe the tiny tool you need, and use it immediately inside one trusted native app. GPT-5.6 produces a strict, versioned AppDocument; MakeYour validates it and renders only precompiled SwiftUI components and allowlisted native capabilities. One more prompt can evolve the same app without erasing its data.
 
-More than 72% of this video is direct iOS Simulator operation. The real demo shows:
-• A saved, hidden OpenAI key, GPT-5.6 model selection, and direct OpenAI consent
-• A blank project becoming a working Travel Budget app from one sentence
-• Real generation progress, validation, native interaction, and the multi-app library
-• The same runtime supporting live data, alerts, records, reminders, photos, and reviewed AI
-• How Codex helped build, test, refactor, and ship the product
+This real iOS Simulator demo shows:
+• A saved, hidden OpenAI key with GPT-5.6 selected
+• “Make a travel budget converter” becoming a working native mini app
+• A different prompt becoming a Daily Focus checklist with local reminder actions
+• Daily Focus evolving from Version 2 to a calm green Version 3 with an Evening Reflection
+• The completed task surviving the redesign — no rebuilding from scratch
+• How Codex accelerated the schema, validator, SwiftUI runtime, testing, safety boundary, and App Store release pipeline
 
-Built for OpenAI Build Week.
+The first 59 seconds follow real Simulator workflows. Short end holds give the narration room; the generated interfaces and interactions are not mock screenshots.
+
+Built for OpenAI Build Week with GPT-5.6 and Codex.
 
 Devpost: https://devpost.com/software/makeyour
 Source code: https://github.com/gn00295120/make-your-ios
 
 Chapters:
-00:00 Connect your own OpenAI key and GPT-5.6
-00:08 Describe any app and generate it
-00:41 Different apps, one safe native runtime
-00:54 Built and verified with Codex
-01:08 Your key, your apps
+00:00 Make tiny apps with your GPT-5.6 key
+00:13 Prompt 1 — Travel Budget
+00:32 Prompt 2 — Daily Focus
+00:43 Evolve the same app to Version 3
+00:59 Built and verified with Codex
+01:08 Make yours
 
 #OpenAI #BuildWeek #Codex #GPT56 #SwiftUI
 ```

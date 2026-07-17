@@ -25,6 +25,8 @@ artifacts/app-store/screenshots/*
 artifacts/app-store/videos/*
 !artifacts/app-store/videos/api-key-gpt56-runtime-final.mp4
 !artifacts/app-store/videos/final-ai-generation-polished.mp4
+!artifacts/app-store/videos/focus-checklist-evolve-final.mp4
+!artifacts/app-store/videos/focus-checklist-generation-final.mp4
 !artifacts/app-store/videos/live-fx-alert-runtime-final.mp4
 !artifacts/app-store/videos/live-fx-runtime-final.mp4
 !artifacts/app-store/videos/new-app-from-scratch-final.mp4
