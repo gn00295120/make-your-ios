@@ -1,0 +1,148 @@
+1
+00:00:00,000 --> 00:00:02,760
+This is MakeYour, one iPhone app
+
+2
+00:00:02,760 --> 00:00:05,990
+where GPT-5.6 creates
+the tiny apps you need.
+
+3
+00:00:06,100 --> 00:00:08,550
+My Apps keeps every creation.
+
+4
+00:00:08,650 --> 00:00:11,450
+Builder is where you create
+or change them.
+
+5
+00:00:11,550 --> 00:00:16,450
+AI Key connects your own OpenAI key
+and GPT-5.6.
+
+6
+00:00:16,550 --> 00:00:20,400
+Together, they become one home
+for your personal tiny apps.
+
+7
+00:00:21,000 --> 00:00:22,400
+Let's create one.
+
+8
+00:00:22,500 --> 00:00:25,900
+I tap New App and ask for
+a daily focus checklist
+
+9
+00:00:25,900 --> 00:00:28,200
+with three tasks and a local reminder.
+
+10
+00:00:28,500 --> 00:00:32,900
+GPT-5.6 turns that prompt into
+a validated, versioned app,
+
+11
+00:00:32,900 --> 00:00:35,650
+and MakeYour opens
+the working native interface.
+
+12
+00:00:35,800 --> 00:00:37,200
+This is not a mockup.
+I can use it immediately.
+
+13
+00:00:37,900 --> 00:00:40,200
+A useful app should also feel like yours.
+
+14
+00:00:40,650 --> 00:00:42,800
+I complete a task, return to Builder,
+
+15
+00:00:42,800 --> 00:00:46,000
+and ask for a calm green design
+with a short evening reflection.
+
+16
+00:00:46,700 --> 00:00:50,400
+GPT-5.6 creates Version 3
+with a new style and a new feature,
+
+17
+00:00:50,400 --> 00:00:53,500
+while my completed task is still there.
+
+18
+00:00:53,800 --> 00:00:56,650
+The app changes with me,
+without starting over.
+
+19
+00:00:56,900 --> 00:00:59,300
+Back in My Apps, Daily Focus
+
+20
+00:00:59,300 --> 00:01:01,300
+is only one of many.
+
+21
+00:01:01,500 --> 00:01:04,400
+I can switch to a travel budget
+converter,
+
+22
+00:01:04,400 --> 00:01:06,950
+live currency alerts,
+or a private food journal.
+
+23
+00:01:07,200 --> 00:01:10,700
+Every tiny app can have
+its own interface, capabilities, and data,
+
+24
+00:01:10,700 --> 00:01:14,200
+while they all live inside MakeYour.
+
+25
+00:01:14,500 --> 00:01:16,100
+No new Xcode project.
+
+26
+00:01:16,300 --> 00:01:17,900
+No separate build pipeline.
+
+27
+00:01:18,100 --> 00:01:19,750
+No starting from scratch.
+
+28
+00:01:20,000 --> 00:01:23,600
+Codex helped us build and test
+the schema, validator,
+
+29
+00:01:23,650 --> 00:01:27,950
+safety boundary, and native SwiftUI
+runtime that make this possible.
+
+30
+00:01:28,200 --> 00:01:31,100
+The next tiny app you need
+is one prompt away.
+
+31
+00:01:31,500 --> 00:01:32,200
+One app.
+
+32
+00:01:32,550 --> 00:01:33,750
+Your tiny apps.
+
+33
+00:01:33,900 --> 00:01:34,850
+Make yours.
