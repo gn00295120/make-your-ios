@@ -2,8 +2,9 @@
 
 Live Devpost project `1342394` is now published as `MakeYour` at
 `https://devpost.com/software/makeyour`, but it has not yet been submitted to the
-hackathon. The public repository URL, YouTube URL, and required submission
-answers still need to be attached.
+hackathon. The public repository is
+`https://github.com/gn00295120/make-your-ios`; the YouTube URL and required
+submission answers still need to be attached.
 
 ## Working project name — owner must make the final choice
 
@@ -140,13 +141,13 @@ The generated app flow is a real Simulator capture, not a mocked animation.
 
 ## Before submission
 
-- Add the public repository URL and license.
+- [x] Add the public repository URL and MIT license.
 - [x] Record and verify a clear, narrated 2:21.96 video covering Codex and GPT-5.6.
 - Upload it publicly to YouTube and verify the submitted link.
 - Show Codex and GPT-5.6 usage explicitly in the voiceover.
 - Run `/feedback` and enter the resulting Codex Session ID.
-- Add the repository URL; if it remains private, share it with Devpost and
-  OpenAI through the submission flow.
+- [x] Publish the judging repository at
+  `https://github.com/gn00295120/make-your-ios`.
 - Select a submission category and confirm all invited team members accepted.
 - Run the clean-clone build instructions.
 - Replace any placeholder project name only after updating the bundle display

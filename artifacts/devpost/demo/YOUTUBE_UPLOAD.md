@@ -32,7 +32,7 @@ This real demo shows:
 Built for OpenAI Build Week.
 
 Devpost: https://devpost.com/software/makeyour
-Source code: ADD_PUBLIC_REPOSITORY_URL
+Source code: https://github.com/gn00295120/make-your-ios
 
 Chapters:
 00:00 Stop downloading another tiny app
