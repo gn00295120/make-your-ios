@@ -125,24 +125,30 @@ the execution boundary.
   allowlisted HTTPS data sources.
 - Early App Review guidance before broadening runtime programmability.
 
-## Final demo storyboard (2:21.96)
+## Final demo storyboard (1:14.97)
 
-- **0:00** — The repeated tiny-app problem and MakeYour thesis.
-- **0:15** — The multi-app native library and bounded AppDocument runtime.
-- **0:33** — Live FX Watch with editable currencies and a test alert.
-- **0:49** — Use It First with records, private photos, reminders, and reviewed AI.
-- **1:09** — Real iOS operation: blank canvas, GPT-5.6 generation, usable Travel
-  Budget Converter, `2500 → 2,300 EUR`, and return to My Apps.
-- **1:45** — How Codex shaped, implemented, tested, and prepared the App Store build.
-- **2:12** — Closing product thesis.
+- **0:00** — Real AI Key screen: the user's key is saved but hidden, GPT-5.6 is
+  selected, and direct OpenAI requests are enabled.
+- **0:08** — Real iOS operation: create a blank canvas, ask for a travel budget
+  converter, wait for GPT-5.6, open the generated native app, use it, and return
+  to the multi-app library.
+- **0:41** — Brief breadth proof: the same generated runtime supports a live
+  currency watchlist, native alerts, local records, reminders, photos, and
+  reviewed AI.
+- **0:54** — How Codex shaped, implemented, tested, and prepared the App Store build.
+- **1:08** — Closing product thesis: your key, your apps, one native home.
 
-The final recording never opens the AI Key screen or exposes the user's key.
-The generated app flow is a real Simulator capture, not a mocked animation.
+The final recording shows the AI Key screen so the BYOK product model is clear,
+but the saved value remains hidden and no credential is exposed. The generated
+app flow is a real Simulator capture, not a mocked animation; 54.07 of 74.97
+seconds (72.1%) show moving Simulator footage. The complete key-and-generation
+story occupies the first 40.57 seconds; example apps are only a short breadth
+proof after the main workflow.
 
 ## Before submission
 
 - [x] Add the public repository URL and MIT license.
-- [x] Record and verify a clear, narrated 2:21.96 video covering Codex and GPT-5.6.
+- [x] Record and verify a clear, narrated 1:14.97 video covering Codex and GPT-5.6.
 - Upload it publicly to YouTube and verify the submitted link.
 - Show Codex and GPT-5.6 usage explicitly in the voiceover.
 - Run `/feedback` and enter the resulting Codex Session ID.

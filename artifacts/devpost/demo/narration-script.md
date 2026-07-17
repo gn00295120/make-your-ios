@@ -1,52 +1,38 @@
 # MakeYour — OpenAI Build Week demo narration
 
-Target: English, under three minutes, public YouTube upload.
+Target: English, about seventy-five seconds, public YouTube upload. The product
+story is BYOK → describe any app → GPT-5.6 generation → native runtime. The first
+three sections are real iOS Simulator operation; only the Codex proof and close
+are static.
 
-## 1. The repeated-app problem
+## 1. Connect GPT-5.6
 
-Vibe coding made software easier to create, yet we still download the same tiny
-calculators, trackers, and reminders. MakeYour turns them into one private,
-native iPhone workspace.
+Connect your OpenAI key and select GPT-5.6. It stays in Keychain and talks
+directly to OpenAI.
 
-## 2. One home for personal software
+## 2. Generate an app from one sentence
 
-Describe what you need, and GPT-5.6 creates a structured app document. MakeYour
-validates it, then renders a real SwiftUI mini app. One library can hold many
-creations, each with its own design, data, and history.
+Now describe any app you want. I create a blank project and type, “Make a travel
+budget converter.” GPT-5.6 turns that sentence into a strict, versioned app
+document. MakeYour validates every page, component, action, and capability, then
+opens a working native app immediately. This is the real iOS Simulator, not a
+screenshot or generated binary. I enter twenty-five hundred dollars, get
+twenty-three hundred euros, open the small MakeYour menu, and return to a library
+where every personal app lives.
 
-## 3. Live FX Watch
+## 3. The same system makes very different apps
 
-This is Live FX Watch, generated inside MakeYour. Choose a base currency, add
-countries, refresh reference rates, and set a threshold alert. The Test Alert
-button demonstrates the complete native interaction without waiting for the
-market to move.
+The same prompt-to-app system can make a currency watchlist with native alerts,
+or a private pantry app with records, reminders, photos, and reviewed AI.
+Different designs and capabilities, all generated inside MakeYour.
 
-## 4. Use It First
+## 4. Built and verified with Codex
 
-Use It First looks and behaves completely differently. It combines private
-photos, pantry records, use-by dates, and local reminders. Its Rescue Chef AI
-sends only the ingredients the user reviews; photos, records, and other projects
-remain on the device.
+Codex helped build and test the schema, validator, native SwiftUI runtime,
+Keychain security, and release pipeline. We passed forty-three tests, cleared
+lint, and submitted Build One for App Store review.
 
-## 5. Generate Travel Budget
+## 5. Close
 
-Now watch the real iOS Simulator. From My Apps, we open a blank canvas and ask
-for a travel budget converter. GPT-5.6 returns a versioned document, the
-validator checks every component and capability, and Travel Budget opens
-immediately. The model designs within a bounded visual grammar; precompiled
-SwiftUI owns storage, notifications, photos, network access, and AI review. No
-generated binary or arbitrary code is executed. The finished mini app fills the
-screen, while one small switcher keeps every personal app close.
-
-## 6. Built and verified with Codex
-
-Codex was the coding agent behind the product, helping turn the thesis into the
-document schema, validator, visual system, record runtime, live data, AI
-confirmation flow, privacy manifest, and release pipeline. We used Codex to test
-real API generation, refactor Swift, pass all forty-three tests, clear strict
-lint, and upload build one to App Store Connect.
-
-## 7. Close
-
-MakeYour is not another project generator. It is where personal software lives
-and evolves. Stop downloading another tiny app. Make yours.
+Your OpenAI key. Any personal app you can describe. Make it and evolve it inside
+MakeYour.

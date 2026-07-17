@@ -3,177 +3,224 @@ set -euo pipefail
 
 demo_dir="${0:A:h}"
 repo_root="${demo_dir:h:h:h}"
+panels_dir="$demo_dir/panels"
 slides_dir="$demo_dir/slides"
 segments_dir="$demo_dir/segments"
-phones_dir="$demo_dir/phones"
 audio_dir="$demo_dir/audio"
-preferred_generation_clip="$repo_root/artifacts/app-store/videos/new-app-from-scratch-final.mp4"
-fallback_generation_clip="$repo_root/artifacts/app-store/videos/final-ai-generation-polished.mp4"
 
-if [[ -f "$preferred_generation_clip" ]]; then
-  generation_clip="$preferred_generation_clip"
-else
-  generation_clip="$fallback_generation_clip"
-  print -u2 "note: using existing generation clip; record ${preferred_generation_clip:t} (26.0 seconds) for the final demo"
-fi
-
-mkdir -p "$slides_dir" "$segments_dir" "$phones_dir" "$audio_dir"
-
-font_regular="/System/Library/Fonts/Helvetica.ttc"
-font_bold="/System/Library/Fonts/HelveticaNeue.ttc"
+key_clip="$repo_root/artifacts/app-store/videos/api-key-gpt56-runtime-final.mp4"
+generation_clip="$repo_root/artifacts/app-store/videos/new-app-from-scratch-final.mp4"
+fx_alert_clip="$repo_root/artifacts/app-store/videos/live-fx-alert-runtime-final.mp4"
+pantry_clip="$repo_root/artifacts/app-store/videos/use-it-first-immersive-runtime-final.mp4"
 icon="$repo_root/MakeYourIOS/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"
-shots="$repo_root/artifacts/app-store/screenshots/upload"
 
-make_phone() {
-  local source_image="$1"
-  local height="$2"
-  local output_image="$3"
-  magick "$source_image" -resize "x${height}" \
-    -bordercolor "#FFFFFF" -border 5 "$output_image"
+font_regular="/System/Library/Fonts/Supplemental/Arial.ttf"
+font_bold="/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+
+mkdir -p "$panels_dir" "$slides_dir" "$segments_dir" "$audio_dir"
+
+for required_file in \
+  "$key_clip" \
+  "$generation_clip" \
+  "$fx_alert_clip" \
+  "$pantry_clip" \
+  "$icon" \
+  "$audio_dir/demo-v3-01-key.mp3" \
+  "$audio_dir/demo-v3-02-generate.mp3" \
+  "$audio_dir/demo-v3-03-breadth.mp3" \
+  "$audio_dir/demo-v3-04-codex.mp3" \
+  "$audio_dir/demo-v3-05-close.mp3"; do
+  [[ -f "$required_file" ]] || {
+    print -u2 "missing required demo asset: $required_file"
+    exit 1
+  }
+done
+
+# The first frame states the product clearly: the user's own OpenAI key and
+# GPT-5.6 turn MakeYour into an on-device factory for personal apps.
+magick -size 1920x1080 xc:none \
+  -fill "#080916DE" -stroke "#8D7BFF77" -strokewidth 2 \
+  -draw "roundrectangle 55,55 1160,1025 48,48" \
+  \( "$icon" -resize 124x124 \) -geometry +105+105 -composite \
+  -gravity NorthWest -font "$font_bold" -fill "#BEB2FF" -pointsize 28 \
+  -annotate +105+285 "BRING YOUR OWN OPENAI KEY" \
+  \( -size 930x260 -background none -font "$font_bold" -fill white \
+     -pointsize 78 caption:"Your key.\nAny app." \) \
+  -geometry +105+340 -composite \
+  \( -size 900x210 -background none -font "$font_regular" -fill "#E2DEFF" \
+     -pointsize 40 caption:"Select GPT-5.6. The key stays in iOS Keychain and requests go directly to OpenAI." \) \
+  -geometry +110+655 -composite \
+  -fill "#6F5CFF" -stroke none -draw "roundrectangle 105,900 485,970 35,35" \
+  -font "$font_bold" -fill white -pointsize 27 -annotate +145+945 "LIVE BYOK SETUP" \
+  "$panels_dir/01-key.png"
+
+magick -size 1920x1080 xc:none \
+  -fill "#100820DE" -stroke "#AF94FF77" -strokewidth 2 \
+  -draw "roundrectangle 55,55 1160,1025 48,48" \
+  -gravity NorthWest -font "$font_bold" -fill "#C7B7FF" -pointsize 28 \
+  -annotate +105+135 "REAL GPT-5.6 GENERATION" \
+  \( -size 930x270 -background none -font "$font_bold" -fill white \
+     -pointsize 74 caption:"Describe it.\nMakeYour builds it." \) \
+  -geometry +105+210 -composite \
+  \( -size 900x180 -background none -font "$font_regular" -fill "#E7E0FF" \
+     -pointsize 40 caption:"Blank canvas → prompt → GPT-5.6 → validated native app" \) \
+  -geometry +110+570 -composite \
+  -fill "#1C1437" -stroke "#7E6AE8" -strokewidth 2 \
+  -draw "roundrectangle 105,790 1010,875 26,26" \
+  -font "$font_regular" -fill white -pointsize 31 \
+  -annotate +145+844 "“Make a travel budget converter”" \
+  -fill "#6F52DD" -stroke none -draw "roundrectangle 105,910 560,980 35,35" \
+  -font "$font_bold" -fill white -pointsize 27 -annotate +145+955 "ONE PROMPT → WORKING APP" \
+  "$panels_dir/02-generate.png"
+
+magick -size 1920x1080 xc:none \
+  -fill "#06121DDE" -stroke "#5DD9FF77" -strokewidth 2 \
+  -draw "roundrectangle 55,55 1160,1025 48,48" \
+  -gravity NorthWest -font "$font_bold" -fill "#68DFFF" -pointsize 28 \
+  -annotate +105+135 "NOT ONE CARD TEMPLATE" \
+  \( -size 940x250 -background none -font "$font_bold" -fill white \
+     -pointsize 69 caption:"Different apps.\nOne safe runtime." \) \
+  -geometry +105+210 -composite \
+  \( -size 900x350 -background none -font "$font_regular" -fill "#D6F3FF" \
+     -pointsize 41 caption:"Live data · native alerts\nLocal records · photos\nReminders · reviewed AI\nA new prompt can change any app" \) \
+  -geometry +110+520 -composite \
+  -fill "#168BB4" -stroke none -draw "roundrectangle 105,910 620,980 35,35" \
+  -font "$font_bold" -fill white -pointsize 27 -annotate +145+955 "GENERATED INSIDE MAKEYOUR" \
+  "$panels_dir/03-breadth.png"
+
+# A short breadth montage follows the complete generation flow. It is evidence
+# that the runtime supports very different apps, not the video's main story.
+ffmpeg -y -hide_banner -loglevel error \
+  -i "$fx_alert_clip" -i "$pantry_clip" \
+  -filter_complex \
+  "[0:v]trim=start=0:end=3,setpts=PTS-STARTPTS,fps=30,scale=1320:2868:flags=lanczos,format=yuv420p[a];\
+   [0:v]trim=start=5.7:end=8.7,setpts=PTS-STARTPTS,fps=30,scale=1320:2868:flags=lanczos,format=yuv420p[b];\
+   [1:v]trim=start=9.2:end=13.5,setpts=PTS-STARTPTS,fps=30,scale=1320:2868:flags=lanczos,format=yuv420p[c];\
+   [1:v]trim=start=22:end=25.2,setpts=PTS-STARTPTS,fps=30,scale=1320:2868:flags=lanczos,format=yuv420p[d];\
+   [a][b][c][d]concat=n=4:v=1:a=0[v]" \
+  -map "[v]" -c:v libx264 -preset medium -crf 19 -movflags +faststart \
+  "$segments_dir/03-breadth-source.mp4"
+
+render_live_segment() {
+  local source_video="$1"
+  local panel="$2"
+  local narration="$3"
+  local duration="$4"
+  local output="$5"
+
+  ffmpeg -y -hide_banner -loglevel error \
+    -i "$source_video" -loop 1 -framerate 30 -i "$panel" -i "$narration" \
+    -filter_complex \
+    "[0:v]split=2[background][phone];\
+     [background]scale=1920:1080:force_original_aspect_ratio=increase,\
+crop=1920:1080,gblur=sigma=32,eq=brightness=-0.43:saturation=0.78,fps=30,\
+tpad=stop_mode=clone:stop_duration=5,trim=duration=${duration},setpts=PTS-STARTPTS[bg];\
+     [phone]scale=-2:1040:flags=lanczos,fps=30,tpad=stop_mode=clone:stop_duration=5,\
+trim=duration=${duration},setpts=PTS-STARTPTS[fg];\
+     [bg][fg]overlay=1320:20:shortest=1[scene];\
+     [scene][1:v]overlay=0:0:shortest=1[v];\
+     [2:a]loudnorm=I=-16:TP=-1.5:LRA=11,apad=pad_dur=5,\
+atrim=duration=${duration},asetpts=PTS-STARTPTS[a]" \
+    -map "[v]" -map "[a]" -c:v libx264 -preset medium -crf 18 \
+    -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -r 30 -t "$duration" \
+    -movflags +faststart "$output"
 }
 
-make_phone "$shots/01-app-library.jpg" 900 "$phones_dir/library.png"
-make_phone "$shots/03-rate-test-alert.jpg" 700 "$phones_dir/fx-alert.png"
-make_phone "$shots/04-use-it-first.jpg" 820 "$phones_dir/pantry-home.png"
-make_phone "$shots/05-use-it-first-record.jpg" 820 "$phones_dir/pantry-record.png"
-make_phone "$shots/06-reviewed-ai-helper.jpg" 820 "$phones_dir/pantry-ai.png"
+render_live_segment \
+  "$key_clip" \
+  "$panels_dir/01-key.png" \
+  "$audio_dir/demo-v3-01-key.mp3" \
+  "8.1" \
+  "$segments_dir/01-key.mp4"
+
+render_live_segment \
+  "$generation_clip" \
+  "$panels_dir/02-generate.png" \
+  "$audio_dir/demo-v3-02-generate.mp3" \
+  "32.466667" \
+  "$segments_dir/02-generate.mp4"
+
+render_live_segment \
+  "$segments_dir/03-breadth-source.mp4" \
+  "$panels_dir/03-breadth.png" \
+  "$audio_dir/demo-v3-03-breadth.mp3" \
+  "13.5" \
+  "$segments_dir/03-breadth.mp4"
+
+magick -size 1920x1080 gradient:"#0A0B18-#342061" \
+  -gravity NorthWest -font "$font_bold" -fill "#BFAFFF" -pointsize 32 \
+  -annotate +110+95 "CODEX ACCELERATED THE BUILD" \
+  \( -size 1600x170 -background none -font "$font_bold" -fill white \
+     -pointsize 72 caption:"Architecture, native runtime, testing, and release." \) \
+  -geometry +110+165 -composite \
+  -fill "#1A1738" -stroke "#7664D8" -strokewidth 3 \
+  -draw "roundrectangle 110,450 600,820 36,36 roundrectangle 715,450 1205,820 36,36 roundrectangle 1320,450 1810,820 36,36" \
+  \( -size 420x155 -background none -font "$font_bold" -fill white -stroke none \
+     -pointsize 76 -gravity center caption:"43 / 43" \) -gravity NorthWest -geometry +145+495 -composite \
+  \( -size 420x100 -background none -font "$font_regular" -fill "#DCD5FF" -stroke none \
+     -pointsize 36 -gravity center caption:"tests passed" \) -gravity NorthWest -geometry +145+670 -composite \
+  \( -size 420x155 -background none -font "$font_bold" -fill white -stroke none \
+     -pointsize 76 -gravity center caption:"ZERO" \) -gravity NorthWest -geometry +750+495 -composite \
+  \( -size 420x100 -background none -font "$font_regular" -fill "#DCD5FF" -stroke none \
+     -pointsize 36 -gravity center caption:"lint violations" \) -gravity NorthWest -geometry +750+670 -composite \
+  \( -size 420x155 -background none -font "$font_bold" -fill white -stroke none \
+     -pointsize 64 -gravity center caption:"BUILD 1" \) -gravity NorthWest -geometry +1355+495 -composite \
+  \( -size 420x130 -background none -font "$font_regular" -fill "#DCD5FF" -stroke none \
+     -pointsize 34 -gravity center caption:"submitted for\nApp Store review" \) -gravity NorthWest -geometry +1355+650 -composite \
+  "$slides_dir/04-codex.png"
 
 magick -size 1920x1080 gradient:"#090817-#442481" \
-  \( "$icon" -resize 380x380 \) -geometry +130+335 -composite \
-  -gravity NorthWest -font "$font_bold" -fill "#8BE8FF" -pointsize 34 \
-  -annotate +620+165 "OPENAI BUILD WEEK" \
-  \( -size 1120x300 -background none -font "$font_bold" -fill white \
-     -pointsize 88 caption:"Stop downloading another tiny app." \) \
-  -geometry +620+225 -composite \
-  \( -size 1080x150 -background none -font "$font_regular" -fill "#D8D3F3" \
-     -pointsize 46 caption:"Make yours — a private native home for personal software." \) \
-  -geometry +625+600 -composite \
-  "$slides_dir/01-problem.png"
-
-magick -size 1920x1080 gradient:"#0A1422-#223C71" \
-  "$phones_dir/library.png" -geometry +155+90 -composite \
-  -gravity NorthWest -font "$font_bold" -fill "#6FE8FF" -pointsize 32 \
-  -annotate +760+160 "ONE HOME. MANY PERSONAL APPS." \
-  \( -size 1030x260 -background none -font "$font_bold" -fill white \
-     -pointsize 72 caption:"Describe it. Generate it. Use it." \) \
-  -geometry +760+225 -composite \
-  \( -size 1000x230 -background none -font "$font_regular" -fill "#D4E4FF" \
-     -pointsize 42 caption:"GPT-5.6   •   validated AppDocument   •   native SwiftUI runtime" \) \
-  -geometry +765+560 -composite \
-  "$slides_dir/02-library.png"
-
-magick -size 1920x1080 gradient:"#07141D-#174E6E" \
-  "$phones_dir/fx-alert.png" -geometry +1515+290 -composite \
-  -gravity NorthWest -font "$font_bold" -fill "#70D8FF" -pointsize 32 \
-  -annotate +680+155 "GENERATED APP #1" \
-  \( -size 760x220 -background none -font "$font_bold" -fill white \
-     -pointsize 72 caption:"Live FX Watch" \) \
-  -geometry +680+215 -composite \
-  \( -size 780x330 -background none -font "$font_regular" -fill "#D6F2FF" \
-     -pointsize 40 caption:"Choose a base currency. Add countries. Refresh reference rates. Test a threshold alert." \) \
-  -geometry +685+440 -composite \
-  "$slides_dir/03-fx.png"
-
-magick -size 1920x1080 gradient:"#071C18-#1F6858" \
-  "$phones_dir/pantry-home.png" -geometry +65+130 -composite \
-  "$phones_dir/pantry-record.png" -geometry +455+130 -composite \
-  "$phones_dir/pantry-ai.png" -geometry +845+130 -composite \
-  -gravity NorthWest -font "$font_bold" -fill "#87FFD8" -pointsize 30 \
-  -annotate +1250+170 "GENERATED APP #2" \
-  \( -size 600x190 -background none -font "$font_bold" -fill white \
-     -pointsize 68 caption:"Use It First" \) \
-  -geometry +1250+225 -composite \
-  \( -size 570x410 -background none -font "$font_regular" -fill "#D8FFF3" \
-     -pointsize 38 caption:"Private photos\nPantry records\nUse-by dates\nLocal reminders\nReviewed text-only AI" \) \
-  -geometry +1255+455 -composite \
-  "$slides_dir/04-pantry.png"
-
-magick -size 1920x1080 gradient:"#110A25-#4B2CB4" \
-  -gravity NorthWest -font "$font_bold" -fill "#C8B8FF" -pointsize 32 \
-  -annotate +120+160 "REAL iOS SIMULATOR — GPT-5.6" \
-  \( -size 1000x260 -background none -font "$font_bold" -fill white \
-     -pointsize 78 caption:"Build it. Open it. Use it." \) \
-  -geometry +120+225 -composite \
-  \( -size 950x270 -background none -font "$font_regular" -fill "#E3DEFF" \
-     -pointsize 42 caption:"My Apps   •   blank canvas   •   prompt   •   validated native runtime" \) \
-  -geometry +125+585 -composite \
-  "$slides_dir/05-generation.png"
-
-magick -size 1920x1080 gradient:"#0B0B17-#39206E" \
-  -gravity NorthWest -font "$font_bold" -fill "#BDAEFF" -pointsize 34 \
-  -annotate +110+95 "BUILT AND VERIFIED WITH CODEX" \
-  \( -size 1150x190 -background none -font "$font_bold" -fill white \
-     -pointsize 72 caption:"From product thesis to App Store build." \) \
-  -geometry +110+155 -composite \
-  -fill "#201A43" -stroke "#725CFF" -strokewidth 3 \
-  -draw "roundrectangle 110,440 500,790 34,34 roundrectangle 545,440 935,790 34,34 roundrectangle 980,440 1370,790 34,34 roundrectangle 1415,440 1805,790 34,34" \
-  \( -size 330x160 -background none -font "$font_bold" -fill white -stroke none -strokewidth 0 -pointsize 70 -gravity center caption:"43 / 43" \) -gravity NorthWest -geometry +140+485 -composite \
-  \( -size 330x90 -background none -font "$font_regular" -fill "#D9D1FF" -stroke none -strokewidth 0 -pointsize 34 -gravity center caption:"tests passed" \) -gravity NorthWest -geometry +140+650 -composite \
-  \( -size 330x160 -background none -font "$font_bold" -fill white -stroke none -strokewidth 0 -pointsize 70 -gravity center caption:"0" \) -gravity NorthWest -geometry +575+485 -composite \
-  \( -size 330x90 -background none -font "$font_regular" -fill "#D9D1FF" -stroke none -strokewidth 0 -pointsize 34 -gravity center caption:"lint violations" \) -gravity NorthWest -geometry +575+650 -composite \
-  \( -size 330x160 -background none -font "$font_bold" -fill white -stroke none -strokewidth 0 -pointsize 66 -gravity center caption:"REAL API" \) -gravity NorthWest -geometry +1010+485 -composite \
-  \( -size 330x90 -background none -font "$font_regular" -fill "#D9D1FF" -stroke none -strokewidth 0 -pointsize 34 -gravity center caption:"generation tested" \) -gravity NorthWest -geometry +1010+650 -composite \
-  \( -size 330x160 -background none -font "$font_bold" -fill white -stroke none -strokewidth 0 -pointsize 60 -gravity center caption:"BUILD 1" \) -gravity NorthWest -geometry +1445+485 -composite \
-  \( -size 330x110 -background none -font "$font_regular" -fill "#D9D1FF" -stroke none -strokewidth 0 -pointsize 32 -gravity center caption:"uploaded to\nApp Store Connect" \) -gravity NorthWest -geometry +1445+635 -composite \
-  "$slides_dir/07-codex.png"
-
-magick -size 1920x1080 gradient:"#090817-#442481" \
-  \( "$icon" -resize 310x310 \) -gravity North -geometry +0+125 -composite \
-  \( -size 1500x170 -background none -font "$font_bold" -fill white \
-     -pointsize 86 -gravity center caption:"Personal software should live and evolve." \) \
-  -gravity North -geometry +0+500 -composite \
-  \( -size 1300x130 -background none -font "$font_regular" -fill "#BFEAFF" \
-     -pointsize 52 -gravity center caption:"Stop downloading another tiny app. Make yours." \) \
+  \( "$icon" -resize 280x280 \) -gravity North -geometry +0+95 -composite \
+  \( -size 1650x240 -background none -font "$font_bold" -fill white \
+     -pointsize 86 -gravity center caption:"Your GPT-5.6. Your apps." \) \
+  -gravity North -geometry +0+430 -composite \
+  \( -size 1400x150 -background none -font "$font_regular" -fill "#BFEAFF" \
+     -pointsize 50 -gravity center caption:"Make it, use it, and evolve it inside MakeYour." \) \
   -gravity North -geometry +0+730 -composite \
-  "$slides_dir/08-close.png"
+  "$slides_dir/05-close.png"
 
 make_still_segment() {
   local slide="$1"
   local narration="$2"
-  local output="$3"
+  local duration="$3"
+  local output="$4"
+
   ffmpeg -y -hide_banner -loglevel error \
     -loop 1 -framerate 30 -i "$slide" -i "$narration" \
-    -map 0:v -map 1:a -c:v libx264 -preset medium -crf 18 -tune stillimage \
-    -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -r 30 -shortest \
+    -filter_complex \
+    "[1:a]loudnorm=I=-16:TP=-1.5:LRA=11,apad=pad_dur=2,\
+atrim=duration=${duration},asetpts=PTS-STARTPTS[a]" \
+    -map 0:v -map "[a]" -c:v libx264 -preset medium -crf 18 -tune stillimage \
+    -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -r 30 -t "$duration" \
     -movflags +faststart "$output"
 }
 
-make_still_segment "$slides_dir/01-problem.png" "$audio_dir/01-problem.mp3" "$segments_dir/01.mp4"
-make_still_segment "$slides_dir/02-library.png" "$audio_dir/02-library.mp3" "$segments_dir/02.mp4"
+make_still_segment \
+  "$slides_dir/04-codex.png" \
+  "$audio_dir/demo-v3-04-codex.mp3" \
+  "14.304" \
+  "$segments_dir/04-codex.mp4"
+
+make_still_segment \
+  "$slides_dir/05-close.png" \
+  "$audio_dir/demo-v3-05-close.mp3" \
+  "6.552" \
+  "$segments_dir/05-close.mp4"
 
 ffmpeg -y -hide_banner -loglevel error \
-  -loop 1 -framerate 30 -i "$slides_dir/03-fx.png" \
-  -i "$repo_root/artifacts/app-store/videos/live-fx-runtime-final.mp4" \
-  -i "$audio_dir/03-fx.mp3" \
-  -filter_complex "[1:v]setpts=0.75*PTS,scale=-2:900,fps=30,tpad=stop_mode=clone:stop_duration=8[phone];[0:v][phone]overlay=130:90:shortest=1[v]" \
-  -map "[v]" -map 2:a -c:v libx264 -preset medium -crf 18 \
-  -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -r 30 -shortest \
-  -movflags +faststart "$segments_dir/03.mp4"
-
-make_still_segment "$slides_dir/04-pantry.png" "$audio_dir/04-pantry.mp3" "$segments_dir/04.mp4"
-
-ffmpeg -y -hide_banner -loglevel error \
-  -loop 1 -framerate 30 -i "$slides_dir/05-generation.png" \
-  -i "$generation_clip" \
-  -i "$audio_dir/05-generation.mp3" \
-  -filter_complex "[1:v]scale=-2:980,fps=30,tpad=stop_mode=clone:stop_duration=8[phone];[0:v][phone]overlay=1280:50:shortest=1[v]" \
-  -map "[v]" -map 2:a -c:v libx264 -preset medium -crf 18 \
-  -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -r 30 -shortest \
-  -movflags +faststart "$segments_dir/05.mp4"
-
-make_still_segment "$slides_dir/07-codex.png" "$audio_dir/07-codex.mp3" "$segments_dir/07.mp4"
-make_still_segment "$slides_dir/08-close.png" "$audio_dir/08-close.mp3" "$segments_dir/08.mp4"
-
-ffmpeg -y -hide_banner -loglevel error \
-  -i "$segments_dir/01.mp4" -i "$segments_dir/02.mp4" \
-  -i "$segments_dir/03.mp4" -i "$segments_dir/04.mp4" \
-  -i "$segments_dir/05.mp4" -i "$segments_dir/07.mp4" \
-  -i "$segments_dir/08.mp4" \
-  -filter_complex "[0:v][0:a][1:v][1:a][2:v][2:a][3:v][3:a][4:v][4:a][5:v][5:a][6:v][6:a]concat=n=7:v=1:a=1[v][a]" \
+  -i "$segments_dir/01-key.mp4" \
+  -i "$segments_dir/02-generate.mp4" \
+  -i "$segments_dir/03-breadth.mp4" \
+  -i "$segments_dir/04-codex.mp4" \
+  -i "$segments_dir/05-close.mp4" \
+  -filter_complex \
+  "[0:v][0:a][1:v][1:a][2:v][2:a][3:v][3:a][4:v][4:a]concat=n=5:v=1:a=1[v][a]" \
   -map "[v]" -map "[a]" -c:v libx264 -preset medium -crf 18 \
-  -c:a aac -b:a 192k -pix_fmt yuv420p -movflags +faststart \
-  "$demo_dir/MakeYour-OpenAI-Build-Week-Demo.mp4"
+  -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -r 30 \
+  -movflags +faststart "$demo_dir/MakeYour-OpenAI-Build-Week-Demo.mp4"
 
-ffprobe -v error -show_entries format=duration,size \
-  -show_entries stream=codec_name,width,height,r_frame_rate \
-  -of default=noprint_wrappers=1 "$demo_dir/MakeYour-OpenAI-Build-Week-Demo.mp4"
+ffprobe -v error \
+  -show_entries format=duration,size \
+  -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt,sample_rate \
+  -of default=noprint_wrappers=1 \
+  "$demo_dir/MakeYour-OpenAI-Build-Week-Demo.mp4"

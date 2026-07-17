@@ -4,29 +4,28 @@
 
 - Video: `MakeYour-OpenAI-Build-Week-Demo.mp4`
 - Thumbnail: `MakeYour-YouTube-Thumbnail.jpg`
-- Verified duration: 2:21.96
+- Verified duration: 1:14.97
 - Video: H.264, 1920 × 1080, 30 fps
-- Audio: AAC, 48 kHz, mono, approximately -16.5 LUFS integrated
+- Audio: AAC, 48 kHz, mono, approximately -16 LUFS integrated
 
 ## Title
 
 ```text
-MakeYour — Build Your Own Native iPhone Apps with GPT-5.6 + Codex
+MakeYour — Use Your OpenAI Key to Build Any iPhone App with GPT-5.6 + Codex
 ```
 
 ## Description
 
 ```text
-MakeYour turns one sentence into a private, native mini app inside one trusted iPhone app.
+MakeYour turns your own OpenAI API key into a factory for personal iPhone apps.
 
-Instead of downloading another calculator, tracker, reminder, pantry app, or currency tool, describe what you need. GPT-5.6 produces a strict, versioned AppDocument; MakeYour validates it and renders only precompiled SwiftUI components and allowlisted capabilities. Generated apps can have distinct visual systems, local records, reminders, private photo slots, live reference data, and reviewed text-only AI.
+Connect your key, select GPT-5.6, and describe any app you need. GPT-5.6 produces a strict, versioned AppDocument; MakeYour validates it and renders only precompiled SwiftUI components and allowlisted native capabilities. Every generated app lives inside one trusted iPhone host and can be changed with another prompt.
 
-This real demo shows:
-• A multi-app personal library
-• Live FX Watch with editable currencies and a testable threshold alert
-• Use It First with private photos, pantry records, reminders, and reviewed AI
-• GPT-5.6 generating a Travel Budget app from one sentence
-• The validator and native runtime safety boundary during the real generation flow
+More than 72% of this video is direct iOS Simulator operation. The real demo shows:
+• A saved, hidden OpenAI key, GPT-5.6 model selection, and direct OpenAI consent
+• A blank project becoming a working Travel Budget app from one sentence
+• Real generation progress, validation, native interaction, and the multi-app library
+• The same runtime supporting live data, alerts, records, reminders, photos, and reviewed AI
 • How Codex helped build, test, refactor, and ship the product
 
 Built for OpenAI Build Week.
@@ -35,13 +34,11 @@ Devpost: https://devpost.com/software/makeyour
 Source code: https://github.com/gn00295120/make-your-ios
 
 Chapters:
-00:00 Stop downloading another tiny app
-00:15 One home for personal apps
-00:33 Live FX Watch
-00:49 Use It First
-01:09 Build an app with GPT-5.6
-01:45 Built and verified with Codex
-02:12 Make yours
+00:00 Connect your own OpenAI key and GPT-5.6
+00:08 Describe any app and generate it
+00:41 Different apps, one safe native runtime
+00:54 Built and verified with Codex
+01:08 Your key, your apps
 
 #OpenAI #BuildWeek #Codex #GPT56 #SwiftUI
 ```
