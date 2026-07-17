@@ -172,35 +172,35 @@ render_live_segment \
   "$segments_dir/pages-timed-source.mp4" \
   "$panels_dir/01-pages.png" \
   "$audio_dir/demo-v5-01-pages.mp3" \
-  "21.2" \
+  "21.4" \
   "$segments_dir/01-pages.mp4"
 
 render_live_segment \
   "$segments_dir/create-source.mp4" \
   "$panels_dir/02-create.png" \
   "$audio_dir/demo-v5-02-create.mp3" \
-  "16.6" \
+  "16.8" \
   "$segments_dir/02-create.mp4"
 
 render_live_segment \
   "$style_clip" \
   "$panels_dir/03-style.png" \
   "$audio_dir/demo-v5-03-style.mp3" \
-  "19.7" \
+  "19.9" \
   "$segments_dir/03-style.mp4"
 
 render_live_segment \
   "$switch_clip" \
   "$panels_dir/04-switch.png" \
   "$audio_dir/demo-v5-04-switch.mp3" \
-  "23.3" \
+  "23.5" \
   "$segments_dir/04-switch.mp4"
 
 render_live_segment \
   "$segments_dir/library-hold-source.mp4" \
   "$panels_dir/05-codex.png" \
   "$audio_dir/demo-v5-05-codex.mp3" \
-  "8.4" \
+  "8.6" \
   "$segments_dir/05-codex.mp4"
 
 render_live_segment \
@@ -210,8 +210,9 @@ render_live_segment \
   "7.1" \
   "$segments_dir/06-close.mp4"
 
-# Six-frame dips separate chapters without hiding any interaction. Audio uses a
-# matching equal-power dissolve, and every source is normalized to CFR 30 fps.
+# Twelve-frame cross-dissolves let each live screen flow into the next without a
+# black flash. The first five segments include a two-tenth-second end hold so the
+# overall 1:35.30 runtime and chapter timestamps stay unchanged.
 ffmpeg -y -hide_banner -loglevel error \
   -i "$segments_dir/01-pages.mp4" \
   -i "$segments_dir/02-create.mp4" \
@@ -220,16 +221,16 @@ ffmpeg -y -hide_banner -loglevel error \
   -i "$segments_dir/05-codex.mp4" \
   -i "$segments_dir/06-close.mp4" \
   -filter_complex \
-  "[0:v][1:v]xfade=transition=fadeblack:duration=0.2:offset=21.0[v01];\
-   [v01][2:v]xfade=transition=fadeblack:duration=0.2:offset=37.4[v02];\
-   [v02][3:v]xfade=transition=fadeblack:duration=0.2:offset=56.9[v03];\
-   [v03][4:v]xfade=transition=fadeblack:duration=0.2:offset=80.0[v04];\
-   [v04][5:v]xfade=transition=fadeblack:duration=0.2:offset=88.2,format=yuv420p[v];\
-   [0:a][1:a]acrossfade=d=0.2:c1=tri:c2=tri[a01];\
-   [a01][2:a]acrossfade=d=0.2:c1=tri:c2=tri[a02];\
-   [a02][3:a]acrossfade=d=0.2:c1=tri:c2=tri[a03];\
-   [a03][4:a]acrossfade=d=0.2:c1=tri:c2=tri[a04];\
-   [a04][5:a]acrossfade=d=0.2:c1=tri:c2=tri[a]" \
+  "[0:v][1:v]xfade=transition=fade:duration=0.4:offset=21.0[v01];\
+   [v01][2:v]xfade=transition=fade:duration=0.4:offset=37.4[v02];\
+   [v02][3:v]xfade=transition=fade:duration=0.4:offset=56.9[v03];\
+   [v03][4:v]xfade=transition=fade:duration=0.4:offset=80.0[v04];\
+   [v04][5:v]xfade=transition=fade:duration=0.4:offset=88.2,format=yuv420p[v];\
+   [0:a][1:a]acrossfade=d=0.4:c1=tri:c2=tri[a01];\
+   [a01][2:a]acrossfade=d=0.4:c1=tri:c2=tri[a02];\
+   [a02][3:a]acrossfade=d=0.4:c1=tri:c2=tri[a03];\
+   [a03][4:a]acrossfade=d=0.4:c1=tri:c2=tri[a04];\
+   [a04][5:a]acrossfade=d=0.4:c1=tri:c2=tri[a]" \
   -map "[v]" -map "[a]" -c:v libx264 -preset medium -crf 18 \
   -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -r 30 \
   -movflags +faststart "$demo_dir/MakeYour-OpenAI-Build-Week-Demo.mp4"

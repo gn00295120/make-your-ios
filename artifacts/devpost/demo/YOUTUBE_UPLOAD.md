@@ -6,7 +6,7 @@
 - Thumbnail: `MakeYour-YouTube-Thumbnail.jpg`
 - Verified duration: 1:35.30
 - Video: H.264, 1920 × 1080, constant 30 fps, 2,859 frames
-- Audio: AAC, 48 kHz, mono, -15.9 LUFS integrated, -1.4 dBFS true peak
+- Audio: AAC, 48 kHz, mono, -16.0 LUFS integrated, -1.5 dBFS true peak
 
 ## Title
 
