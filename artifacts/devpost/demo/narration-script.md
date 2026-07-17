@@ -1,39 +1,46 @@
 # MakeYour — OpenAI Build Week demo narration
 
-Target: English, 1:15.30, public YouTube upload. The product story is OpenAI
-Build Week → BYOK GPT-5.6 → two different tiny apps → evolve one without
-rebuilding → Codex. The first four chapters use real iOS Simulator operation;
-only the Codex proof and close are static.
+Target: English, 1:35.30, public YouTube upload. The product story is GPT-5.6
+inside MakeYour → create one working tiny app → evolve its style and behavior →
+switch among many tiny apps in one native iPhone app. Every chapter keeps real
+iOS Simulator footage on screen; the final two chapters hold the real App
+Library behind the closing credits.
 
-## 1. Core concept — 0:00
+## 1. Three pages, one home — 0:00
 
-Built for OpenAI Build Week, MakeYour turns GPT-5.6 into a personal app workshop
-on iPhone. Connect your own OpenAI key, then describe the tiny tool you need.
+This is MakeYour, one iPhone app where GPT-5.6 creates the tiny apps you need.
+My Apps keeps every creation. Builder is where you create or change them. AI Key
+connects your own OpenAI key and GPT-5.6. Together, they become one home for
+your personal tiny apps.
 
-## 2. Prompt 01: Travel Budget — 0:13
+## 2. Create a Daily Focus app — 0:21
 
-First, I ask for a travel budget converter. GPT-5.6 turns the prompt into a
-validated, versioned app, then MakeYour opens it as a working native interface.
-I can enter twenty-five hundred dollars and use the result immediately.
+Let's create one. I tap New App and ask for a daily focus checklist with three
+tasks and a local reminder. GPT-5.6 turns that prompt into a validated,
+versioned app, and MakeYour opens the working native interface. This is not a
+mockup. I can use it immediately.
 
-## 3. Prompt 02: Daily Focus — 0:32
+## 3. Make it your style — 0:37
 
-Now, a completely different idea: a daily focus checklist with three tasks and
-a local reminder. GPT-5.6 builds a second tiny app with its own data and native
-actions.
+A useful app should also feel like yours. I complete a task, return to Builder,
+and ask for a calm green design with a short evening reflection. GPT-5.6 creates
+Version 3 with a new style and a new feature, while my completed task is still
+there. The app changes with me, without starting over.
 
-## 4. Evolve the same app — 0:43
+## 4. Many tiny apps, one home — 0:57
 
-The first version is only the beginning. I ask for a calm green design and an
-evening reflection. GPT-5.6 updates the same app to version three, while the
-completed task stays intact. No rebuilding from scratch.
+Back in My Apps, Daily Focus is only one of many. I can switch to a travel budget
+converter, live currency alerts, or a private food journal. Every tiny app can
+have its own interface, capabilities, and data, while they all live inside
+MakeYour. No new Xcode project. No separate build pipeline. No starting from
+scratch.
 
-## 5. Built and verified with Codex — 0:59
+## 5. Built with Codex — 1:20
 
-Codex helped us design, build, test, and verify the schema, SwiftUI runtime,
-safety boundary, and App Store release pipeline.
+Codex helped us build and test the schema, validator, safety boundary, and native
+SwiftUI runtime that make this possible.
 
-## 6. Close — 1:08
+## 6. Close — 1:28
 
-Stop rebuilding the same tiny apps. Make yours once, then keep making it better
-whenever your life changes.
+The next tiny app you need is one prompt away. One app. Your tiny apps. Make
+yours.
