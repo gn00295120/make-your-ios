@@ -22,6 +22,8 @@
 - [x] App Store Connect app record (`MAKEYOUR-IOS-001`)
 - [x] Apple Distribution-signed IPA export
 - [x] App Store Connect upload accepted for processing
+- [x] App privacy answers published
+- [x] MakeYour 1.0.0 submitted to App Review
 - [x] External TestFlight group `Devpost Judges` with public link
 - [x] Build 1 submitted to Beta App Review
 
@@ -32,6 +34,10 @@
 - Distribution IPA: `artifacts/app-store/build/MakeYourIOS-1.0.0-build1-AppStore.ipa`
 - TestFlight public link: `https://testflight.apple.com/join/3Rnqg5Ds`
 - Beta App Review state: `WAITING_FOR_REVIEW`
+- App Store version state: `WAITING_FOR_REVIEW`
+- App Review submission: `c3e9fc5c-9daf-47da-ad6d-8d4b63480047`, submitted
+  2026-07-17 23:30 Asia/Taipei
+- Release method: automatic after approval (`AFTER_APPROVAL`)
 - Verification: 43 tests passed, strict SwiftLint reported 0 violations, and
   the exported app passed strict Apple Distribution code-signature verification.
 - Apple accepted MakeYour 1.0.0 (1) at 2026-07-17 19:06 Asia/Taipei. Processing
@@ -58,7 +64,7 @@
 
 - [x] App information: name, subtitle, categories, content rights, age rating
 - [x] Pricing and availability (Free, USA base territory, 175 territories)
-- [ ] App privacy answers
+- [x] App privacy answers
 - [x] Version information: description, keywords, support URL, screenshots
 - [x] Build selection and export compliance
 - [x] App Review contact, notes, and review attachment
@@ -77,7 +83,8 @@
 - [ ] Offline/cached FX and provider-error states
 - [ ] Delete project and remove API key
 
-## Submission boundary
+## App Review submission
 
-Uploading a build creates remote state but is reversible. Submit only after all
-metadata, URLs, screenshots, privacy answers, pricing, and review access are verified.
+Apple accepted the review submission on 2026-07-17. The version, Build 1, and
+review submission item were verified through the App Store Connect API; both the
+version and review submission are `WAITING_FOR_REVIEW`.
