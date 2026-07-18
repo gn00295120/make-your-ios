@@ -23,16 +23,25 @@ struct ImmersiveAppHostView: View {
             Button(action: openApps) {
                 Label("My Apps", systemImage: "square.grid.2x2.fill")
             }
+            .accessibilityIdentifier("runtime.open-apps")
             Button(action: openBuilder) {
                 Label("Edit in Builder", systemImage: "wand.and.stars")
             }
+            .accessibilityIdentifier("runtime.open-builder")
             Button(action: openAIKey) {
                 Label("AI Key", systemImage: "key.fill")
             }
+            .accessibilityIdentifier("runtime.open-ai-key")
         } label: {
             Image(systemName: "circle.grid.2x2.fill")
                 .font(.body.weight(.semibold))
+                .symbolRenderingMode(.monochrome)
+                .foregroundStyle(Color.primary)
                 .frame(width: 44, height: 44)
+                .background(.regularMaterial, in: Circle())
+                .overlay {
+                    Circle().stroke(Color.primary.opacity(0.14), lineWidth: 1)
+                }
                 .contentShape(.circle)
         }
         .accessibilityLabel("MakeYour menu")

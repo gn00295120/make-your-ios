@@ -28,6 +28,7 @@
 		2F27B513A02EADDA034B6D3A /* TaskListRuntimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A409209338B69C65DCE1041 /* TaskListRuntimeView.swift */; };
 		2FFD435694A89C2AFAD7CF17 /* DesignStudioSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6091B1B091BF3DE467935A72 /* DesignStudioSheet.swift */; };
 		32E18E6F9FA8C1208C7676F5 /* OpenAIAppGenerationSchemaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E73D850BED3D8FFFAFD73AD0 /* OpenAIAppGenerationSchemaTests.swift */; };
+		37EDD03AD2AF57B20BA53297 /* RuntimeHostShellUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8621239375EA8EAF93A4B22A /* RuntimeHostShellUITests.swift */; };
 		3B640BC751202D6E45251288 /* CapabilityRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681D39AB1078087AC2FF1B81 /* CapabilityRegistryTests.swift */; };
 		3C97924C3E4CF5C690FAECAC /* MakeYourIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC95B4BA8160F16EACD52757 /* MakeYourIOSApp.swift */; };
 		40AD69812A5A6C23244CFAF2 /* LocalAssetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2136345C4494895841F7ED /* LocalAssetStore.swift */; };
@@ -97,6 +98,7 @@
 		D084B0CF0747CF302339D5F5 /* SampleDocuments+DeviceLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F97CDC3D4B6F382B2E6B1E9 /* SampleDocuments+DeviceLab.swift */; };
 		D19EA03A4A6D6DB1EB7B0543 /* AppDocumentValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB6A3B7536D9FF36E40FAF1 /* AppDocumentValidator.swift */; };
 		D2DCA2560433C2D0EF67B969 /* LedgerRuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A07498499E73D819A7E5EE /* LedgerRuntimeTests.swift */; };
+		D634DF42A6F793299EEFCF10 /* GameRuntimeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D4E8274133797830F984AD /* GameRuntimeUITests.swift */; };
 		DC658BC95434B7C0E5D28535 /* DesignGenerationReviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4411A1C51712DFDC23F2BB4B /* DesignGenerationReviewSheet.swift */; };
 		DD361CB8990B138B3676682C /* AppRuntimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BDB8363D48E1C0FC956511 /* AppRuntimeView.swift */; };
 		DE219B9BE2938414E7F72431 /* GeneratedCapabilityPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327A94A835DEF3E2CA993F9 /* GeneratedCapabilityPayloadTests.swift */; };
@@ -183,6 +185,7 @@
 		6091B1B091BF3DE467935A72 /* DesignStudioSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignStudioSheet.swift; sourceTree = "<group>"; };
 		63294D3C4032FCBB2D01C35E /* InfoBannerNodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoBannerNodeView.swift; sourceTree = "<group>"; };
 		648ECAEE4A9B1DDB5F43C2E5 /* OpenAIAppGenerationClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAppGenerationClientTests.swift; sourceTree = "<group>"; };
+		64D4E8274133797830F984AD /* GameRuntimeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRuntimeUITests.swift; sourceTree = "<group>"; };
 		66CE55CA037258C452392964 /* CapabilityRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapabilityRegistry.swift; sourceTree = "<group>"; };
 		67CD04128B0AA0A2ABA2798D /* MakeYourTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeYourTheme.swift; sourceTree = "<group>"; };
 		67D4840BA05DF53664588B14 /* OpenAITextCompletionClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITextCompletionClientTests.swift; sourceTree = "<group>"; };
@@ -198,6 +201,7 @@
 		7E3AC215FD4F694083753AF7 /* PageRenderers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageRenderers.swift; sourceTree = "<group>"; };
 		805778B768F0DACFB13ACC74 /* OpenAIAppGenerationClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAppGenerationClient.swift; sourceTree = "<group>"; };
 		805C794F032703BD6A3EA517 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		8621239375EA8EAF93A4B22A /* RuntimeHostShellUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeHostShellUITests.swift; sourceTree = "<group>"; };
 		89DE5C7EE85046849A388753 /* DeviceInputServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInputServices.swift; sourceTree = "<group>"; };
 		8D7A72865790F21439F56011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8FB6A3B7536D9FF36E40FAF1 /* AppDocumentValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDocumentValidator.swift; sourceTree = "<group>"; };
@@ -425,7 +429,9 @@
 			isa = PBXGroup;
 			children = (
 				71CDD848D6242EE8B9B7DDFC /* DesignStudioUITests.swift */,
+				64D4E8274133797830F984AD /* GameRuntimeUITests.swift */,
 				491081C584EBF59D3883C8FA /* LiveAIGenerationUITests.swift */,
+				8621239375EA8EAF93A4B22A /* RuntimeHostShellUITests.swift */,
 			);
 			path = MakeYourIOSUITests;
 			sourceTree = "<group>";
@@ -729,7 +735,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				626459FF138F44D9C577DF77 /* DesignStudioUITests.swift in Sources */,
+				D634DF42A6F793299EEFCF10 /* GameRuntimeUITests.swift in Sources */,
 				1A2383E50BD754D6752AEF77 /* LiveAIGenerationUITests.swift in Sources */,
+				37EDD03AD2AF57B20BA53297 /* RuntimeHostShellUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

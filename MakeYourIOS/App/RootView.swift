@@ -14,6 +14,7 @@ struct RootView: View {
     @Environment(WorkspaceStore.self) private var store
     @State private var selectedTab: RootTab
     @State private var runtimeRoute: RuntimeRoute?
+    @State private var isPresentingDemo: Bool
     private let demoScreen: String?
 
     init(arguments: [String] = ProcessInfo.processInfo.arguments) {
@@ -29,32 +30,53 @@ struct RootView: View {
         default: initialTab = .apps
         }
         _selectedTab = State(initialValue: initialTab)
+        _isPresentingDemo = State(initialValue: Self.demoScreenNames.contains(screen ?? ""))
     }
 
     var body: some View {
-        if let demoDocument {
-            NavigationStack {
-                AppRuntimeView(
-                    projectID: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,
-                    document: demoDocument
-                )
-            }
-        } else {
-            tabs
-                .fullScreenCover(item: $runtimeRoute) { route in
-                    if let project = store.projects.first(where: { $0.id == route.id }) {
-                        ImmersiveAppHostView(
-                            project: project,
-                            openApps: { leaveRuntime(for: .apps) },
-                            openBuilder: {
-                                store.select(project.id)
-                                leaveRuntime(for: .builder)
-                            },
-                            openAIKey: { leaveRuntime(for: .aiKey) }
-                        )
-                    }
+        tabs
+            .fullScreenCover(item: $runtimeRoute) { route in
+                if let project = store.projects.first(where: { $0.id == route.id }) {
+                    ImmersiveAppHostView(
+                        project: project,
+                        openApps: { leaveRuntime(for: .apps) },
+                        openBuilder: {
+                            store.select(project.id)
+                            leaveRuntime(for: .builder)
+                        },
+                        openAIKey: { leaveRuntime(for: .aiKey) }
+                    )
                 }
-        }
+            }
+            .fullScreenCover(isPresented: $isPresentingDemo) {
+                if let demoProject {
+                    ImmersiveAppHostView(
+                        project: demoProject,
+                        openApps: { leaveDemo(for: .apps) },
+                        openBuilder: {
+                            selectWorkspaceProject(matching: demoProject.document)
+                            leaveDemo(for: .builder)
+                        },
+                        openAIKey: { leaveDemo(for: .aiKey) }
+                    )
+                } else {
+                    ContentUnavailableView(
+                        "Demo unavailable",
+                        systemImage: "exclamationmark.triangle"
+                    )
+                }
+            }
+    }
+
+    private var demoProject: WorkspaceProject? {
+        guard let demoDocument else { return nil }
+        return WorkspaceProject(
+            id: demoDocument.id,
+            document: demoDocument,
+            createdAt: demoDocument.updatedAt,
+            updatedAt: demoDocument.updatedAt,
+            lastPrompt: "Demo route"
+        )
     }
 
     private var demoDocument: AppDocument? {
@@ -107,4 +129,21 @@ struct RootView: View {
         selectedTab = destination
         runtimeRoute = nil
     }
+
+    private func leaveDemo(for destination: RootTab) {
+        selectedTab = destination
+        isPresentingDemo = false
+    }
+
+    private func selectWorkspaceProject(matching document: AppDocument) {
+        guard let project = store.projects.first(where: {
+            $0.document.name == document.name
+        }) else { return }
+        store.select(project.id)
+    }
+
+    private static let demoScreenNames: Set<String> = [
+        "converter", "tasks", "muse-journal", "news", "market",
+        "ledger", "platformer", "snake", "device"
+    ]
 }

@@ -66,25 +66,16 @@ private struct SnakeRuntimeGame: View {
     var body: some View {
         VStack(alignment: .leading, spacing: design.componentSpacing) {
             if variant == .immersive {
-                ZStack(alignment: .top) {
-                    snakeBoard
-                    LinearGradient(
-                        colors: [.black.opacity(0.72), .clear],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 110)
-                    .allowsHitTesting(false)
-                    GameRuntimeHeader(
-                        node: node,
-                        score: engine.score,
-                        target: spec.targetScore,
-                        bestScore: bestScore,
-                        collectibleName: spec.collectibleName,
-                        immersive: true
-                    )
-                    .padding(14)
-                }
+                GameRuntimeHeader(
+                    node: node,
+                    score: engine.score,
+                    target: spec.targetScore,
+                    bestScore: bestScore,
+                    collectibleName: spec.collectibleName,
+                    compact: true
+                )
+                .padding(.horizontal, controlHorizontalInset)
+                snakeBoard
             } else {
                 GameRuntimeHeader(
                     node: node,
@@ -92,7 +83,7 @@ private struct SnakeRuntimeGame: View {
                     target: spec.targetScore,
                     bestScore: bestScore,
                     collectibleName: spec.collectibleName,
-                    immersive: false
+                    compact: false
                 )
                 snakeBoard
             }
@@ -103,6 +94,7 @@ private struct SnakeRuntimeGame: View {
                 onStartOrPause: toggleStartOrPause,
                 onRestart: restart
             )
+            .padding(.horizontal, controlHorizontalInset)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear(perform: loadBestScore)
@@ -120,7 +112,7 @@ private struct SnakeRuntimeGame: View {
             )
             .onChange(of: timeline.date) { _, _ in tick() }
         }
-        .overlay { GamePhaseOverlay(phase: engine.phase, start: start) }
+        .overlay { GamePhaseOverlay(phase: engine.phase, readyAtTop: true) }
         .clipShape(
             RoundedRectangle(
                 cornerRadius: [.fullBleed, .immersive].contains(variant) ? 0 : design.cornerRadius,
@@ -137,14 +129,35 @@ private struct SnakeRuntimeGame: View {
 
     private var snakeControls: some View {
         VStack(spacing: 7) {
-            DirectionButton(symbol: "chevron.up") { engine.changeDirection(.north) }
+            DirectionButton(
+                symbol: "chevron.up",
+                accessibilityLabel: "Move up",
+                identifier: "game.direction.up"
+            ) { engine.changeDirection(.north) }
             HStack(spacing: 28) {
-                DirectionButton(symbol: "chevron.left") { engine.changeDirection(.left) }
-                DirectionButton(symbol: "chevron.down") { engine.changeDirection(.down) }
-                DirectionButton(symbol: "chevron.right") { engine.changeDirection(.right) }
+                DirectionButton(
+                    symbol: "chevron.left",
+                    accessibilityLabel: "Move left",
+                    identifier: "game.direction.left"
+                ) { engine.changeDirection(.left) }
+                DirectionButton(
+                    symbol: "chevron.down",
+                    accessibilityLabel: "Move down",
+                    identifier: "game.direction.down"
+                ) { engine.changeDirection(.down) }
+                DirectionButton(
+                    symbol: "chevron.right",
+                    accessibilityLabel: "Move right",
+                    identifier: "game.direction.right"
+                ) { engine.changeDirection(.right) }
             }
         }
         .frame(maxWidth: .infinity)
+        .padding(.horizontal, controlHorizontalInset)
+    }
+
+    private var controlHorizontalInset: CGFloat {
+        [.fullBleed, .immersive].contains(variant) ? 16 : 0
     }
 
     private func tick() {
@@ -152,11 +165,6 @@ private struct SnakeRuntimeGame: View {
         engine.step()
         if engine.score > previousScore { feedback(.light) }
         handlePhaseAndScore()
-    }
-
-    private func start() {
-        engine.start()
-        lastPhase = engine.phase
     }
 
     private func toggleStartOrPause() {
@@ -240,25 +248,16 @@ private struct PlatformerRuntimeGame: View {
     var body: some View {
         VStack(alignment: .leading, spacing: design.componentSpacing) {
             if variant == .immersive {
-                ZStack(alignment: .top) {
-                    platformBoard
-                    LinearGradient(
-                        colors: [.black.opacity(0.68), .clear],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 100)
-                    .allowsHitTesting(false)
-                    GameRuntimeHeader(
-                        node: node,
-                        score: engine.score,
-                        target: spec.targetScore,
-                        bestScore: bestScore,
-                        collectibleName: spec.collectibleName,
-                        immersive: true
-                    )
-                    .padding(14)
-                }
+                GameRuntimeHeader(
+                    node: node,
+                    score: engine.score,
+                    target: spec.targetScore,
+                    bestScore: bestScore,
+                    collectibleName: spec.collectibleName,
+                    compact: true
+                )
+                .padding(.horizontal, controlHorizontalInset)
+                platformBoard
             } else {
                 GameRuntimeHeader(
                     node: node,
@@ -266,7 +265,7 @@ private struct PlatformerRuntimeGame: View {
                     target: spec.targetScore,
                     bestScore: bestScore,
                     collectibleName: spec.collectibleName,
-                    immersive: false
+                    compact: false
                 )
                 platformBoard
             }
@@ -277,6 +276,7 @@ private struct PlatformerRuntimeGame: View {
                 onStartOrPause: toggleStartOrPause,
                 onRestart: restart
             )
+            .padding(.horizontal, controlHorizontalInset)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear(perform: loadBestScore)
@@ -294,7 +294,13 @@ private struct PlatformerRuntimeGame: View {
             )
             .onChange(of: timeline.date) { _, date in updateFrame(date) }
         }
-        .overlay { GamePhaseOverlay(phase: engine.phase, start: start) }
+        .overlay { GamePhaseOverlay(phase: engine.phase, readyAtTop: false) }
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: [.fullBleed, .immersive].contains(variant) ? 0 : design.cornerRadius,
+                style: .continuous
+            )
+        )
         .overlay {
             if variant == .framed {
                 RoundedRectangle(cornerRadius: design.cornerRadius, style: .continuous)
@@ -305,9 +311,21 @@ private struct PlatformerRuntimeGame: View {
 
     private var platformControls: some View {
         HStack(spacing: 12) {
-            DirectionButton(symbol: "arrow.left") { horizontalInput = -1 }
-            DirectionButton(symbol: "stop.fill") { horizontalInput = 0 }
-            DirectionButton(symbol: "arrow.right") { horizontalInput = 1 }
+            DirectionButton(
+                symbol: "arrow.left",
+                accessibilityLabel: "Move left",
+                identifier: "game.direction.left"
+            ) { horizontalInput = -1 }
+            DirectionButton(
+                symbol: "stop.fill",
+                accessibilityLabel: "Stop moving",
+                identifier: "game.direction.stop"
+            ) { horizontalInput = 0 }
+            DirectionButton(
+                symbol: "arrow.right",
+                accessibilityLabel: "Move right",
+                identifier: "game.direction.right"
+            ) { horizontalInput = 1 }
             Spacer()
             Button {
                 jumpRequested = true
@@ -318,7 +336,13 @@ private struct PlatformerRuntimeGame: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(design.accent)
+            .accessibilityIdentifier("game.action.jump")
         }
+        .padding(.horizontal, controlHorizontalInset)
+    }
+
+    private var controlHorizontalInset: CGFloat {
+        [.fullBleed, .immersive].contains(variant) ? 16 : 0
     }
 
     private func updateFrame(_ date: Date) {
@@ -334,14 +358,11 @@ private struct PlatformerRuntimeGame: View {
         handlePhaseAndScore()
     }
 
-    private func start() {
-        engine.start()
-        previousFrame = nil
-        lastPhase = engine.phase
-    }
-
     private func toggleStartOrPause() {
         engine.togglePause()
+        if engine.phase == .paused {
+            horizontalInput = 0
+        }
         previousFrame = nil
         lastPhase = engine.phase
     }
@@ -349,6 +370,7 @@ private struct PlatformerRuntimeGame: View {
     private func restart() {
         engine.restart()
         horizontalInput = 0
+        jumpRequested = false
         previousFrame = nil
         lastPhase = .ready
     }
@@ -408,10 +430,23 @@ private struct SnakeCanvas: View {
                 x: (size.width - boardSize.width) / 2,
                 y: (size.height - boardSize.height) / 2
             )
-            context.fill(
-                Path(roundedRect: CGRect(origin: origin, size: boardSize), cornerRadius: 16),
-                with: .color(colors.background)
-            )
+            let boardRect = CGRect(origin: origin, size: boardSize)
+            context.fill(Path(roundedRect: boardRect, cornerRadius: 16), with: .color(colors.background))
+
+            for column in 1..<engine.columns {
+                let xPosition = origin.x + Double(column) * cell
+                var line = Path()
+                line.move(to: CGPoint(x: xPosition, y: boardRect.minY))
+                line.addLine(to: CGPoint(x: xPosition, y: boardRect.maxY))
+                context.stroke(line, with: .color(colors.primary.opacity(0.07)), lineWidth: 0.5)
+            }
+            for row in 1..<engine.rows {
+                let yPosition = origin.y + Double(row) * cell
+                var line = Path()
+                line.move(to: CGPoint(x: boardRect.minX, y: yPosition))
+                line.addLine(to: CGPoint(x: boardRect.maxX, y: yPosition))
+                context.stroke(line, with: .color(colors.primary.opacity(0.07)), lineWidth: 0.5)
+            }
 
             for (index, segment) in engine.snake.enumerated() {
                 let rect = CGRect(
@@ -435,13 +470,11 @@ private struct SnakeCanvas: View {
             context.fill(Path(ellipseIn: foodRect), with: .color(colors.collectible))
         }
         .aspectRatio(Double(engine.columns) / Double(engine.rows), contentMode: .fit)
-        .frame(
-            maxWidth: .infinity,
-            minHeight: variant == .immersive ? 430 : 300,
-            maxHeight: variant == .immersive ? 520 : 390
-        )
+        .frame(maxWidth: variant == .framed ? 252 : .infinity)
+        .frame(maxWidth: .infinity)
         .accessibilityLabel("Snake board, score \(engine.score)")
         .accessibilityValue("Target \(engine.targetScore)")
+        .accessibilityIdentifier("game.board.snake")
     }
 }
 
@@ -514,6 +547,7 @@ private struct PlatformerCanvas: View {
         )
         .accessibilityLabel("Platform game, score \(engine.score)")
         .accessibilityValue("Target \(engine.targetScore)")
+        .accessibilityIdentifier("game.board.platformer")
     }
 
     private func canvasRect(_ rect: PlatformRect, cameraX: Double, scale: Double) -> CGRect {
@@ -532,7 +566,7 @@ private struct GameRuntimeHeader: View {
     let target: Int
     let bestScore: Int
     let collectibleName: String
-    let immersive: Bool
+    let compact: Bool
 
     @Environment(\.runtimeDesign) private var design
 
@@ -544,52 +578,74 @@ private struct GameRuntimeHeader: View {
                     systemImage: node.symbol.isEmpty ? "gamecontroller.fill" : node.symbol
                 )
                 .font(design.sectionFont)
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
                 .accessibilityAddTraits(.isHeader)
-                if !node.subtitle.isEmpty {
+                if !compact, !node.subtitle.isEmpty {
                     Text(node.subtitle)
                         .font(design.captionFont)
-                        .foregroundStyle(immersive ? Color.white.opacity(0.84) : design.secondaryForeground)
+                        .foregroundStyle(design.secondaryForeground)
                 }
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(score) / \(target)")
                     .font(design.titleFont.monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
                 Text("Best \(bestScore) · \(collectibleName)")
                     .font(design.captionFont)
-                    .foregroundStyle(immersive ? Color.white.opacity(0.84) : design.secondaryForeground)
+                    .foregroundStyle(design.secondaryForeground)
             }
         }
-        .foregroundStyle(immersive ? Color.white : design.primaryForeground)
+        .foregroundStyle(design.primaryForeground)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(node.title), \(node.subtitle), score \(score) of \(target), best \(bestScore)"
+        )
     }
 }
 
 private struct GamePhaseOverlay: View {
     let phase: GamePhase
-    let start: () -> Void
+    let readyAtTop: Bool
 
     @Environment(\.runtimeDesign) private var design
 
     @ViewBuilder
     var body: some View {
-        if phase != .playing {
+        switch phase {
+        case .playing:
+            EmptyView()
+        case .ready:
+            Label("Ready to play", systemImage: "play.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(.black.opacity(0.62), in: Capsule())
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity,
+                    alignment: readyAtTop ? .top : .center
+                )
+                .padding(.top, readyAtTop ? 14 : 0)
+                .allowsHitTesting(false)
+                .accessibilityIdentifier("game.phase.status")
+        case .paused, .won, .lost:
             ZStack {
                 Color.black.opacity(0.46)
                 VStack(spacing: 10) {
                     Image(systemName: phaseSymbol).font(.title.bold())
                     Text(phaseTitle).font(.headline)
-                    if phase == .ready || phase == .paused {
-                        Button(phase == .ready ? "Start" : "Resume", action: start)
-                            .buttonStyle(.borderedProminent)
-                            .tint(design.accent)
-                    }
                 }
                 .foregroundStyle(.white)
             }
             .clipShape(
                 RoundedRectangle(cornerRadius: design.cornerRadius, style: .continuous)
             )
+            .allowsHitTesting(false)
+            .accessibilityIdentifier("game.phase.status")
         }
     }
 
@@ -626,13 +682,19 @@ private struct GameTransportControls: View {
             Button(action: onStartOrPause) {
                 Label(controlLabel, systemImage: controlSymbol)
                     .frame(maxWidth: .infinity)
+                    .frame(minHeight: 48)
             }
             .buttonStyle(.borderedProminent)
             .tint(design.accent)
             .disabled(phase == .won || phase == .lost)
+            .accessibilityIdentifier("game.transport.primary")
 
-            Button("Restart", systemImage: "arrow.counterclockwise", action: onRestart)
-                .buttonStyle(.bordered)
+            Button(action: onRestart) {
+                Label("Restart", systemImage: "arrow.counterclockwise")
+                    .frame(minHeight: 48)
+            }
+            .buttonStyle(.bordered)
+            .accessibilityIdentifier("game.transport.restart")
         }
     }
 
@@ -652,6 +714,8 @@ private struct GameTransportControls: View {
 
 private struct DirectionButton: View {
     let symbol: String
+    let accessibilityLabel: String
+    let identifier: String
     let action: () -> Void
 
     @Environment(\.runtimeDesign) private var design
@@ -669,6 +733,9 @@ private struct DirectionButton: View {
                 : .roundedRectangle(radius: design.controlCornerRadius)
         )
         .tint(design.accent)
+        .contentShape(Rectangle())
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityIdentifier(identifier)
     }
 }
 
