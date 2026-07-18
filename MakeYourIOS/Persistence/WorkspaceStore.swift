@@ -23,14 +23,17 @@ final class WorkspaceStore {
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
     private let assetStore: LocalAssetStore
+    private let runtimeStateStore: ProjectRuntimeStateStore
 
     init(
         fileURL: URL? = nil,
         seedSamples: Bool = true,
-        assetStore: LocalAssetStore? = nil
+        assetStore: LocalAssetStore? = nil,
+        runtimeStateStore: ProjectRuntimeStateStore = ProjectRuntimeStateStore()
     ) {
         self.fileURL = fileURL ?? Self.defaultFileURL
         self.assetStore = assetStore ?? LocalAssetStore()
+        self.runtimeStateStore = runtimeStateStore
 
         encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -158,6 +161,8 @@ final class WorkspaceStore {
             lastPersistenceError = error.localizedDescription
             return
         }
+        runtimeStateStore.delete(projectID: projectID)
+        ProjectNotificationStore.removeAll(projectID: projectID)
         projects.removeAll(where: { $0.id == projectID })
         if selectedProjectID == projectID {
             selectedProjectID = projects.first?.id
@@ -168,8 +173,16 @@ final class WorkspaceStore {
     func resetSamples() {
         for project in projects {
             try? assetStore.deleteAssets(projectID: project.id)
+            runtimeStateStore.delete(projectID: project.id)
+            ProjectNotificationStore.removeAll(projectID: project.id)
         }
         projects = [
+            WorkspaceProject(document: SampleDocuments.dailyBrief),
+            WorkspaceProject(document: SampleDocuments.marketPocket),
+            WorkspaceProject(document: SampleDocuments.pocketLedger),
+            WorkspaceProject(document: SampleDocuments.skybound),
+            WorkspaceProject(document: SampleDocuments.neonSnake),
+            WorkspaceProject(document: SampleDocuments.captureKit),
             WorkspaceProject(document: SampleDocuments.liveFXWatch),
             WorkspaceProject(document: SampleDocuments.useItFirst),
             WorkspaceProject(document: SampleDocuments.quickConvert),
@@ -214,6 +227,12 @@ final class WorkspaceStore {
     }
 
     private static let sampleDocuments = [
+        SampleDocuments.dailyBrief,
+        SampleDocuments.marketPocket,
+        SampleDocuments.pocketLedger,
+        SampleDocuments.skybound,
+        SampleDocuments.neonSnake,
+        SampleDocuments.captureKit,
         SampleDocuments.liveFXWatch,
         SampleDocuments.useItFirst,
         SampleDocuments.quickConvert,

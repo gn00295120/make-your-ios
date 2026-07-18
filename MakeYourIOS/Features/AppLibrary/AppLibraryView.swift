@@ -86,6 +86,7 @@ struct AppLibraryView: View {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("Create app")
+                .accessibilityIdentifier("library.create")
             }
         }
         .sheet(isPresented: $showingCreateSheet) {
@@ -133,7 +134,10 @@ private struct LibraryHeroView: View {
                     .foregroundStyle(.white.opacity(0.9))
             }
 
-            Text("Build the calculator, tracker, or reminder you need — then change it whenever life changes.")
+            Text(
+                "Build a news reader, scanner, game, tracker, calculator, or AI tool — "
+                    + "then change it whenever life changes."
+            )
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.82))
                 .fixedSize(horizontal: false, vertical: true)
@@ -222,6 +226,36 @@ private struct CreateAppSheet: View {
                         onCreate: onCreate
                     )
                     TemplateButton(
+                        document: SampleDocuments.captureKit,
+                        label: "Device toolkit",
+                        detail: "Camera, QR, location, files, and more",
+                        onCreate: onCreate
+                    )
+                    TemplateButton(
+                        document: SampleDocuments.dailyBrief,
+                        label: "Live news reader",
+                        detail: "Credited feeds, topics, and bookmarks",
+                        onCreate: onCreate
+                    )
+                    TemplateButton(
+                        document: SampleDocuments.marketPocket,
+                        label: "Stock watchlist",
+                        detail: "Latest quotes, symbols, and charts",
+                        onCreate: onCreate
+                    )
+                    TemplateButton(
+                        document: SampleDocuments.pocketLedger,
+                        label: "Personal ledger",
+                        detail: "Income, expenses, budgets, and charts",
+                        onCreate: onCreate
+                    )
+                    TemplateButton(
+                        document: SampleDocuments.skybound,
+                        label: "Original game",
+                        detail: "Touch controls, scoring, and saved bests",
+                        onCreate: onCreate
+                    )
+                    TemplateButton(
                         document: SampleDocuments.quickConvert,
                         label: "Calculator",
                         detail: "Inputs, formulas, and results",
@@ -291,5 +325,12 @@ private struct TemplateButton: View {
             .makeYourCard()
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityIdentifier(templateIdentifier)
+    }
+
+    private var templateIdentifier: String {
+        let slug = label.lowercased().replacingOccurrences(of: " ", with: "-")
+        return "create.template.\(slug)"
     }
 }

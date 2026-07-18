@@ -45,7 +45,14 @@ final class GeneratedAppPayloadTests: XCTestCase {
               "image": {
                 "aspect":"banner","contentMode":"fill","altText":"Daily photo",
                 "decorative":false,"allowsUserSelection":true
-              }
+              },
+              "collection": null,
+              "liveData": null,
+              "newsFeed": null,
+              "marketWatch": null,
+              "ledger": null,
+              "game": null,
+              "deviceInput": null
             },
             {
               "id": "assistant",
@@ -63,10 +70,14 @@ final class GeneratedAppPayloadTests: XCTestCase {
                 "surface":"outlined","span":"full","alignment":"leading",
                 "emphasis":"regular","variant":"automatic"
               },
-              "image": {
-                "aspect":"landscape","contentMode":"fill","altText":"",
-                "decorative":true,"allowsUserSelection":false
-              }
+              "image": null,
+              "collection": null,
+              "liveData": null,
+              "newsFeed": null,
+              "marketWatch": null,
+              "ledger": null,
+              "game": null,
+              "deviceInput": null
             }
           ]
         }

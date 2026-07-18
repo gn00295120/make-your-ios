@@ -73,37 +73,6 @@ enum AppTint: String, Codable, CaseIterable, Hashable, Sendable {
     }
 }
 
-enum AppCapability: String, Codable, CaseIterable, Hashable, Sendable {
-    case localStorage = "storage.local"
-    case safeCalculation = "calculation.safe"
-    case localNotifications = "notifications.scheduleLocal"
-    case photoPicker = "photo.pick"
-    case network = "http.request"
-    case aiRequests = "ai.complete"
-
-    var label: String {
-        switch self {
-        case .localStorage: "Local data"
-        case .safeCalculation: "Calculations"
-        case .localNotifications: "Notifications"
-        case .photoPicker: "Photos"
-        case .network: "Internet access"
-        case .aiRequests: "AI requests"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .localStorage: "externaldrive"
-        case .safeCalculation: "function"
-        case .localNotifications: "bell.badge"
-        case .photoPicker: "photo.on.rectangle"
-        case .network: "network"
-        case .aiRequests: "sparkles"
-        }
-    }
-}
-
 struct AppPage: Codable, Hashable, Identifiable, Sendable {
     var id: String
     var title: String
@@ -131,6 +100,11 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
     var image: ImageSpec?
     var collection: RecordCollectionSpec?
     var liveData: LiveDataListSpec?
+    var newsFeed: NewsFeedSpec?
+    var marketWatch: MarketWatchSpec?
+    var ledger: LedgerSpec?
+    var game: GameSpec?
+    var deviceInput: DeviceInputSpec?
 
     init(
         id: String = UUID().uuidString,
@@ -147,7 +121,12 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         presentation: ComponentPresentation? = nil,
         image: ImageSpec? = nil,
         collection: RecordCollectionSpec? = nil,
-        liveData: LiveDataListSpec? = nil
+        liveData: LiveDataListSpec? = nil,
+        newsFeed: NewsFeedSpec? = nil,
+        marketWatch: MarketWatchSpec? = nil,
+        ledger: LedgerSpec? = nil,
+        game: GameSpec? = nil,
+        deviceInput: DeviceInputSpec? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -164,6 +143,11 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         self.image = image
         self.collection = collection
         self.liveData = liveData
+        self.newsFeed = newsFeed
+        self.marketWatch = marketWatch
+        self.ledger = ledger
+        self.game = game
+        self.deviceInput = deviceInput
     }
 
     var resolvedPresentation: ComponentPresentation {
@@ -188,6 +172,11 @@ enum ComponentKind: String, Codable, CaseIterable, Hashable, Sendable {
     case aiAssistant
     case recordCollection
     case liveDataList
+    case newsFeed
+    case marketWatch
+    case ledger
+    case game
+    case deviceInput
     case divider
 }
 
@@ -234,6 +223,139 @@ struct LiveDataListSpec: Codable, Hashable, Sendable {
 
 enum LiveResourceKind: String, Codable, CaseIterable, Hashable, Sendable {
     case exchangeRates
+}
+
+struct NewsFeedSpec: Codable, Hashable, Sendable {
+    var sources: [NewsSourceKind]
+    var topics: [String]
+    var allowsTopicEditing: Bool
+    var allowsBookmarks: Bool
+    var maximumItems: Int
+}
+
+enum NewsSourceKind: String, Codable, CaseIterable, Hashable, Sendable {
+    case bbcWorld
+    case bbcTechnology
+    case nprNews
+}
+
+struct MarketWatchSpec: Codable, Hashable, Sendable {
+    var provider: MarketDataProviderKind
+    var initialSymbols: [String]
+    var allowsSymbolEditing: Bool
+    var showsChart: Bool
+    var range: MarketRange
+}
+
+enum MarketDataProviderKind: String, Codable, CaseIterable, Hashable, Sendable {
+    case twelveData
+}
+
+enum MarketRange: String, Codable, CaseIterable, Hashable, Sendable {
+    case oneWeek
+    case oneMonth
+    case threeMonths
+}
+
+struct LedgerSpec: Codable, Hashable, Sendable {
+    var currencyCode: String
+    var categories: [String]
+    var period: LedgerPeriod
+    var monthlyBudget: Double
+    var allowsIncome: Bool
+    var initialEntries: [LedgerSeedEntry]
+}
+
+struct LedgerSeedEntry: Codable, Hashable, Sendable {
+    var title: String
+    var note: String
+    var amount: Double
+    var type: LedgerEntryType
+    var category: String
+    var date: String
+}
+
+enum LedgerEntryType: String, Codable, CaseIterable, Hashable, Sendable {
+    case income
+    case expense
+}
+
+enum LedgerPeriod: String, Codable, CaseIterable, Hashable, Sendable {
+    case currentMonth
+    case allTime
+}
+
+struct GameSpec: Codable, Hashable, Sendable {
+    var kind: GameKind
+    var difficulty: GameDifficulty
+    var palette: GamePalette
+    var targetScore: Int
+    var levelSeed: Int
+    var playerName: String
+    var collectibleName: String
+    var haptics: Bool
+}
+
+enum GameKind: String, Codable, CaseIterable, Hashable, Sendable {
+    case snake
+    case platformer
+}
+
+enum GameDifficulty: String, Codable, CaseIterable, Hashable, Sendable {
+    case relaxed
+    case standard
+    case fast
+}
+
+enum GamePalette: String, Codable, CaseIterable, Hashable, Sendable {
+    case forest
+    case neon
+    case sky
+    case candy
+}
+
+struct DeviceInputSpec: Codable, Hashable, Sendable {
+    var kind: DeviceInputKind
+    var buttonLabel: String
+    var resultLabel: String
+    var allowsRepeat: Bool
+}
+
+enum DeviceInputKind: String, Codable, CaseIterable, Hashable, Sendable {
+    case cameraPhoto
+    case qrCode
+    case barcode
+    case text
+    case currentLocation
+    case contact
+    case documentText
+    case pedometer
+    case shareText
+    case copyText
+    case haptic
+
+    var requiresPhotoCapture: Bool { self == .cameraPhoto }
+
+    var requiresScanner: Bool {
+        switch self {
+        case .qrCode, .barcode, .text: true
+        default: false
+        }
+    }
+
+    var requiredCapability: AppCapability {
+        switch self {
+        case .cameraPhoto: .cameraCapture
+        case .qrCode, .barcode, .text: .codeScanner
+        case .currentLocation: .currentLocation
+        case .contact: .contactPicker
+        case .documentText: .documentPicker
+        case .pedometer: .pedometer
+        case .shareText: .shareSheet
+        case .copyText: .clipboardWrite
+        case .haptic: .haptics
+        }
+    }
 }
 
 struct ComponentItem: Codable, Hashable, Identifiable, Sendable {

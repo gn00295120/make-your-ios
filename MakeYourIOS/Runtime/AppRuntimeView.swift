@@ -174,6 +174,22 @@ private struct ComponentRenderer: View {
             )
         case .liveDataList:
             LiveDataListRuntimeView(projectID: projectID, node: node, tint: tint)
+        case .newsFeed:
+            NewsFeedRuntimeView(projectID: projectID, node: node, tint: tint)
+        case .marketWatch:
+            MarketWatchRuntimeView(projectID: projectID, node: node, tint: tint)
+        case .ledger:
+            LedgerRuntimeView(projectID: projectID, node: node, tint: tint)
+        case .game:
+            GameRuntimeView(projectID: projectID, node: node, tint: tint)
+        case .deviceInput:
+            DeviceInputRuntimeView(
+                projectID: projectID,
+                node: node,
+                tint: tint,
+                theme: theme,
+                session: session
+            )
         case .divider:
             Divider().padding(.vertical, 4)
         }

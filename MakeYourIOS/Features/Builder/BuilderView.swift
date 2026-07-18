@@ -1,6 +1,14 @@
 import SwiftUI
 
 struct BuilderView: View {
+    private struct PendingGeneration: Identifiable {
+        var id = UUID()
+        var projectID: UUID
+        var document: AppDocument
+        var prompt: String
+        var addedCapabilities: [AppCapability]
+    }
+
     @Environment(WorkspaceStore.self) private var store
     @Environment(AISettingsStore.self) private var aiSettings
     let openApps: () -> Void
@@ -11,12 +19,15 @@ struct BuilderView: View {
     @State private var isPresentingRuntime = false
     @State private var errorMessage: String?
     @State private var generationNote: String?
+    @State private var pendingGeneration: PendingGeneration?
 
     private let client = OpenAIAppGenerationClient()
     private let suggestions = [
-        "Make a travel budget converter",
-        "Add a task reminder for tonight",
-        "Create a simple habit checklist",
+        "Build a focused live news reader",
+        "Create a stock watchlist with a chart",
+        "Make a personal income and expense ledger",
+        "Design an original platform game",
+        "Add a camera and QR scanner toolkit",
         "Make the design calmer and clearer"
     ]
 
@@ -68,6 +79,14 @@ struct BuilderView: View {
                     }
                 )
             }
+        }
+        .sheet(item: $pendingGeneration) { pending in
+            CapabilityReviewSheet(
+                capabilities: pending.addedCapabilities,
+                onCancel: { pendingGeneration = nil },
+                onApprove: { apply(pending) }
+            )
+            .presentationDetents([.medium, .large])
         }
         .alert("Couldn’t update this app", isPresented: Binding(
             get: { errorMessage != nil },
@@ -144,16 +163,47 @@ struct BuilderView: View {
                     currentDocument: project.document,
                     config: config
                 )
-                try store.replaceDocument(projectID: project.id, with: document, prompt: request)
-                withAnimation(.snappy) {
-                    prompt = ""
-                    generationNote = "Version \(document.version) passed validation and is ready to use."
-                    isPresentingRuntime = true
+                let existingCapabilities = Set(project.document.capabilities)
+                let addedCapabilities = Set(document.capabilities)
+                    .subtracting(existingCapabilities)
+                    .sorted(by: { $0.rawValue < $1.rawValue })
+                let pending = PendingGeneration(
+                    projectID: project.id,
+                    document: document,
+                    prompt: request,
+                    addedCapabilities: addedCapabilities
+                )
+                if addedCapabilities.isEmpty {
+                    try applyImmediately(pending)
+                } else {
+                    pendingGeneration = pending
                 }
             } catch {
                 errorMessage = error.localizedDescription
             }
             isGenerating = false
+        }
+    }
+
+    private func apply(_ pending: PendingGeneration) {
+        do {
+            try applyImmediately(pending)
+            pendingGeneration = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func applyImmediately(_ pending: PendingGeneration) throws {
+        try store.replaceDocument(
+            projectID: pending.projectID,
+            with: pending.document,
+            prompt: pending.prompt
+        )
+        withAnimation(.snappy) {
+            prompt = ""
+            generationNote = "Version \(pending.document.version) passed validation and is ready to use."
+            isPresentingRuntime = true
         }
     }
 }
@@ -187,6 +237,7 @@ private struct BuilderPromptCard: View {
 
             TextEditor(text: $prompt)
                 .frame(minHeight: 104)
+                .accessibilityIdentifier("builder.prompt")
                 .scrollContentBackground(.hidden)
                 .padding(12)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -245,6 +296,7 @@ private struct BuilderPromptCard: View {
             .buttonStyle(.borderedProminent)
             .tint(MakeYourTheme.brand)
             .disabled(promptIsEmpty || isGenerating)
+            .accessibilityIdentifier("builder.generate")
         } else {
             Button(action: onOpenSettings) {
                 Label("Connect an API key to generate", systemImage: "key.fill")

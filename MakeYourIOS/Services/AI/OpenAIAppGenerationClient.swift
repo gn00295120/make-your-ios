@@ -23,7 +23,7 @@ struct OpenAIAppGenerationClient: Sendable {
         return try Self.decodeDocument(data, replacing: currentDocument)
     }
 
-    private func makeRequest(
+    func makeRequest(
         prompt: String,
         currentDocument: AppDocument,
         config: AIConnectionConfig
@@ -42,7 +42,7 @@ struct OpenAIAppGenerationClient: Sendable {
         let body: [String: Any] = [
             "model": config.model,
             "store": false,
-            "max_output_tokens": 8_000,
+            "max_output_tokens": 25_000,
             "safety_identifier": config.safetyIdentifier,
             "reasoning": ["effort": "low"],
             "instructions": Self.instructions,
@@ -66,7 +66,7 @@ struct OpenAIAppGenerationClient: Sendable {
         return request
     }
 
-    private static func validate(response: URLResponse, data: Data) throws {
+    static func validate(response: URLResponse, data: Data) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw AppGenerationError.invalidResponse
         }
@@ -76,11 +76,14 @@ struct OpenAIAppGenerationClient: Sendable {
         }
     }
 
-    private static func decodeDocument(
+    static func decodeDocument(
         _ data: Data,
         replacing currentDocument: AppDocument
     ) throws -> AppDocument {
         let apiResponse = try JSONDecoder().decode(ResponsesAPIResponse.self, from: data)
+        if apiResponse.status == "incomplete" {
+            throw AppGenerationError.incomplete(apiResponse.incompleteDetails?.reason ?? "unknown")
+        }
         if let refusal = apiResponse.output
             .compactMap(\.content)
             .flatMap({ $0 })
@@ -112,6 +115,10 @@ struct OpenAIAppGenerationClient: Sendable {
     Convert the user's request into a coherent, immediately usable app document.
     You may only use the component kinds and capabilities allowed by the response schema.
     Never emit code, scripts, URLs, secrets, custom APIs, or unsupported SF Symbols.
+    Preserve stable page, node, item, and binding IDs when editing existing behavior. Use concise kebab-case
+    IDs for new elements. For each specialized node, fill only its matching configuration object and return
+    null for image, collection, liveData, newsFeed, marketWatch, ledger, game, and deviceInput when unrelated.
+    List only capabilities actually used; the host independently derives and enforces the exact capability set.
     Keep the experience focused: one to three pages and no more than twelve components per page.
     Use concise, friendly interface copy and semantic iOS patterns.
     Make an intentional visual system. Choose a theme, page layout, spans, surfaces, alignment,
@@ -132,6 +139,26 @@ struct OpenAIAppGenerationClient: Sendable {
     put rates, URLs, API keys, or provider instructions in the document. Declare http.request.
     Exchange rates are latest daily reference data, not streaming market quotes. Describe them as latest,
     not real-time, tick-by-tick, guaranteed, or suitable for trading.
+    Use newsFeed for a live news collector or reading dashboard. Choose only the built-in source IDs,
+    provide focused topic filters, and enable bookmarks or topic editing when useful. The host fetches,
+    credits, caches, filters, and opens the original articles; never invent feed URLs. Declare http.request.
+    Use marketWatch for stock or ETF watchlists. Configure symbols, chart range, and editing; the host uses
+    the fixed Twelve Data adapter, secure local provider credentials, caching, and charts. AAPL supports the
+    provider's public demo mode; other symbols may ask the user for their own Twelve Data key at runtime.
+    Describe quotes as latest or delayed and never as guaranteed real-time or suitable for trading.
+    Use ledger for real income and expense tracking rather than a generic collection. Choose a currency,
+    useful categories, period, optional monthly budget, and realistic typed seed entries with positive amounts
+    and YYYY-MM-DD dates. The host computes income, spending, balance, budget progress, and category totals.
+    Use game for a complete playable snake or platformer experience. Select a bounded difficulty, palette,
+    score goal, deterministic level seed, player label, and collectible label. The host owns controls, physics,
+    collision, scoring, restart, pause, high scores, and haptics. Never request copyrighted characters, names,
+    levels, sounds, or artwork; translate requests like Mario into an original platform adventure.
+    Use deviceInput for host-owned iPhone abilities: cameraPhoto, qrCode, barcode, text scanning,
+    currentLocation, contact selection, documentText import, pedometer, shareText, copyText, or haptic.
+    Give it a stable binding and clear button/result labels. For shareText and copyText, put the bounded text
+    payload in node.value. The host owns permission prompts, hardware checks, native pickers, result limits,
+    and local persistence. Declare only the matching capability; never imply background access, silent sharing,
+    full address-book browsing, arbitrary file access, or continuous location/motion tracking.
     For taskList and checklist, seed realistic example items that the user can replace.
     Do not create a metric that claims to live-update from a taskList; cross-component computed bindings
     are not supported yet. Use taskList state itself instead.
@@ -161,6 +188,10 @@ struct OpenAIAppGenerationClient: Sendable {
 }
 
 private struct ResponsesAPIResponse: Decodable {
+    struct IncompleteDetails: Decodable {
+        var reason: String
+    }
+
     struct Output: Decodable {
         var content: [Content]?
     }
@@ -171,7 +202,15 @@ private struct ResponsesAPIResponse: Decodable {
         var refusal: String?
     }
 
+    var status: String?
+    var incompleteDetails: IncompleteDetails?
     var output: [Output]
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case incompleteDetails = "incomplete_details"
+        case output
+    }
 }
 
 private struct APIErrorEnvelope: Decodable {
@@ -179,11 +218,12 @@ private struct APIErrorEnvelope: Decodable {
     var error: Body
 }
 
-enum AppGenerationError: LocalizedError {
+enum AppGenerationError: LocalizedError, Equatable {
     case invalidResponse
     case invalidDocumentEncoding
     case missingOutput
     case refused(String)
+    case incomplete(String)
     case api(statusCode: Int, message: String)
 
     var errorDescription: String? {
@@ -192,6 +232,8 @@ enum AppGenerationError: LocalizedError {
         case .invalidDocumentEncoding: "The current app could not be encoded for generation."
         case .missingOutput: "The model did not return an app document."
         case .refused(let reason): reason
+        case .incomplete(let reason):
+            "OpenAI stopped before the app document was complete (\(reason)). Try again."
         case .api(let statusCode, let message): "OpenAI error \(statusCode): \(message)"
         }
     }

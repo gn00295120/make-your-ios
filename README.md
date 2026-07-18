@@ -10,9 +10,9 @@ renders it with a catalog of precompiled SwiftUI components and capabilities.
 
 ## Demo flow
 
-1. Open **My Apps** and switch between **Live FX Watch**, **Use It First**,
-   **Quick Convert**, and **Gentle Tasks**. The first two were generated through
-   MakeYour's own Builder and ship as reviewable examples.
+1. Open **My Apps** and switch between working examples for live news, market
+   quotes, personal accounting, an original platform game, Snake, camera/QR
+   capture, foreign exchange, task reminders, private photos, and reviewed AI.
 2. Open **Builder**, describe a change, and preview the generated result.
 3. Open **AI Key**, add an OpenAI API key, and generate a real document with the
    Responses API. The key is stored in the device Keychain and requests go from
@@ -56,8 +56,27 @@ xcodebuild \
   test
 ```
 
-Current verification: 43 tests passing on an iPhone 17 Pro iOS 26.5 simulator,
-plus `swiftlint lint --strict` with zero violations.
+The test suite covers schema strictness, capability derivation, document
+validation, fixed-provider parsers, persistence calculations, and deterministic
+game engines. Run it with the command above before shipping.
+
+The live AI path is intentionally isolated from the normal test suite because it
+uses the API key already saved in the selected Simulator and makes one real
+OpenAI request:
+
+```bash
+xcodebuild \
+  -project MakeYourIOS.xcodeproj \
+  -scheme MakeYourIOSLiveE2E \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  test
+```
+
+On July 18, 2026, the current source passed 85 unit tests, the gated live
+generation UI test, strict SwiftLint across 91 Swift files with zero violations,
+generic Simulator build, and a signed physical-iPhone build. The live test
+created and opened a validated local-only app named `E2E Proof`; do not run that
+scheme repeatedly unless another billable end-to-end request is intended.
 
 ## Architecture
 
@@ -86,6 +105,15 @@ file path. The user fills that slot with `PhotosPicker`; MakeYour normalizes the
 image, stores it in the project-local asset store, and keeps the bytes outside
 the generated document and AI prompt.
 
+Device features use the same bounded capability model. A generated document may
+request host-owned camera, QR/barcode/text scanner, one-time location, Apple
+contact picker, bounded text-file import, today’s pedometer count, share sheet,
+clipboard write, or haptic components. Access starts only after the user taps;
+captured results stay in that tiny app by default, scanned URLs are shown as text
+rather than opened, and unsupported simulators or devices receive an honest
+fallback. Sharing leaves the app only through the system share sheet after the
+user chooses a destination; clipboard writes also require an explicit tap.
+
 ## AI inside generated apps
 
 Mini apps can include an allowlisted `aiAssistant` component. The component has
@@ -95,9 +123,11 @@ other fields, other projects, and the full `AppDocument` are not attached. The
 request uses the user's Keychain-backed API key directly with the OpenAI
 Responses API.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the product boundary and
-roadmap, and [docs/DEVPOST_SUBMISSION.md](docs/DEVPOST_SUBMISSION.md) for the
-OpenAI Build Week submission draft and demo storyboard.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the product boundary,
+[docs/CAPABILITY_CATALOG.md](docs/CAPABILITY_CATALOG.md) for the exact shipping
+capabilities and hardware-limited roadmap, and
+[docs/DEVPOST_SUBMISSION.md](docs/DEVPOST_SUBMISSION.md) for the OpenAI Build
+Week submission draft and demo storyboard.
 
 App Store Connect metadata, review notes, privacy/support pages, export options,
 and the release checklist live in [docs/app-store](docs/app-store).
@@ -108,8 +138,9 @@ and the release checklist live in [docs/app-store](docs/app-store).
 - Keys are never written to project files, `UserDefaults`, logs, or generated
   documents.
 - Generated documents are size-limited and validated against an allowlist.
-- The runtime exposes local UI, calculations, project data, selected photos,
-  opt-in local notifications, and reviewed text-only AI requests. It does not
-  execute Swift, JavaScript, WebAssembly, or plugins.
+- The runtime exposes local UI, calculations, fixed-provider news/market data,
+  project data, selected or captured photos, user-initiated scanning, opt-in
+  local notifications, deterministic games, and reviewed text-only AI requests.
+  It does not execute Swift, JavaScript, WebAssembly, or plugins.
 - Mini apps are private workspaces inside one signed host app; they are not
   independent `.ipa` files.

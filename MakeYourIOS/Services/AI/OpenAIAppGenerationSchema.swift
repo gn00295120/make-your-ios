@@ -4,7 +4,14 @@ extension OpenAIAppGenerationClient {
     static var responseSchema: [String: Any] {
         let string: [String: Any] = ["type": "string"]
         let boolean: [String: Any] = ["type": "boolean"]
+        let number: [String: Any] = ["type": "number"]
+        let integer: [String: Any] = ["type": "integer"]
         let stringArray: [String: Any] = ["type": "array", "items": string]
+        func nullableObject(_ object: [String: Any]) -> [String: Any] {
+            var result = object
+            result["type"] = ["object", "null"]
+            return result
+        }
         let theme: [String: Any] = [
             "type": "object",
             "additionalProperties": false,
@@ -92,6 +99,98 @@ extension OpenAIAppGenerationClient {
                 "allowsItemEditing", "allowsThresholds"
             ]
         ]
+        let newsFeed: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "sources": [
+                    "type": "array",
+                    "items": ["type": "string", "enum": NewsSourceKind.allCases.map(\.rawValue)]
+                ],
+                "topics": stringArray,
+                "allowsTopicEditing": boolean,
+                "allowsBookmarks": boolean,
+                "maximumItems": integer
+            ],
+            "required": [
+                "sources", "topics", "allowsTopicEditing", "allowsBookmarks", "maximumItems"
+            ]
+        ]
+        let marketWatch: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "provider": [
+                    "type": "string",
+                    "enum": MarketDataProviderKind.allCases.map(\.rawValue)
+                ],
+                "initialSymbols": stringArray,
+                "allowsSymbolEditing": boolean,
+                "showsChart": boolean,
+                "range": ["type": "string", "enum": MarketRange.allCases.map(\.rawValue)]
+            ],
+            "required": [
+                "provider", "initialSymbols", "allowsSymbolEditing", "showsChart", "range"
+            ]
+        ]
+        let ledgerEntry: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "title": string,
+                "note": string,
+                "amount": number,
+                "type": ["type": "string", "enum": LedgerEntryType.allCases.map(\.rawValue)],
+                "category": string,
+                "date": string
+            ],
+            "required": ["title", "note", "amount", "type", "category", "date"]
+        ]
+        let ledger: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "currencyCode": string,
+                "categories": stringArray,
+                "period": ["type": "string", "enum": LedgerPeriod.allCases.map(\.rawValue)],
+                "monthlyBudget": number,
+                "allowsIncome": boolean,
+                "initialEntries": ["type": "array", "items": ledgerEntry]
+            ],
+            "required": [
+                "currencyCode", "categories", "period", "monthlyBudget", "allowsIncome",
+                "initialEntries"
+            ]
+        ]
+        let game: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "kind": ["type": "string", "enum": GameKind.allCases.map(\.rawValue)],
+                "difficulty": ["type": "string", "enum": GameDifficulty.allCases.map(\.rawValue)],
+                "palette": ["type": "string", "enum": GamePalette.allCases.map(\.rawValue)],
+                "targetScore": integer,
+                "levelSeed": integer,
+                "playerName": string,
+                "collectibleName": string,
+                "haptics": boolean
+            ],
+            "required": [
+                "kind", "difficulty", "palette", "targetScore", "levelSeed", "playerName",
+                "collectibleName", "haptics"
+            ]
+        ]
+        let deviceInput: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "kind": ["type": "string", "enum": DeviceInputKind.allCases.map(\.rawValue)],
+                "buttonLabel": string,
+                "resultLabel": string,
+                "allowsRepeat": boolean
+            ],
+            "required": ["kind", "buttonLabel", "resultLabel", "allowsRepeat"]
+        ]
         let item: [String: Any] = [
             "type": "object",
             "additionalProperties": false,
@@ -131,14 +230,20 @@ extension OpenAIAppGenerationClient {
                 "items": ["type": "array", "items": item],
                 "action": action,
                 "presentation": nodeDesign,
-                "image": image,
-                "collection": collection,
-                "liveData": liveData
+                "image": nullableObject(image),
+                "collection": nullableObject(collection),
+                "liveData": nullableObject(liveData),
+                "newsFeed": nullableObject(newsFeed),
+                "marketWatch": nullableObject(marketWatch),
+                "ledger": nullableObject(ledger),
+                "game": nullableObject(game),
+                "deviceInput": nullableObject(deviceInput)
             ],
             "required": [
                 "id", "kind", "title", "subtitle", "symbol", "value",
                 "placeholder", "binding", "options", "items", "action",
-                "presentation", "image", "collection", "liveData"
+                "presentation", "image", "collection", "liveData", "newsFeed",
+                "marketWatch", "ledger", "game", "deviceInput"
             ]
         ]
         let page: [String: Any] = [

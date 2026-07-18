@@ -11,13 +11,13 @@
 <main>
   <div class="mark" aria-hidden="true">✦</div>
   <h1>MakeYour Support</h1>
-  <p class="lede">Help for building and using your private native mini apps.</p>
+  <p class="lede">Help for building and using your private native tiny apps.</p>
 
   <h2>Contact</h2>
   <div class="card">Email <strong>support@claude-world.com</strong>. Include the MakeYour version, iOS version, feature, and exact error text. Never send an API key or private content.</div>
 
   <h2>Where is my API key?</h2>
-  <p>It is stored in iOS Keychain with When Unlocked, This Device Only protection. Remove it from AI Key → Remove.</p>
+  <p>Your OpenAI key is stored in iOS Keychain with When Unlocked, This Device Only protection. Remove it from AI Key → Remove. An optional Twelve Data key for symbols beyond its AAPL demo uses the same protection and can be removed from the market provider-key screen.</p>
 
   <h2>Generation is not working</h2>
   <p>Confirm your key is valid for the selected Responses API model, Allow requests to OpenAI is enabled, and the iPhone is online. Provider errors appear in the app without printing the key.</p>
@@ -25,11 +25,20 @@
   <h2>Are FX values live market quotes?</h2>
   <p>No. They are the latest available daily reference rates from Frankfurter. They are not streaming quotes or financial advice.</p>
 
+  <h2>Where do news and stock data come from?</h2>
+  <p>News uses fixed BBC World, BBC Technology, and NPR News RSS feeds; local search, topics, and bookmarks are not sent to those providers. Market data uses fixed Twelve Data endpoints. AAPL supports demo access; other symbols require your own Twelve Data key. Quotes can be delayed or rate-limited and are not financial advice.</p>
+
+  <h2>Why is a device action unavailable?</h2>
+  <p>Camera capture, live QR/barcode/text scanning, pedometer data, and meaningful haptics require supported physical iPhone hardware and may be unavailable in Simulator. Camera, location, and motion also require the corresponding iOS permission. MakeYour starts these actions only after you tap.</p>
+
+  <h2>What can device actions access?</h2>
+  <p>Scanning returns inert text and never opens a URL automatically. Location is one-shot, contacts come only from Apple's single-contact picker, text-file import is bounded to one selected file, and pedometer access returns today's aggregate steps. Sharing uses Apple's destination chooser; clipboard access is tap-initiated and write-only. There is no background camera, location, contact, file, or motion access.</p>
+
   <h2>Does AI see photos or records?</h2>
-  <p>No. A mini-app AI helper sends only text entered into that helper after the exact task and text are shown for confirmation. Photos, records, other apps, and device data are not attached.</p>
+  <p>No. A tiny-app AI helper sends only text entered into that helper after the exact task and text are shown for confirmation. Photos, records, scans, coordinates, contacts, imported files, step counts, other apps, and general device data are not attached automatically.</p>
 
   <h2>Delete my data</h2>
-  <p>Long-press an app in My Apps and choose Delete. Remove the API key from AI Key. Deleting MakeYour removes all remaining local data.</p>
+  <p>Long-press an app in My Apps and choose Delete to remove its document, project-local state and images, and local notifications. Remove host-level OpenAI and Twelve Data keys with the in-app controls before uninstalling. Uninstall removes sandboxed projects, assets, caches, and runtime state, but does not guarantee deletion of Keychain items.</p>
 
   <p><a href="privacy.html">Read the Privacy Policy</a></p>
   <footer>MakeYour · Support for version 1.0</footer>

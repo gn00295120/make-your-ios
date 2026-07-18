@@ -32,25 +32,11 @@ struct RootView: View {
     }
 
     var body: some View {
-        if demoScreen == "converter" {
+        if let demoDocument {
             NavigationStack {
                 AppRuntimeView(
                     projectID: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,
-                    document: SampleDocuments.quickConvert
-                )
-            }
-        } else if demoScreen == "tasks" {
-            NavigationStack {
-                AppRuntimeView(
-                    projectID: UUID(uuidString: "22222222-2222-2222-2222-222222222222")!,
-                    document: SampleDocuments.gentleTasks
-                )
-            }
-        } else if demoScreen == "muse-journal" {
-            NavigationStack {
-                AppRuntimeView(
-                    projectID: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!,
-                    document: SampleDocuments.museJournal
+                    document: demoDocument
                 )
             }
         } else {
@@ -68,6 +54,21 @@ struct RootView: View {
                         )
                     }
                 }
+        }
+    }
+
+    private var demoDocument: AppDocument? {
+        switch demoScreen {
+        case "converter": SampleDocuments.quickConvert
+        case "tasks": SampleDocuments.gentleTasks
+        case "muse-journal": SampleDocuments.museJournal
+        case "news": SampleDocuments.dailyBrief
+        case "market": SampleDocuments.marketPocket
+        case "ledger": SampleDocuments.pocketLedger
+        case "platformer": SampleDocuments.skybound
+        case "snake": SampleDocuments.neonSnake
+        case "device": SampleDocuments.captureKit
+        default: nil
         }
     }
 

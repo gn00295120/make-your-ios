@@ -1,0 +1,334 @@
+import SwiftUI
+
+struct NewsFeedRuntimeView: View {
+    private struct CachedState: Codable {
+        var articles: [NewsArticle]
+        var bookmarks: [String: NewsArticle]
+        var topics: [String]
+        var selectedTopics: Set<String>
+        var lastUpdated: Date?
+    }
+
+    private enum DisplayMode: String, CaseIterable, Identifiable {
+        case latest = "Latest"
+        case saved = "Saved"
+
+        var id: String { rawValue }
+    }
+
+    let projectID: UUID
+    let node: ComponentNode
+    let tint: AppTint
+
+    @State private var articles: [NewsArticle] = []
+    @State private var bookmarks: [String: NewsArticle] = [:]
+    @State private var topics: [String]
+    @State private var selectedTopics: Set<String> = []
+    @State private var searchText = ""
+    @State private var displayMode: DisplayMode = .latest
+    @State private var lastUpdated: Date?
+    @State private var errorMessage: String?
+    @State private var isRefreshing = false
+    @State private var hasLoaded = false
+    @State private var isEditingTopics = false
+
+    private let client = NewsFeedClient()
+    private let stateStore = ProjectRuntimeStateStore()
+
+    init(projectID: UUID, node: ComponentNode, tint: AppTint) {
+        self.projectID = projectID
+        self.node = node
+        self.tint = tint
+        _topics = State(initialValue: Self.normalizedTopics(node.newsFeed?.topics ?? []))
+    }
+
+    private var spec: NewsFeedSpec {
+        node.newsFeed ?? NewsFeedSpec(
+            sources: [.bbcWorld, .nprNews],
+            topics: [],
+            allowsTopicEditing: true,
+            allowsBookmarks: true,
+            maximumItems: 20
+        )
+    }
+
+    private var displayedArticles: [NewsArticle] {
+        let candidates = displayMode == .saved
+            ? Array(bookmarks.values).sorted {
+                ($0.publishedAt ?? .distantPast) > ($1.publishedAt ?? .distantPast)
+            }
+            : articles
+        return candidates.filter {
+            NewsArticleFilter.matches(
+                $0,
+                searchText: searchText,
+                selectedTopics: selectedTopics
+            )
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            header
+            controls
+            topicFilters
+            status
+            articleList
+            NewsSourceCredit(sources: spec.sources)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .task {
+            guard !hasLoaded else { return }
+            hasLoaded = true
+            loadCachedState()
+            await refresh()
+        }
+        .sheet(isPresented: $isEditingTopics) {
+            NewsTopicEditorView(topics: $topics, tint: tint)
+                .onDisappear {
+                    selectedTopics.formIntersection(Set(topics))
+                    persist()
+                }
+        }
+    }
+}
+
+extension NewsFeedRuntimeView {
+    private var header: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(node.title.isEmpty ? "News" : node.title)
+                    .font(.headline)
+                if !node.subtitle.isEmpty {
+                    Text(node.subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            Button {
+                Task { await refresh() }
+            } label: {
+                if isRefreshing {
+                    ProgressView().frame(width: 36, height: 36)
+                } else {
+                    Image(systemName: "arrow.clockwise")
+                        .frame(width: 36, height: 36)
+                }
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .disabled(isRefreshing)
+            .accessibilityLabel("Refresh news")
+        }
+    }
+
+    private var controls: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Search headlines and topics", text: $searchText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear search")
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+
+            if spec.allowsBookmarks {
+                Picker("Articles", selection: $displayMode) {
+                    ForEach(DisplayMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var topicFilters: some View {
+        if !topics.isEmpty || spec.allowsTopicEditing {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(topics, id: \.self) { topic in
+                        Button {
+                            if selectedTopics.contains(topic) {
+                                selectedTopics.remove(topic)
+                            } else {
+                                selectedTopics.insert(topic)
+                            }
+                            persist()
+                        } label: {
+                            Text(topic)
+                                .font(.caption.weight(.semibold))
+                                .padding(.horizontal, 11)
+                                .padding(.vertical, 8)
+                                .foregroundStyle(
+                                    selectedTopics.contains(topic) ? Color.white : tint.color
+                                )
+                                .background(
+                                    selectedTopics.contains(topic)
+                                        ? tint.color
+                                        : tint.color.opacity(0.12),
+                                    in: Capsule()
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if spec.allowsTopicEditing {
+                        Button {
+                            isEditingTopics = true
+                        } label: {
+                            Label("Topics", systemImage: "slider.horizontal.3")
+                                .font(.caption.weight(.semibold))
+                                .padding(.horizontal, 11)
+                                .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var status: some View {
+        if let errorMessage {
+            Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        } else if let lastUpdated {
+            Label {
+                Text("Updated \(lastUpdated, style: .relative)")
+            } icon: {
+                Image(systemName: "clock")
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var articleList: some View {
+        if isRefreshing && articles.isEmpty {
+            HStack {
+                Spacer()
+                ProgressView("Loading headlines…")
+                Spacer()
+            }
+            .padding(.vertical, 24)
+        } else if displayedArticles.isEmpty {
+            ContentUnavailableView(
+                displayMode == .saved ? "No saved stories" : "No matching stories",
+                systemImage: displayMode == .saved ? "bookmark" : "newspaper",
+                description: Text(
+                    displayMode == .saved
+                        ? "Bookmark an article to keep it here."
+                        : "Try another search or topic."
+                )
+            )
+            .frame(maxWidth: .infinity)
+        } else {
+            LazyVStack(spacing: 0) {
+                ForEach(Array(displayedArticles.enumerated()), id: \.element.id) { index, article in
+                    NewsArticleRow(
+                        article: article,
+                        tint: tint,
+                        allowsBookmarks: spec.allowsBookmarks,
+                        isBookmarked: bookmarks[article.id] != nil,
+                        onToggleBookmark: { toggleBookmark(article) }
+                    )
+                    if index < displayedArticles.count - 1 {
+                        Divider().padding(.leading, 12)
+                    }
+                }
+            }
+        }
+    }
+
+    private func refresh() async {
+        isRefreshing = true
+        defer { isRefreshing = false }
+        do {
+            articles = try await client.latest(
+                sources: spec.sources,
+                maximumItems: spec.maximumItems
+            )
+            lastUpdated = .now
+            errorMessage = nil
+            persist()
+        } catch {
+            errorMessage = articles.isEmpty
+                ? error.localizedDescription
+                : "Couldn’t refresh. Showing saved headlines."
+        }
+    }
+
+    private func toggleBookmark(_ article: NewsArticle) {
+        if bookmarks[article.id] == nil {
+            bookmarks[article.id] = article
+        } else {
+            bookmarks[article.id] = nil
+        }
+        persist()
+    }
+
+    private func loadCachedState() {
+        guard let cached = try? stateStore.load(
+            CachedState.self,
+            projectID: projectID,
+            nodeID: node.id,
+            namespace: "news-feed-v1"
+        ) else { return }
+        articles = cached.articles
+        bookmarks = cached.bookmarks
+        topics = Self.normalizedTopics(cached.topics)
+        selectedTopics = cached.selectedTopics.intersection(Set(topics))
+        lastUpdated = cached.lastUpdated
+    }
+
+    private func persist() {
+        let state = CachedState(
+            articles: Array(articles.prefix(40)),
+            bookmarks: bookmarks,
+            topics: topics,
+            selectedTopics: selectedTopics,
+            lastUpdated: lastUpdated
+        )
+        do {
+            try stateStore.save(
+                state,
+                projectID: projectID,
+                nodeID: node.id,
+                namespace: "news-feed-v1"
+            )
+        } catch {
+            errorMessage = "News changes could not be saved."
+        }
+    }
+
+    private static func normalizedTopics(_ values: [String]) -> [String] {
+        var seen = Set<String>()
+        return values.compactMap { value in
+            let trimmed = String(value.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40))
+            guard !trimmed.isEmpty, seen.insert(trimmed.lowercased()).inserted else { return nil }
+            return trimmed
+        }
+        .prefix(8)
+        .map { $0 }
+    }
+}

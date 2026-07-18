@@ -53,7 +53,7 @@ struct GeneratedAppPayload: Decodable {
                 let presentation = makePresentation(node.presentation, for: kind)
                 let binding = normalizedID(node.binding, fallback: "value-\(nodeIndex + 1)")
                 return ComponentNode(
-                    id: "\(pageID)-node-\(nodeIndex + 1)",
+                    id: normalizedID(node.id, fallback: "\(pageID)-node-\(nodeIndex + 1)"),
                     kind: kind,
                     title: String(node.title.prefix(120)),
                     subtitle: String(node.subtitle.prefix(320)),
@@ -76,7 +76,12 @@ struct GeneratedAppPayload: Decodable {
                     presentation: presentation,
                     image: kind == .image ? makeImage(node.image, fallbackTitle: node.title) : nil,
                     collection: kind == .recordCollection ? makeCollection(node.collection) : nil,
-                    liveData: kind == .liveDataList ? makeLiveData(node.liveData) : nil
+                    liveData: kind == .liveDataList ? makeLiveData(node.liveData) : nil,
+                    newsFeed: kind == .newsFeed ? makeNewsFeed(node.newsFeed) : nil,
+                    marketWatch: kind == .marketWatch ? makeMarketWatch(node.marketWatch) : nil,
+                    ledger: kind == .ledger ? makeLedger(node.ledger) : nil,
+                    game: kind == .game ? makeGame(node.game) : nil,
+                    deviceInput: kind == .deviceInput ? makeDeviceInput(node.deviceInput) : nil
                 )
             }
             return AppPage(
@@ -90,7 +95,9 @@ struct GeneratedAppPayload: Decodable {
             )
         }
     }
+}
 
+private extension GeneratedAppPayload {
     private func makeItems(
         _ items: [Item],
         pageID: String,
@@ -101,7 +108,7 @@ struct GeneratedAppPayload: Decodable {
             let generatedID = "\(pageID)-node-\(nodeIndex + 1)-item-\(itemIndex + 1)"
             let itemID = kind == .currencyConverter
                 ? normalizedCurrencyCode(item.id, fallback: generatedID)
-                : generatedID
+                : normalizedID(item.id, fallback: generatedID)
             return ComponentItem(
                 id: itemID,
                 title: String(item.title.prefix(100)),
@@ -128,17 +135,17 @@ struct GeneratedAppPayload: Decodable {
         )
     }
 
-    private func makeImage(_ image: Image, fallbackTitle: String) -> ImageSpec {
+    private func makeImage(_ image: Image?, fallbackTitle: String) -> ImageSpec {
         let fallbackAltText = fallbackTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        let altText = image.altText.isEmpty
+        let altText = (image?.altText ?? "").isEmpty
             ? (fallbackAltText.isEmpty ? "User-selected image" : fallbackAltText)
-            : image.altText
+            : image?.altText ?? fallbackAltText
         return ImageSpec(
-            aspect: ImageAspect(rawValue: image.aspect) ?? .landscape,
-            contentMode: ImageContentMode(rawValue: image.contentMode) ?? .fill,
+            aspect: ImageAspect(rawValue: image?.aspect ?? "") ?? .landscape,
+            contentMode: ImageContentMode(rawValue: image?.contentMode ?? "") ?? .fill,
             altText: String(altText.prefix(180)),
-            decorative: image.decorative,
-            allowsUserSelection: image.allowsUserSelection
+            decorative: image?.decorative ?? false,
+            allowsUserSelection: image?.allowsUserSelection ?? true
         )
     }
 
@@ -174,36 +181,107 @@ struct GeneratedAppPayload: Decodable {
         )
     }
 
-    private func makeCapabilities(for pages: [AppPage]) -> [AppCapability] {
-        var safeCapabilities = Set(capabilities.compactMap(AppCapability.init(rawValue:)))
-        safeCapabilities.insert(.localStorage)
+    private func makeNewsFeed(_ newsFeed: NewsFeed?) -> NewsFeedSpec {
+        var seenSources = Set<NewsSourceKind>()
+        let sources = (newsFeed?.sources ?? [])
+            .compactMap(NewsSourceKind.init(rawValue:))
+            .filter { seenSources.insert($0).inserted }
+            .prefix(3)
+        var seenTopics = Set<String>()
+        let topics = (newsFeed?.topics ?? [])
+            .map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40)) }
+            .filter { !$0.isEmpty && seenTopics.insert($0.lowercased()).inserted }
+            .prefix(8)
+        return NewsFeedSpec(
+            sources: sources.isEmpty ? [.bbcWorld, .nprNews] : Array(sources),
+            topics: Array(topics),
+            allowsTopicEditing: newsFeed?.allowsTopicEditing ?? true,
+            allowsBookmarks: newsFeed?.allowsBookmarks ?? true,
+            maximumItems: min(max(newsFeed?.maximumItems ?? 20, 5), 40)
+        )
+    }
 
-        let nodes = pages.flatMap(\.nodes)
-        if nodes.contains(where: { $0.kind == .currencyConverter }) {
-            safeCapabilities.insert(.safeCalculation)
+    private func makeMarketWatch(_ marketWatch: MarketWatch?) -> MarketWatchSpec {
+        var seen = Set<String>()
+        let symbols = (marketWatch?.initialSymbols ?? [])
+            .compactMap(normalizedMarketSymbol)
+            .filter { seen.insert($0).inserted }
+            .prefix(10)
+        return MarketWatchSpec(
+            provider: MarketDataProviderKind(rawValue: marketWatch?.provider ?? "") ?? .twelveData,
+            initialSymbols: symbols.isEmpty ? ["AAPL"] : Array(symbols),
+            allowsSymbolEditing: marketWatch?.allowsSymbolEditing ?? true,
+            showsChart: marketWatch?.showsChart ?? true,
+            range: MarketRange(rawValue: marketWatch?.range ?? "") ?? .oneMonth
+        )
+    }
+
+    private func makeLedger(_ ledger: Ledger?) -> LedgerSpec {
+        let currency = normalizedCurrencyCode(ledger?.currencyCode ?? "USD", fallback: "USD")
+        var seen = Set<String>()
+        let categories = (ledger?.categories ?? [])
+            .map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(30)) }
+            .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
+            .prefix(16)
+        let safeCategories = categories.isEmpty
+            ? ["Food", "Transport", "Home", "Fun", "Other"]
+            : Array(categories)
+        let fallbackCategory = safeCategories[0]
+        let allowsIncome = ledger?.allowsIncome ?? true
+        let entries = (ledger?.initialEntries ?? []).prefix(30).map { entry in
+            let requestedCategory = entry.category.trimmingCharacters(in: .whitespacesAndNewlines)
+            let category = safeCategories.first {
+                $0.caseInsensitiveCompare(requestedCategory) == .orderedSame
+            } ?? fallbackCategory
+            return LedgerSeedEntry(
+                title: String((entry.title.isEmpty ? "Entry" : entry.title).prefix(80)),
+                note: String(entry.note.prefix(160)),
+                amount: entry.amount.isFinite ? abs(entry.amount) : 0,
+                type: allowsIncome ? (LedgerEntryType(rawValue: entry.type) ?? .expense) : .expense,
+                category: category,
+                date: normalizedDay(entry.date)
+            )
         }
-        if nodes.contains(where: { $0.kind == .taskList || $0.action.type == .scheduleNotification }) {
-            safeCapabilities.insert(.localNotifications)
-        }
-        if nodes.contains(where: { $0.kind == .image && $0.image?.allowsUserSelection == true }) {
-            safeCapabilities.insert(.photoPicker)
-        }
-        if nodes.contains(where: { $0.kind == .aiAssistant }) {
-            safeCapabilities.insert(.aiRequests)
-        }
-        if nodes.contains(where: { $0.kind == .recordCollection }) {
-            safeCapabilities.insert(.localStorage)
-        }
-        if nodes.contains(where: {
-            $0.kind == .recordCollection && $0.collection?.allowsReminders == true
-        }) {
-            safeCapabilities.insert(.localNotifications)
-        }
-        if nodes.contains(where: { $0.kind == .liveDataList }) {
-            safeCapabilities.insert(.localStorage)
-            safeCapabilities.insert(.network)
-        }
-        return safeCapabilities.sorted(by: { $0.rawValue < $1.rawValue })
+        return LedgerSpec(
+            currencyCode: currency,
+            categories: safeCategories,
+            period: LedgerPeriod(rawValue: ledger?.period ?? "") ?? .currentMonth,
+            monthlyBudget: max(0, safeFiniteValue(ledger?.monthlyBudget)),
+            allowsIncome: allowsIncome,
+            initialEntries: entries
+        )
+    }
+
+    private func makeGame(_ game: Game?) -> GameSpec {
+        let playerName = nonEmpty(game?.playerName, fallback: "Player")
+        let collectibleName = nonEmpty(game?.collectibleName, fallback: "Token")
+        return GameSpec(
+            kind: GameKind(rawValue: game?.kind ?? "") ?? .snake,
+            difficulty: GameDifficulty(rawValue: game?.difficulty ?? "") ?? .standard,
+            palette: GamePalette(rawValue: game?.palette ?? "") ?? .neon,
+            targetScore: min(max(game?.targetScore ?? 10, 1), 100),
+            levelSeed: min(max(game?.levelSeed ?? 42, 0), 999_999),
+            playerName: String(playerName.prefix(30)),
+            collectibleName: String(collectibleName.prefix(30)),
+            haptics: game?.haptics ?? true
+        )
+    }
+
+    private func makeDeviceInput(_ deviceInput: DeviceInput?) -> DeviceInputSpec {
+        let kind = DeviceInputKind(rawValue: deviceInput?.kind ?? "") ?? .qrCode
+        let defaultButton = kind.requiresPhotoCapture ? "Take photo" : "Start scanning"
+        let defaultResult = kind.requiresPhotoCapture ? "Captured photo" : "Scanned result"
+        return DeviceInputSpec(
+            kind: kind,
+            buttonLabel: String(nonEmpty(deviceInput?.buttonLabel, fallback: defaultButton).prefix(60)),
+            resultLabel: String(nonEmpty(deviceInput?.resultLabel, fallback: defaultResult).prefix(60)),
+            allowsRepeat: deviceInput?.allowsRepeat ?? true
+        )
+    }
+
+    private func makeCapabilities(for pages: [AppPage]) -> [AppCapability] {
+        AppCapabilityResolver.requiredCapabilities(for: pages)
+            .sorted(by: { $0.rawValue < $1.rawValue })
     }
 
     private func makeInitialState() -> [String: String] {
@@ -227,6 +305,34 @@ struct GeneratedAppPayload: Decodable {
         return normalized.count == 3 ? normalized : fallback
     }
 
+    private func normalizedMarketSymbol(_ value: String) -> String? {
+        let normalized = value.uppercased().filter { character in
+            character.isLetter || character.isNumber || ".-^".contains(character)
+        }
+        guard (1...15).contains(normalized.count) else { return nil }
+        return normalized
+    }
+
+    private func normalizedDay(_ value: String) -> String {
+        if value.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil {
+            return value
+        }
+        return String(ISO8601DateFormatter().string(from: .now).prefix(10))
+    }
+
+    private func nonEmpty(_ value: String?, fallback: String) -> String {
+        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? fallback : trimmed
+    }
+
+    private func safeFiniteValue(_ value: Double?) -> Double {
+        guard let value, value.isFinite else { return 0 }
+        return value
+    }
+
+}
+
+extension GeneratedAppPayload {
     static let allowedSymbols: Set<String> = [
         "sparkles", "wand.and.stars", "square.grid.2x2.fill", "checkmark.circle.fill",
         "arrow.left.arrow.right.circle.fill", "globe.asia.australia.fill", "lock.shield.fill",
@@ -239,6 +345,11 @@ struct GeneratedAppPayload: Decodable {
         "location.fill", "map.fill", "gift.fill", "gamecontroller.fill", "music.note",
         "headphones", "message.fill", "envelope.fill", "phone.fill", "link",
         "externaldrive", "function", "network", "circle.fill", "quote.bubble.fill",
-        "photo.badge.plus", "photo.on.rectangle", "party.popper.fill", "iphone"
+        "photo.badge.plus", "photo.on.rectangle", "party.popper.fill", "iphone",
+        "qrcode.viewfinder", "barcode.viewfinder", "text.viewfinder",
+        "person.crop.circle.badge.plus", "doc.badge.plus", "figure.walk.motion",
+        "square.and.arrow.up", "doc.on.clipboard", "waveform",
+        "newspaper.fill", "bookmark.fill", "dollarsign.circle.fill", "chart.xyaxis.line",
+        "arrow.up.right", "arrow.down.right", "figure.run", "trophy.fill"
     ]
 }

@@ -35,131 +35,87 @@ struct AppDocumentValidator: Sendable {
         }
 
         let pageIDs = document.pages.map(\.id)
-        guard Set(pageIDs).count == pageIDs.count else {
+        guard pageIDs.allSatisfy({ !$0.isEmpty }),
+              Set(pageIDs).count == pageIDs.count else {
             throw AppDocumentValidationError.duplicateIdentifier
         }
 
         let nodeIDs = allNodes.map(\.id)
-        guard Set(nodeIDs).count == nodeIDs.count else {
+        guard nodeIDs.allSatisfy({ !$0.isEmpty }),
+              Set(nodeIDs).count == nodeIDs.count else {
             throw AppDocumentValidationError.duplicateIdentifier
         }
-    }
 
-    private func validateContent(_ document: AppDocument) throws {
-        let allNodes = document.pages.flatMap(\.nodes)
         for node in allNodes {
-            guard node.title.count <= 120,
-                  node.subtitle.count <= 320,
-                  node.value.count <= 800,
-                  node.placeholder.count <= 160,
-                  node.binding.count <= 120,
-                  node.items.count <= Self.maximumItemsPerNode else {
-                throw AppDocumentValidationError.contentLimitExceeded
-            }
-
-            if node.kind == .image {
-                guard let image = node.image,
-                      !node.binding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                    throw AppDocumentValidationError.invalidComponentConfiguration(.image)
-                }
-                if !image.decorative,
-                   image.altText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    throw AppDocumentValidationError.invalidComponentConfiguration(.image)
-                }
-            }
-
-            if node.kind == .aiAssistant,
-               node.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                throw AppDocumentValidationError.invalidComponentConfiguration(.aiAssistant)
-            }
-
-            if node.kind == .recordCollection {
-                guard let collection = node.collection,
-                      !collection.itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-                      !collection.titleLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-                      collection.itemName.count <= 40,
-                      collection.titleLabel.count <= 60,
-                      collection.noteLabel.count <= 60,
-                      collection.valueLabel.count <= 60,
-                      collection.valueUnit.count <= 12,
-                      collection.dateLabel.count <= 60,
-                      collection.aggregate != .sum || collection.valueKind != .none else {
-                    throw AppDocumentValidationError.invalidComponentConfiguration(.recordCollection)
-                }
-            }
-
-            if node.kind == .liveDataList {
-                guard let liveData = node.liveData,
-                      Self.isCurrencyCode(liveData.primaryValue),
-                      !liveData.initialSymbols.isEmpty,
-                      liveData.initialSymbols.count <= 30,
-                      liveData.initialSymbols.allSatisfy(Self.isCurrencyCode),
-                      !liveData.initialSymbols.contains(liveData.primaryValue.uppercased()) else {
-                    throw AppDocumentValidationError.invalidComponentConfiguration(.liveDataList)
-                }
+            let itemIDs = node.items.map(\.id)
+            guard itemIDs.allSatisfy({ !$0.isEmpty }),
+                  Set(itemIDs).count == itemIDs.count else {
+                throw AppDocumentValidationError.duplicateIdentifier
             }
         }
     }
 
     private func validateCapabilities(_ document: AppDocument) throws {
-        let allNodes = document.pages.flatMap(\.nodes)
-        let nodeKinds = Set(allNodes.map(\.kind))
-        if nodeKinds.contains(.currencyConverter),
-           !document.capabilities.contains(.safeCalculation) {
-            throw AppDocumentValidationError.missingCapability(.safeCalculation)
+        let required = AppCapabilityResolver.requiredCapabilities(for: document.pages)
+        let declared = Set(document.capabilities)
+        guard declared.count == document.capabilities.count else {
+            throw AppDocumentValidationError.duplicateIdentifier
         }
-
-        if nodeKinds.contains(.taskList),
-           allNodes.contains(where: { $0.kind == .taskList }),
-           !document.capabilities.contains(.localStorage) {
-            throw AppDocumentValidationError.missingCapability(.localStorage)
+        if let missing = required.subtracting(declared).sorted(by: { $0.rawValue < $1.rawValue }).first {
+            throw AppDocumentValidationError.missingCapability(missing)
         }
-
-        if nodeKinds.contains(.taskList),
-           !document.capabilities.contains(.localNotifications) {
-            throw AppDocumentValidationError.missingCapability(.localNotifications)
-        }
-
-        if allNodes.contains(where: { $0.kind == .image && $0.image?.allowsUserSelection == true }),
-           !document.capabilities.contains(.photoPicker) {
-            throw AppDocumentValidationError.missingCapability(.photoPicker)
-        }
-
-        if nodeKinds.contains(.aiAssistant),
-           !document.capabilities.contains(.aiRequests) {
-            throw AppDocumentValidationError.missingCapability(.aiRequests)
-        }
-
-        if nodeKinds.contains(.recordCollection),
-           !document.capabilities.contains(.localStorage) {
-            throw AppDocumentValidationError.missingCapability(.localStorage)
-        }
-
-        if allNodes.contains(where: {
-            $0.kind == .recordCollection && $0.collection?.allowsReminders == true
-        }), !document.capabilities.contains(.localNotifications) {
-            throw AppDocumentValidationError.missingCapability(.localNotifications)
-        }
-
-        if nodeKinds.contains(.liveDataList),
-           !document.capabilities.contains(.localStorage) {
-            throw AppDocumentValidationError.missingCapability(.localStorage)
-        }
-
-        if nodeKinds.contains(.liveDataList),
-           !document.capabilities.contains(.network) {
-            throw AppDocumentValidationError.missingCapability(.network)
-        }
-
-        if allNodes.contains(where: { $0.action.type == .scheduleNotification }),
-           !document.capabilities.contains(.localNotifications) {
-            throw AppDocumentValidationError.missingCapability(.localNotifications)
+        if let unnecessary = declared.subtracting(required)
+            .sorted(by: { $0.rawValue < $1.rawValue })
+            .first {
+            throw AppDocumentValidationError.unnecessaryCapability(unnecessary)
         }
     }
 
-    private static func isCurrencyCode(_ value: String) -> Bool {
-        let code = value.uppercased()
-        return code.count == 3 && code.allSatisfy(\.isLetter)
+    func validateActions(_ document: AppDocument) throws {
+        let allNodes = document.pages.flatMap(\.nodes)
+        let pageIDs = Set(document.pages.map(\.id))
+        let bindingKinds: Set<ComponentKind> = [
+            .textInput, .numberInput, .picker, .image, .deviceInput
+        ]
+        let bindings = allNodes
+            .filter { bindingKinds.contains($0.kind) }
+            .map(\.binding)
+        guard bindings.allSatisfy({ !$0.isEmpty }), Set(bindings).count == bindings.count else {
+            throw AppDocumentValidationError.duplicateBinding
+        }
+
+        try allNodes.forEach { node in
+            try validateAction(node.action, pageIDs: pageIDs, bindings: bindings)
+        }
+    }
+
+    private func validateAction(
+        _ action: RuntimeAction,
+        pageIDs: Set<String>,
+        bindings: [String]
+    ) throws {
+        switch action.type {
+        case .none:
+            break
+        case .navigate:
+            guard pageIDs.contains(action.target) else {
+                throw AppDocumentValidationError.invalidAction(action.type)
+            }
+        case .setValue:
+            guard bindings.contains(action.target) else {
+                throw AppDocumentValidationError.invalidAction(action.type)
+            }
+        case .showMessage:
+            guard !action.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw AppDocumentValidationError.invalidAction(action.type)
+            }
+        case .scheduleNotification:
+            guard let minutes = Int(action.target),
+                  (1...10_080).contains(minutes),
+                  !action.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw AppDocumentValidationError.invalidAction(action.type)
+            }
+        }
     }
 }
 
@@ -172,7 +128,10 @@ enum AppDocumentValidationError: LocalizedError, Equatable {
     case duplicateIdentifier
     case contentLimitExceeded
     case invalidComponentConfiguration(ComponentKind)
+    case invalidAction(RuntimeActionType)
+    case duplicateBinding
     case missingCapability(AppCapability)
+    case unnecessaryCapability(AppCapability)
 
     var errorDescription: String? {
         switch self {
@@ -192,8 +151,14 @@ enum AppDocumentValidationError: LocalizedError, Equatable {
             "Some generated content exceeds the runtime limits."
         case .invalidComponentConfiguration(let kind):
             "The \(kind.rawValue) component is missing required configuration."
+        case .invalidAction(let action):
+            "The \(action.rawValue) action points to an invalid target or value."
+        case .duplicateBinding:
+            "Stateful components need unique, non-empty bindings."
         case .missingCapability(let capability):
             "The app did not declare its \(capability.label) capability."
+        case .unnecessaryCapability(let capability):
+            "The app declares unused \(capability.label) access."
         }
     }
 }

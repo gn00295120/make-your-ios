@@ -50,7 +50,12 @@ enum GeneratedAppPayloadTestFixtures {
             presentation: design,
             image: image,
             collection: nil,
-            liveData: nil
+            liveData: nil,
+            newsFeed: nil,
+            marketWatch: nil,
+            ledger: nil,
+            game: nil,
+            deviceInput: nil
         )
     }
 
@@ -82,7 +87,12 @@ enum GeneratedAppPayloadTestFixtures {
                 allowsCompletion: false,
                 allowsReminders: true
             ),
-            liveData: nil
+            liveData: nil,
+            newsFeed: nil,
+            marketWatch: nil,
+            ledger: nil,
+            game: nil,
+            deviceInput: nil
         )
     }
 
@@ -109,7 +119,12 @@ enum GeneratedAppPayloadTestFixtures {
                 allowsPrimarySelection: true,
                 allowsItemEditing: true,
                 allowsThresholds: true
-            )
+            ),
+            newsFeed: nil,
+            marketWatch: nil,
+            ledger: nil,
+            game: nil,
+            deviceInput: nil
         )
     }
 

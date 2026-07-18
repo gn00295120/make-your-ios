@@ -11,6 +11,12 @@ final class WorkspaceStoreTests: XCTestCase {
         let store = WorkspaceStore(fileURL: archiveURL, seedSamples: true)
 
         XCTAssertEqual(store.projects.map(\.document.name), [
+            "Daily Brief",
+            "Market Pocket",
+            "Pocket Ledger",
+            "Skybound",
+            "Neon Snake",
+            "Device Lab",
             "Live FX Watch",
             "Use It First",
             "Quick Convert",
@@ -87,6 +93,70 @@ final class WorkspaceStoreTests: XCTestCase {
         XCTAssertTrue(assetStore.hasImage(projectID: duplicateID, binding: "journal-photo"))
         XCTAssertEqual(store.projects.count, 1)
         XCTAssertEqual(store.projects[0].id, duplicateID)
+    }
+
+    func testDeleteRemovesOnlyThatProjectsRuntimeState() throws {
+        let (testDirectory, archiveURL) = makeArchiveURL()
+        defer { try? FileManager.default.removeItem(at: testDirectory) }
+        let suiteName = "WorkspaceStoreTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let runtimeStateStore = ProjectRuntimeStateStore(defaults: defaults)
+        let store = WorkspaceStore(
+            fileURL: archiveURL,
+            seedSamples: false,
+            runtimeStateStore: runtimeStateStore
+        )
+        let deletedID = store.createProject(document: SampleDocuments.gentleTasks)
+        let retainedID = store.createProject(document: SampleDocuments.gentleTasks)
+        try runtimeStateStore.save(
+            ["deleted"],
+            projectID: deletedID,
+            nodeID: "tasks",
+            namespace: "tasks"
+        )
+        try runtimeStateStore.save(
+            ["retained"],
+            projectID: retainedID,
+            nodeID: "tasks",
+            namespace: "tasks"
+        )
+
+        store.delete(deletedID)
+
+        let deleted: [String]? = try runtimeStateStore.load(
+            [String].self,
+            projectID: deletedID,
+            nodeID: "tasks",
+            namespace: "tasks"
+        )
+        let retained: [String]? = try runtimeStateStore.load(
+            [String].self,
+            projectID: retainedID,
+            nodeID: "tasks",
+            namespace: "tasks"
+        )
+        XCTAssertNil(deleted)
+        XCTAssertEqual(retained, ["retained"])
+    }
+
+    func testNotificationCleanupSelectsOnlyDeletedProjectIdentifiers() {
+        let projectID = UUID()
+        let anotherProjectID = UUID()
+        let expected = [
+            "makeyour.\(projectID.uuidString).task",
+            "makeyour.action.\(projectID.uuidString).button"
+        ]
+
+        let matching = ProjectNotificationStore.matchingIdentifiers(
+            in: expected + [
+                "makeyour.\(anotherProjectID.uuidString).task",
+                "unrelated"
+            ],
+            projectID: projectID
+        )
+
+        XCTAssertEqual(matching, expected)
     }
 
     func testDesignControlsApplyThemeAndAddPrivateImageSlot() {

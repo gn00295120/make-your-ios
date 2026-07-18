@@ -62,6 +62,58 @@ extension GeneratedAppPayload {
         var allowsThresholds: Bool
     }
 
+    struct NewsFeed: Decodable {
+        var sources: [String]
+        var topics: [String]
+        var allowsTopicEditing: Bool
+        var allowsBookmarks: Bool
+        var maximumItems: Int
+    }
+
+    struct MarketWatch: Decodable {
+        var provider: String
+        var initialSymbols: [String]
+        var allowsSymbolEditing: Bool
+        var showsChart: Bool
+        var range: String
+    }
+
+    struct Ledger: Decodable {
+        var currencyCode: String
+        var categories: [String]
+        var period: String
+        var monthlyBudget: Double
+        var allowsIncome: Bool
+        var initialEntries: [LedgerEntry]
+    }
+
+    struct LedgerEntry: Decodable {
+        var title: String
+        var note: String
+        var amount: Double
+        var type: String
+        var category: String
+        var date: String
+    }
+
+    struct Game: Decodable {
+        var kind: String
+        var difficulty: String
+        var palette: String
+        var targetScore: Int
+        var levelSeed: Int
+        var playerName: String
+        var collectibleName: String
+        var haptics: Bool
+    }
+
+    struct DeviceInput: Decodable {
+        var kind: String
+        var buttonLabel: String
+        var resultLabel: String
+        var allowsRepeat: Bool
+    }
+
     struct Node: Decodable {
         var id: String
         var kind: String
@@ -75,9 +127,14 @@ extension GeneratedAppPayload {
         var items: [Item]
         var action: Action
         var presentation: NodeDesign
-        var image: Image
+        var image: Image?
         var collection: Collection?
         var liveData: LiveData?
+        var newsFeed: NewsFeed?
+        var marketWatch: MarketWatch?
+        var ledger: Ledger?
+        var game: Game?
+        var deviceInput: DeviceInput?
     }
 
     struct Item: Decodable {

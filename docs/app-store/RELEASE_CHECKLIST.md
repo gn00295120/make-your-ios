@@ -1,6 +1,10 @@
-# MakeYour 1.0 release checklist
+# MakeYour release checklist
 
-## Completed in the repository
+## Submitted build 1 snapshot
+
+The checked items in this section describe the preserved MakeYour 1.0.0 build 1
+archive and its July 17 submission. They do not certify the expanded
+capability changes currently in the source tree.
 
 - [x] Bundle ID `com.longweiwang.makeyourios`
 - [x] Version `1.0.0`, build `1`
@@ -27,7 +31,7 @@
 - [x] External TestFlight group `Devpost Judges` with public link
 - [x] Build 1 submitted to Beta App Review
 
-## Current local release status (2026-07-17)
+## Submitted build 1 status snapshot (2026-07-17)
 
 - Preserved archive: `artifacts/app-store/build/MakeYourIOS-1.0.0-build1-final.xcarchive.zip`
 - Working archive: `/tmp/MakeYourIOS-1.0.0-build1-final.xcarchive`
@@ -43,7 +47,63 @@
 - Apple accepted MakeYour 1.0.0 (1) at 2026-07-17 19:06 Asia/Taipei. Processing
   completed successfully and the build is `VALID`.
 
-## Required before App Review submission
+## Expanded capability build gates
+
+Current source verification snapshot (2026-07-18):
+
+- 85/85 unit tests and the separately gated 1/1 live OpenAI generation UI test
+  passed on an iPhone 17 Pro Simulator running iOS 26.5.
+- Strict SwiftLint checked 91 Swift files with zero violations; `git diff
+  --check`, generic Simulator build, and signed physical-iPhone build passed.
+- The built iPhone app contains camera, contact, When In Use location, and
+  motion usage descriptions plus `PrivacyInfo.xcprivacy`; strict local
+  code-signature verification passed.
+- The exact candidate was installed on the connected iPhone. Automated launch
+  was denied because the phone was locked, so the physical camera/scanner and
+  permission interaction gates below deliberately remain unchecked.
+- Live BBC RSS, live Twelve Data AAPL demo data, the generated `E2E Proof`
+  document, and its rendered runtime were observed on the Simulator.
+
+- [ ] Increment `CURRENT_PROJECT_VERSION` above build `1`; do not overwrite or
+  relabel the preserved build 1 archive.
+- [ ] Generate the Xcode project from the committed `project.yml`, archive the
+  current source, and export a newly signed IPA.
+- [ ] Run the full unit suite, strict SwiftLint, `git diff --check`, release
+  build, archive validation, and strict code-signature verification; record the
+  actual results without copying the historical 43-test count.
+- [ ] Confirm the archive contains camera, contact, When In Use location, and
+  motion usage descriptions, plus the current privacy manifest.
+- [ ] Fresh-install the exact candidate on TestFlight and confirm all ten seeded
+  tiny apps appear.
+- [ ] Exercise capability review for generated documents and verify missing or
+  unused declarations are rejected.
+- [ ] Test Frankfurter, BBC World, BBC Technology, NPR News, Twelve Data AAPL
+  demo access, a user-supplied Twelve Data key, and OpenAI generation against
+  their fixed adapters, including timeout, malformed, rate-limit, and offline
+  states.
+- [ ] On a supported physical iPhone, test camera grant/deny/capture, QR,
+  supported barcode and visible-text scanning, one-time location, today's
+  pedometer count, and haptic feedback.
+- [ ] On the target iOS release, test contact cancellation/selection, bounded
+  text/JSON/CSV import, share cancellation/destination choice, and tap-initiated
+  clipboard write.
+- [ ] Verify that deleting a tiny app removes its document, runtime state,
+  project images, and pending/delivered local notifications while leaving
+  host-level API keys available to other projects.
+- [ ] Record a current-build demo showing real OpenAI generation, capability
+  review, two contrasting generated tiny apps, and smooth project switching.
+- [ ] Capture new screenshots and App Review attachments if the selected build
+  presents features not shown in build 1 assets.
+- [ ] Replace the App Review notes with the expanded-build draft only after that
+  binary is uploaded and selected.
+- [ ] Reconfirm App Store privacy answers for OpenAI and Twelve Data provider
+  account identifiers/retention; update `PrivacyInfo.xcprivacy` if needed.
+- [ ] Publish the July 18 privacy/support text at the production HTTPS URLs and
+  verify those public pages from a logged-out browser.
+- [ ] Submit the new build to internal TestFlight, then external Beta App Review,
+  before replacing or updating the App Store review submission.
+
+## Historical build 1 pre-submission items
 
 - [x] Create or confirm the explicit App ID `com.longweiwang.makeyourios` in the
   Apple Developer account.
@@ -60,7 +120,7 @@
 - [x] Export an Apple Distribution-signed App Store IPA.
 - [x] Pass Apple's package analysis and upload the build.
 
-## App Store Connect fields
+## Historical build 1 App Store Connect fields
 
 - [x] App information: name, subtitle, categories, content rights, age rating
 - [x] Pricing and availability (Free, USA base territory, 175 territories)
@@ -70,9 +130,14 @@
 - [x] App Review contact, notes, and review attachment
 - [x] Release method
 
-## Final TestFlight pass
+## Expanded-build TestFlight pass
 
-- [ ] Fresh-install launch seeds four reviewable mini apps
+- [ ] Fresh-install launch seeds ten reviewable tiny apps
+- [ ] Daily Brief refresh, local search/topics/bookmarks, cache, and original link
+- [ ] Market Pocket AAPL demo, provider-key add/remove, symbols, ranges, and cache
+- [ ] Pocket Ledger entry CRUD, income/expense totals, budget, and category chart
+- [ ] Skybound and Neon Snake controls, pause, restart, win/loss, and saved score
+- [ ] Device Lab's 11 actions, including honest Simulator/hardware fallbacks
 - [ ] Live FX refresh, add/remove currency, base selection, threshold, Test Alert
 - [ ] Use It First record add/edit/delete, completion, photo, and reminder
 - [ ] Builder generation with review key
@@ -80,10 +145,10 @@
 - [ ] Upper-right menu routes to My Apps, Builder, and AI Key
 - [ ] AI request confirmation Send button works on first presentation
 - [ ] VoiceOver labels, Dynamic Type, light mode, and dark mode smoke tests
-- [ ] Offline/cached FX and provider-error states
-- [ ] Delete project and remove API key
+- [ ] Offline/cache/provider-error states for FX, news, market, and OpenAI
+- [ ] Delete project; separately remove OpenAI and Twelve Data keys
 
-## App Review submission
+## Historical build 1 App Review submission
 
 Apple accepted the review submission on 2026-07-17. The version, Build 1, and
 review submission item were verified through the App Store Connect API; both the

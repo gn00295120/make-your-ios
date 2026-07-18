@@ -36,6 +36,14 @@ struct ProjectRuntimeStateStore {
         )
     }
 
+    func delete(projectID: UUID) {
+        let projectSegment = ".\(projectID.uuidString)."
+        let keys = defaults.dictionaryRepresentation().keys.filter {
+            $0.hasPrefix("runtime.") && $0.contains(projectSegment)
+        }
+        keys.forEach(defaults.removeObject(forKey:))
+    }
+
     private func key(projectID: UUID, nodeID: String, namespace: String) -> String {
         "runtime.\(namespace).\(projectID.uuidString).\(nodeID)"
     }

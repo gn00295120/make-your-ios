@@ -36,15 +36,45 @@ vocabulary declares:
 - `calculation.safe`
 - `notifications.scheduleLocal`
 - `photo.pick`
+- `camera.capture`
+- `camera.scanCode`
+- `location.current`
+- `contacts.pick`
+- `files.import`
+- `motion.pedometer`
+- `share.present`
+- `clipboard.write`
+- `haptics.play`
 - `http.request`
 - `ai.complete`
 
 Each request passes through manifest declaration, host availability, per-project
 user grant, operating-system permission, execution limits, and result
-sanitization. The current runtime implements local UI/state, calculations,
-explicit local notifications, user-selected project-local photos, and reviewed
-text-only AI completion. General HTTP is reserved in the manifest but is not
-exposed as an arbitrary generated network primitive.
+sanitization. The active capability set is derived again by the host and must
+exactly match what the document uses; generated text cannot silently escalate
+access. The current runtime implements local UI/state, calculations, explicit
+local notifications, user-selected and camera-captured project-local photos,
+user-initiated QR/barcode/text scanning, fixed-provider network components, and
+reviewed text-only AI completion. General HTTP is not exposed as an arbitrary
+generated network primitive.
+
+Device components are native host adapters. The current catalog includes camera
+capture, QR/barcode/text scanning, one-time foreground location, Apple’s
+single-contact picker, bounded text-file import, one-time pedometer reads,
+reviewed sharing, clipboard writes, and haptic feedback. They request access
+only after a tap, check availability, sanitize and bound outputs, persist results
+within the project boundary, and never open scanned URLs or forward results to
+AI by default. Adding a generated version that needs a new capability first
+presents a host-controlled review sheet.
+
+`CapabilityRegistry` is the platform ledger for every compiled host ability. It
+records category, privacy risk, availability mode, user-action requirement,
+framework/permission note, and the enforced boundary. Its exhaustive mapping
+means a new enum case cannot compile until the product supplies metadata; the AI
+schema exposes only abilities that actually ship in the signed host.
+
+The complete shipping/roadmap split, including all 11 current device actions,
+is maintained in [CAPABILITY_CATALOG.md](CAPABILITY_CATALOG.md).
 
 ## Visual grammar
 
@@ -132,12 +162,15 @@ and small credentials are stored using
 - App Library: create, duplicate, switch, and delete private projects.
 - Builder: prompt, deterministic preview, and generated-document replacement.
 - Runtime: hero, text, metric, input, picker, button, checklist, task list,
-  currency converter, generic record collections, fixed-provider live-data
-  watchlists, image slots, text-only AI assistants, banners, dividers,
-  navigation, page layouts, and presentation tokens.
+  currency converter, generic record collections, a typed ledger,
+  fixed-provider exchange/news/market views, playable Snake and original
+  platform games, image slots, camera and code/text scanning, one-time location,
+  contact/file pickers, pedometer, share/clipboard/haptics, text-only AI
+  assistants, banners, dividers, navigation, page layouts, and presentation tokens.
 - BYOK: OpenAI Responses API; editable model; device-only Keychain storage.
-- Samples: AI-generated Live FX Watch and Use It First projects, an editorial
-  currency converter, a soft local task reminder, plus an optional photo-and-AI
+- Samples: live news, a market watchlist, a personal ledger, original platform
+  and Snake games, a camera/QR capture kit, Live FX Watch, Use It First, an
+  editorial currency converter, a local task reminder, and a photo-and-AI
   journal starter.
 
 Future releases should add safe expression ASTs, versioned JSON Patch editing,

@@ -37,5 +37,6 @@ struct ImmersiveAppHostView: View {
         }
         .accessibilityLabel("MakeYour menu")
         .accessibilityHint("Opens app library, builder, and AI key options")
+        .accessibilityIdentifier("runtime.host-menu")
     }
 }

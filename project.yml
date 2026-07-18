@@ -28,7 +28,10 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
         INFOPLIST_KEY_UILaunchScreen_Generation: true
-        INFOPLIST_KEY_NSUserNotificationsUsageDescription: MakeYour uses notifications only when a mini app asks you to schedule a reminder.
+        INFOPLIST_KEY_NSCameraUsageDescription: MakeYour uses the camera only when a tiny app asks you to take a photo or scan a code.
+        INFOPLIST_KEY_NSContactsUsageDescription: MakeYour shows Apple’s contact picker only when a tiny app asks you to choose a contact.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: MakeYour requests one current location only when you tap a tiny app location component.
+        INFOPLIST_KEY_NSMotionUsageDescription: MakeYour reads today’s step count only when you tap a tiny app pedometer component.
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: false
     scheme:
@@ -45,3 +48,28 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.longweiwang.makeyourios.tests
         GENERATE_INFOPLIST_FILE: true
+  MakeYourIOSUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MakeYourIOSUITests
+    dependencies:
+      - target: MakeYourIOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.longweiwang.makeyourios.uitests
+        GENERATE_INFOPLIST_FILE: true
+schemes:
+  MakeYourIOSLiveE2E:
+    build:
+      targets:
+        MakeYourIOS: all
+        MakeYourIOSUITests: [test]
+    test:
+      commandLineArguments:
+        "-run-live-ai-e2e": true
+      captureScreenshotsAutomatically: true
+      deleteScreenshotsWhenEachTestSucceeds: false
+      targets:
+        - name: MakeYourIOSUITests
+          parallelizable: false

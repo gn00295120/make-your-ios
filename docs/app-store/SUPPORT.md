@@ -10,6 +10,11 @@ contact `support@claude-world.com`.
 In iOS Keychain with When Unlocked, This Device Only protection. Remove it at
 any time from AI Key → Remove.
 
+Market Pocket also supports an optional Twelve Data API key for symbols other
+than the provider's AAPL demo. It uses the same device-only Keychain protection
+and can be removed from the market provider-key screen. Deleting one tiny app
+does not remove either host-level key because another tiny app may use it.
+
 ### Why can't MakeYour generate an app?
 
 Confirm that the API key is valid for the selected Responses API model, that
@@ -21,20 +26,58 @@ connection. MakeYour displays provider errors without printing the API key.
 No. They are the latest available daily reference rates from Frankfurter. They
 are suitable for a personal reference tool, not trading or financial advice.
 
+### Where do news and stock data come from?
+
+Daily Brief uses fixed BBC World, BBC Technology, and NPR News RSS feeds. Search,
+topic filtering, and bookmarks run locally; opening an article goes to the
+publisher's original page. Market Pocket uses fixed Twelve Data quote and
+daily-history endpoints. AAPL supports the provider's public demo access; other
+symbols require your own Twelve Data key. Quotes can be delayed, unavailable,
+or rate-limited and are not financial advice.
+
+### Why is camera, scanning, steps, or haptics unavailable?
+
+Still-photo capture, VisionKit QR/barcode/text scanning, pedometer data, and
+meaningful haptic feedback require supported physical iPhone hardware. They may
+show an unavailable message in Simulator or on unsupported devices. Camera,
+location, and motion actions also require the matching iOS permission. MakeYour
+requests access only after you tap the action; you can review or change access
+in iOS Settings.
+
+### What does a device action read or share?
+
+- Camera and scanning run only in the foreground. Scanned URLs are displayed as
+  inert text and are never opened automatically.
+- Current location returns one coordinate; it does not start background or
+  continuous tracking.
+- Apple's contact picker returns only the contact you select. MakeYour does not
+  browse the address book.
+- Document import reads one selected UTF-8 text, JSON, or CSV file up to 256 KB
+  and stores at most 2,000 characters.
+- Pedometer reads today's aggregate step count once, not raw/background motion.
+- Share presents Apple's destination chooser. Clipboard access writes configured
+  text only after a tap and never reads the clipboard. Haptics collect no data.
+
 ### How do I remove my data?
 
 Long-press an app in My Apps and choose Delete to remove its document and
-project images. Remove the API key from AI Key. Deleting MakeYour from the iPhone
-removes all remaining local data.
+project-local runtime state and images, plus its pending and delivered local
+notifications. Remove the OpenAI key from AI Key and any Twelve Data key from
+the market provider-key screen before uninstalling. Deleting MakeYour from the
+iPhone removes its sandboxed projects, assets, caches, and runtime state, but
+iOS does not guarantee that uninstalling removes Keychain items.
 
 ### Does AI see my photos or records?
 
-No. Mini-app AI helpers accept text entered into that helper. The exact task and
+No. Tiny-app AI helpers accept text entered into that helper. The exact task and
 text appear on a confirmation screen before every request. Photos, records,
-other apps, and device data are not attached.
+scans, coordinates, contacts, imported files, step counts, other apps, and
+general device data are not attached automatically.
 
 ## When contacting support
 
-Include the MakeYour version, iOS version, the feature being used, and the exact
-error text. Never send an API key, private prompt, selected image, or personal
-record in a support message.
+Include the MakeYour version and build, iOS version, device model, the feature
+being used, whether it was Simulator or a physical iPhone, and the exact error
+text. Never send an API key, private prompt, selected/captured image, scanned
+value, coordinate, contact, imported text, or personal record in a support
+message.
