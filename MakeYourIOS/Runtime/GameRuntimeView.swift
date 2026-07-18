@@ -19,7 +19,8 @@ struct GameRuntimeView: View {
             levelSeed: 42,
             playerName: "Player",
             collectibleName: "Token",
-            haptics: true
+            haptics: true,
+            program: nil
         )
     }
 
@@ -30,6 +31,23 @@ struct GameRuntimeView: View {
             SnakeRuntimeGame(projectID: projectID, node: node, spec: spec, tint: tint)
         case .platformer:
             PlatformerRuntimeGame(projectID: projectID, node: node, spec: spec, tint: tint)
+        case .custom:
+            if let program = spec.program,
+               let compiled = try? TinyGameCompiler().compile(program) {
+                TinyGameRuntimeView(
+                    title: node.title.isEmpty ? "Tiny game" : node.title,
+                    program: compiled,
+                    palette: spec.palette,
+                    hapticsEnabled: spec.haptics
+                )
+                .id(program)
+            } else {
+                ContentUnavailableView(
+                    "Game unavailable",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text("This tiny game contains an invalid or unsupported rule set.")
+                )
+            }
         }
     }
 }

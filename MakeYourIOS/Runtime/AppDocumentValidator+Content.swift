@@ -40,6 +40,7 @@ extension AppDocumentValidator {
         case .ledger: try validateLedger(node)
         case .game: try validateGame(node)
         case .deviceInput: try validateDeviceInput(node)
+        case .control: break
         default: break
         }
     }
@@ -134,6 +135,17 @@ extension AppDocumentValidator {
               game.collectibleName.count <= 30 else {
             throw AppDocumentValidationError.invalidComponentConfiguration(.game)
         }
+        switch game.kind {
+        case .snake, .platformer:
+            guard game.program == nil else {
+                throw AppDocumentValidationError.invalidComponentConfiguration(.game)
+            }
+        case .custom:
+            guard let program = game.program,
+                  (try? TinyGameCompiler().compile(program)) != nil else {
+                throw AppDocumentValidationError.invalidComponentConfiguration(.game)
+            }
+        }
     }
 
     private func validateDeviceInput(_ node: ComponentNode) throws {
@@ -157,7 +169,8 @@ extension AppDocumentValidator {
             (.marketWatch, node.marketWatch != nil),
             (.ledger, node.ledger != nil),
             (.game, node.game != nil),
-            (.deviceInput, node.deviceInput != nil)
+            (.deviceInput, node.deviceInput != nil),
+            (.control, node.control != nil)
         ]
         let configuredKinds = configurations.compactMap { $0.1 ? $0.0 : nil }
         let specializedKinds = Set(configurations.map { $0.0 })

@@ -59,7 +59,7 @@ enum PageLayoutEngine {
         guard wantsCompactWidth else { return false }
 
         switch node.kind {
-        case .text, .metric, .infoBanner, .image:
+        case .text, .metric, .infoBanner, .image, .control, .button:
             return true
         default:
             return false

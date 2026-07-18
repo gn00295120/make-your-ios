@@ -37,6 +37,7 @@ enum RendererCatalog {
         .ledger: [.automatic, .compact, .cards, .dense],
         .game: [.automatic, .framed, .fullBleed, .immersive],
         .deviceInput: [.automatic, .compact, .cards, .framed],
+        .control: [.automatic, .compact, .framed],
         .divider: [.automatic, .compact]
     ]
 }

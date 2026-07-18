@@ -122,6 +122,41 @@ summary before the user applies it.
 The complete token and renderer contract lives in
 [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 
+## Composable behavior graph
+
+`RuntimeLogic` is the safe behavior layer between static components and
+specialized host features. It provides three typed scalar values (`text`,
+`number`, and `boolean`), session or project persistence, and finite ordered
+events. Inputs, pickers, controls, AI results, and device results can write a
+binding; text, metrics, banners, buttons, and progress views can render the same
+state through bindings or bounded `{{state-key}}` templates.
+
+Events may run only a validated list of steps: set state, navigate, show an
+in-app message, schedule a local notification, or play a haptic. Expressions are
+flat literal/state operands with copy, concatenate, add, subtract, multiply,
+divide, minimum, and maximum operations. Conditions provide typed equality,
+numeric ordering, and empty/non-empty checks. There are no event-emitting steps,
+loops, timers, recursion, callbacks, or dynamic dispatch, so generated logic
+cannot create an unbounded execution chain.
+
+The engine calculates the complete state transaction before committing it. A
+missing reference, invalid type, divide-by-zero, excessive magnitude, or storage
+failure leaves the prior state active. The validator separately limits state,
+events, steps, operands, string lengths, notification delays, and exact host
+capabilities.
+
+Custom games use a sibling `TinyGameProgram` rather than the general behavior
+graph. Its compiler validates world dimensions, entity and rule references,
+reachability, controls, spawn/effect/contact budgets, and full initial bounds.
+The deterministic fixed-step engine owns movement, contact-begin detection,
+edge-crossing events, ordered rule effects, feedback, terminal states, pause,
+restart, and seeded spawning. This supports original top-down collectors,
+dodgers, and simple shooters; solid-platform jumping continues to use the
+polished platformer preset.
+
+The exact shipping vocabulary and extension rules live in
+[RUNTIME_BLOCKS.md](RUNTIME_BLOCKS.md).
+
 ## Private media boundary
 
 Generated image nodes and canvas backgrounds contain a semantic binding and
@@ -200,17 +235,21 @@ and small credentials are stored using
 - App Library: create, duplicate, switch, and delete private projects.
 - Builder: prompt, deterministic preview, and generated-document replacement.
 - Runtime: hero, text, metric, input, picker, button, checklist, task list,
+  typed state, toggle/slider/stepper/progress controls, finite calculations and
+  conditions, ordered events,
   currency converter, generic record collections, a typed ledger,
   fixed-provider exchange/news/market views, playable Snake and original
-  platform games, image slots, camera and code/text scanning, one-time location,
+  platform games, bounded custom rule-driven games, image slots, camera and code/text scanning, one-time location,
   contact/file pickers, pedometer, share/clipboard/haptics, text-only AI
   assistants, banners, dividers, navigation, page layouts, and presentation tokens.
 - BYOK: OpenAI Responses API; editable model; device-only Keychain storage.
-- Samples: live news, a market watchlist, a personal ledger, original platform
-  and Snake games, a camera/QR capture kit, Live FX Watch, Use It First, an
+- Samples: a composable hydration tracker, a custom Star Garden game, live news,
+  a market watchlist, a personal ledger, original platform and Snake games, a
+  camera/QR capture kit, Live FX Watch, Use It First, an
   editorial currency converter, a local task reminder, and a photo-and-AI
   journal starter.
 
-Future releases should add safe expression ASTs, versioned JSON Patch editing,
-per-project SQLite namespaces, automated accessibility and snapshot checks, and
-additional narrowly reviewed fixed-provider capabilities.
+Future releases should add typed date/list/object state, safe collection queries
+and mutations, versioned JSON Patch editing, per-project SQLite namespaces,
+automated accessibility and snapshot checks, and additional narrowly reviewed
+fixed-provider capabilities.

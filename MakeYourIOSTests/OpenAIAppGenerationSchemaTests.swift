@@ -62,18 +62,53 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
         XCTAssertTrue(componentKinds.contains(ComponentKind.ledger.rawValue))
         XCTAssertTrue(componentKinds.contains(ComponentKind.game.rawValue))
         XCTAssertTrue(componentKinds.contains(ComponentKind.deviceInput.rawValue))
+        XCTAssertTrue(componentKinds.contains(ComponentKind.control.rawValue))
 
         try assertRendererSchema(in: root)
+        try assertLogicSchema(in: root)
 
         for propertyName in [
             "image", "collection", "liveData", "newsFeed", "marketWatch", "ledger", "game",
-            "deviceInput"
+            "deviceInput", "control"
         ] {
             let property = try XCTUnwrap(
                 try findProperty(named: propertyName, in: root) as? [String: Any]
             )
             XCTAssertEqual(Set(property["type"] as? [String] ?? []), Set(["object", "null"]))
         }
+
+        let gameSchema = try XCTUnwrap(
+            try findProperty(named: "game", in: root) as? [String: Any]
+        )
+        let gameProperties = try XCTUnwrap(gameSchema["properties"] as? [String: Any])
+        let program = try XCTUnwrap(gameProperties["program"] as? [String: Any])
+        XCTAssertEqual(Set(program["type"] as? [String] ?? []), Set(["object", "null"]))
+        let programProperties = try XCTUnwrap(program["properties"] as? [String: Any])
+        XCTAssertNotNil(programProperties["world"])
+        XCTAssertNotNil(programProperties["templates"])
+        XCTAssertNotNil(programProperties["rules"])
+        XCTAssertNotNil(programProperties["controls"])
+    }
+
+    private func assertLogicSchema(in root: [String: Any]) throws {
+        let properties = try XCTUnwrap(root["properties"] as? [String: Any])
+        let logic = try XCTUnwrap(properties["logic"] as? [String: Any])
+        XCTAssertEqual(Set(logic["type"] as? [String] ?? []), Set(["object", "null"]))
+
+        let nodeEvents = try XCTUnwrap(try findProperty(named: "events", in: root) as? [String: Any])
+        XCTAssertEqual(nodeEvents["type"] as? String, "array")
+        let valueBinding = try XCTUnwrap(
+            try findProperty(named: "valueBinding", in: root) as? [String: Any]
+        )
+        XCTAssertEqual(valueBinding["type"] as? String, "string")
+
+        let stepKinds = findEnums(named: "kind", in: nodeEvents)
+            .first(where: { $0.contains(RuntimeStepKind.setState.rawValue) })
+        XCTAssertEqual(Set(try XCTUnwrap(stepKinds)), Set(RuntimeStepKind.allCases.map(\.rawValue)))
+        let operations = try XCTUnwrap(findEnums(named: "operation", in: nodeEvents).first)
+        XCTAssertEqual(Set(operations), Set(RuntimeExpressionOperation.allCases.map(\.rawValue)))
+        let comparisons = try XCTUnwrap(findEnums(named: "comparison", in: nodeEvents).first)
+        XCTAssertEqual(Set(comparisons), Set(RuntimeComparison.allCases.map(\.rawValue)))
     }
 
     private func assertThemeSchema(in properties: [String: Any]) throws {

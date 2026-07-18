@@ -4,13 +4,17 @@ struct InputNodeView: View {
     let node: ComponentNode
     let tint: AppTint
     @Bindable var session: RuntimeSessionState
+    let onValueChanged: () -> Void
 
     @Environment(\.runtimeDesign) private var design
 
     private var value: Binding<String> {
         Binding(
             get: { session.binding(for: node.binding, fallback: node.value) },
-            set: { session.set($0, for: node.binding) }
+            set: {
+                session.set($0, for: node.binding)
+                onValueChanged()
+            }
         )
     }
 
@@ -55,13 +59,17 @@ struct PickerNodeView: View {
     let node: ComponentNode
     let tint: AppTint
     @Bindable var session: RuntimeSessionState
+    let onValueChanged: () -> Void
 
     @Environment(\.runtimeDesign) private var design
 
     private var selection: Binding<String> {
         Binding(
             get: { session.binding(for: node.binding, fallback: node.options.first ?? "") },
-            set: { session.set($0, for: node.binding) }
+            set: {
+                session.set($0, for: node.binding)
+                onValueChanged()
+            }
         )
     }
 
@@ -108,6 +116,7 @@ struct PickerNodeView: View {
 
 struct ActionButtonNodeView: View {
     let node: ComponentNode
+    @Bindable var session: RuntimeSessionState
     let action: () -> Void
 
     @Environment(\.runtimeDesign) private var design
@@ -116,37 +125,62 @@ struct ActionButtonNodeView: View {
         RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .button)
     }
 
-    @ViewBuilder
     var body: some View {
-        switch variant {
-        case .outlinedAction:
-            Button(action: action) { label }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.roundedRectangle(radius: design.controlCornerRadius))
-                .tint(design.accent)
-        case .softAction:
-            Button(action: action) { label }
-                .buttonStyle(.plain)
-                .foregroundStyle(design.accent)
-                .background(design.accent.opacity(0.12), in: controlShape)
-                .overlay {
-                    if design.differentiateWithoutColor {
-                        controlShape.stroke(design.accent, lineWidth: max(1, design.borderWidth))
+        Group {
+            switch variant {
+            case .outlinedAction:
+                Button(action: action) { label }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.roundedRectangle(radius: design.controlCornerRadius))
+                    .tint(design.accent)
+            case .softAction:
+                Button(action: action) { label }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(design.accent)
+                    .background(design.accent.opacity(0.12), in: controlShape)
+                    .overlay {
+                        if design.differentiateWithoutColor {
+                            controlShape.stroke(design.accent, lineWidth: max(1, design.borderWidth))
+                        }
                     }
-                }
-        default:
-            Button(action: action) { label }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.roundedRectangle(radius: design.controlCornerRadius))
-                .tint(design.accent)
+            default:
+                Button(action: action) { label }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.roundedRectangle(radius: design.controlCornerRadius))
+                    .tint(design.accent)
+            }
         }
+        .accessibilityIdentifier("runtime.node.\(node.id)")
     }
 
     private var label: some View {
-        Label(node.title, systemImage: node.symbol.isEmpty ? "arrow.right" : node.symbol)
+        HStack(spacing: 8) {
+            Image(systemName: node.symbol.isEmpty ? "arrow.right" : node.symbol)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(resolvedLabel)
+                if !resolvedSubtitle.isEmpty {
+                    Text(resolvedSubtitle)
+                        .font(design.captionFont)
+                        .opacity(0.82)
+                }
+            }
+        }
             .font(variant == .compact ? design.captionFont.weight(.semibold) : .headline)
             .frame(maxWidth: .infinity)
             .padding(.vertical, variant == .compact ? 10 : 14)
+    }
+
+    private var resolvedLabel: String {
+        if let valueBinding = node.valueBinding, !valueBinding.isEmpty {
+            return session.binding(for: valueBinding, fallback: session.resolveTemplate(node.value))
+        }
+        let title = session.resolveTemplate(node.title)
+        guard title.isEmpty else { return title }
+        return session.resolveTemplate(node.value)
+    }
+
+    private var resolvedSubtitle: String {
+        session.resolveTemplate(node.subtitle)
     }
 
     private var controlShape: RoundedRectangle {

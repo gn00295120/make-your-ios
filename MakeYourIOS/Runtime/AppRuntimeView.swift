@@ -1,6 +1,8 @@
 import SwiftUI
+import UIKit
 import UserNotifications
 
+// swiftlint:disable:next type_body_length
 struct AppRuntimeView: View {
     let projectID: UUID
     let document: AppDocument
@@ -13,12 +15,22 @@ struct AppRuntimeView: View {
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     @State private var selectedPageID: String
     @State private var session: RuntimeSessionState
+    private let logicEngine: RuntimeLogicEngine
 
     init(projectID: UUID, document: AppDocument) {
         self.projectID = projectID
         self.document = document
+        let logicEngine = RuntimeLogicEngine(logic: document.logic)
+        self.logicEngine = logicEngine
+        let initialValues = document.initialState.merging(logicEngine.initialValues) { _, logicValue in
+            logicValue
+        }
         _selectedPageID = State(initialValue: document.startPageID)
-        _session = State(initialValue: RuntimeSessionState(initialValues: document.initialState))
+        _session = State(initialValue: RuntimeSessionState(
+            initialValues: initialValues,
+            projectID: projectID,
+            persistentKeys: logicEngine.persistentKeys
+        ))
     }
 
     private var selectedPage: AppPage {
@@ -64,7 +76,8 @@ struct AppRuntimeView: View {
                         theme: theme,
                         capabilities: document.capabilities,
                         session: session,
-                        onNavigate: selectPage
+                        onEvent: perform,
+                        onLegacyAction: performLegacy
                     )
                 }
 
@@ -173,6 +186,112 @@ struct AppRuntimeView: View {
             selectedPageID = target
         }
     }
+
+    private func perform(_ trigger: RuntimeEventTrigger, source node: ComponentNode) {
+        let matchingEvents = (node.events ?? []).filter { $0.trigger == trigger }
+        guard !matchingEvents.isEmpty else { return }
+        let event = RuntimeEvent(
+            trigger: trigger,
+            steps: matchingEvents.flatMap(\.steps)
+        )
+
+        do {
+            let execution = try logicEngine.execute(event: event, values: session.values)
+            try session.commit(execution.values)
+            perform(execution.effects, source: node)
+        } catch {
+            session.alertMessage = error.localizedDescription
+        }
+    }
+
+    private func performLegacy(_ action: RuntimeAction, source node: ComponentNode) {
+        switch action.type {
+        case .none:
+            break
+        case .navigate:
+            selectPage(action.target)
+        case .setValue:
+            session.set(action.value, for: action.target)
+        case .showMessage:
+            session.alertMessage = session.resolveTemplate(action.value)
+        case .scheduleNotification:
+            guard document.capabilities.contains(.localNotifications) else {
+                session.alertMessage = "This app has not requested notification access."
+                return
+            }
+            let minutes = max(1, min(Int(action.target) ?? 60, 10_080))
+            Task {
+                await scheduleNotification(
+                    delayMinutes: minutes,
+                    message: session.resolveTemplate(action.value),
+                    source: node
+                )
+            }
+        }
+    }
+
+    private func perform(_ effects: [RuntimeLogicEffect], source node: ComponentNode) {
+        for effect in effects {
+            switch effect {
+            case .navigate(let pageID):
+                selectPage(pageID)
+            case .message(let message):
+                session.alertMessage = session.resolveTemplate(message)
+            case .notification(let delayMinutes, let message):
+                guard document.capabilities.contains(.localNotifications) else {
+                    session.alertMessage = "This app has not requested notification access."
+                    continue
+                }
+                Task {
+                    await scheduleNotification(
+                        delayMinutes: delayMinutes,
+                        message: session.resolveTemplate(message),
+                        source: node
+                    )
+                }
+            case .haptic:
+                guard document.capabilities.contains(.haptics) else {
+                    session.alertMessage = "This app has not requested haptic access."
+                    continue
+                }
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            }
+        }
+    }
+
+    private func scheduleNotification(
+        delayMinutes: Int,
+        message: String,
+        source node: ComponentNode
+    ) async {
+        do {
+            let center = UNUserNotificationCenter.current()
+            let granted = try await center.requestAuthorization(options: [.alert, .sound])
+            guard granted else {
+                session.alertMessage = "Notifications are turned off."
+                return
+            }
+
+            let content = UNMutableNotificationContent()
+            let title = session.resolveTemplate(node.title)
+            content.title = title.isEmpty ? "MakeYour reminder" : title
+            content.body = message.isEmpty ? "A reminder from your mini app." : message
+            content.sound = .default
+
+            let request = UNNotificationRequest(
+                identifier: "makeyour.action.\(projectID.uuidString).\(node.id)",
+                content: content,
+                trigger: UNTimeIntervalNotificationTrigger(
+                    timeInterval: TimeInterval(delayMinutes * 60),
+                    repeats: false
+                )
+            )
+            try await center.add(request)
+            session.alertMessage = "Reminder scheduled for \(delayMinutes) minutes from now."
+        } catch {
+            session.alertMessage = error.localizedDescription
+        }
+    }
 }
 
 struct ComponentRenderer: View {
@@ -182,7 +301,8 @@ struct ComponentRenderer: View {
     let theme: AppVisualTheme
     let capabilities: [AppCapability]
     @Bindable var session: RuntimeSessionState
-    let onNavigate: (String) -> Void
+    let onEvent: (RuntimeEventTrigger, ComponentNode) -> Void
+    let onLegacyAction: (RuntimeAction, ComponentNode) -> Void
 
     var body: some View {
         content
@@ -197,19 +317,35 @@ struct ComponentRenderer: View {
         case .sectionHeader:
             SectionHeaderNodeView(node: node)
         case .text:
-            TextNodeView(node: node)
+            TextNodeView(node: node, session: session)
         case .metric:
-            MetricNodeView(node: node, tint: tint)
+            MetricNodeView(node: node, tint: tint, session: session)
         case .textInput, .numberInput:
-            InputNodeView(node: node, tint: tint, session: session)
+            InputNodeView(
+                node: node,
+                tint: tint,
+                session: session,
+                onValueChanged: { onEvent(.valueChanged, node) }
+            )
         case .picker:
-            PickerNodeView(node: node, tint: tint, session: session)
+            PickerNodeView(
+                node: node,
+                tint: tint,
+                session: session,
+                onValueChanged: { onEvent(.valueChanged, node) }
+            )
         case .button:
-            ActionButtonNodeView(node: node) { perform(node.action) }
+            ActionButtonNodeView(node: node, session: session) {
+                if node.events?.isEmpty == false {
+                    onEvent(.tap, node)
+                } else {
+                    onLegacyAction(node.action, node)
+                }
+            }
         case .checklist:
             ChecklistNodeView(node: node, tint: tint, session: session)
         case .infoBanner:
-            InfoBannerNodeView(node: node, tint: tint)
+            InfoBannerNodeView(node: node, tint: tint, session: session)
         case .currencyConverter:
             CurrencyConverterRuntimeView(node: node, tint: tint)
         case .taskList:
@@ -217,7 +353,12 @@ struct ComponentRenderer: View {
         case .image:
             ImageNodeView(projectID: projectID, node: node, tint: tint, theme: theme)
         case .aiAssistant:
-            AITextRuntimeView(node: node, tint: tint)
+            AITextRuntimeView(
+                node: node,
+                tint: tint,
+                session: session,
+                onValueChanged: { onEvent(.valueChanged, node) }
+            )
         case .recordCollection:
             RecordCollectionRuntimeView(
                 projectID: projectID,
@@ -241,59 +382,17 @@ struct ComponentRenderer: View {
                 node: node,
                 tint: tint,
                 theme: theme,
-                session: session
+                session: session,
+                onValueChanged: { onEvent(.valueChanged, node) }
+            )
+        case .control:
+            RuntimeControlNodeView(
+                node: node,
+                session: session,
+                onValueChanged: { onEvent(.valueChanged, node) }
             )
         case .divider:
             Divider().padding(.vertical, 4)
-        }
-    }
-
-    private func perform(_ action: RuntimeAction) {
-        switch action.type {
-        case .none:
-            break
-        case .navigate:
-            onNavigate(action.target)
-        case .setValue:
-            session.set(action.value, for: action.target)
-        case .showMessage:
-            session.alertMessage = action.value
-        case .scheduleNotification:
-            guard capabilities.contains(.localNotifications) else {
-                session.alertMessage = "This app has not requested notification access."
-                return
-            }
-            Task { await scheduleNotification(action) }
-        }
-    }
-
-    private func scheduleNotification(_ action: RuntimeAction) async {
-        do {
-            let center = UNUserNotificationCenter.current()
-            let granted = try await center.requestAuthorization(options: [.alert, .sound])
-            guard granted else {
-                session.alertMessage = "Notifications are turned off."
-                return
-            }
-
-            let minutes = max(1, min(Int(action.target) ?? 60, 10_080))
-            let content = UNMutableNotificationContent()
-            content.title = node.title.isEmpty ? "MakeYour reminder" : node.title
-            content.body = action.value.isEmpty ? "A reminder from your mini app." : action.value
-            content.sound = .default
-
-            let request = UNNotificationRequest(
-                identifier: "makeyour.action.\(projectID.uuidString).\(node.id)",
-                content: content,
-                trigger: UNTimeIntervalNotificationTrigger(
-                    timeInterval: TimeInterval(minutes * 60),
-                    repeats: false
-                )
-            )
-            try await center.add(request)
-            session.alertMessage = "Reminder scheduled for \(minutes) minutes from now."
-        } catch {
-            session.alertMessage = error.localizedDescription
         }
     }
 }

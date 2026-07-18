@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 import SwiftUI
 
@@ -15,6 +16,7 @@ struct AppDocument: Codable, Hashable, Identifiable, Sendable {
     var startPageID: String
     var capabilities: [AppCapability]
     var initialState: [String: String]
+    var logic: RuntimeLogic?
     var theme: AppVisualTheme?
     var pages: [AppPage]
 
@@ -30,6 +32,7 @@ struct AppDocument: Codable, Hashable, Identifiable, Sendable {
         startPageID: String = "home",
         capabilities: [AppCapability] = [.localStorage],
         initialState: [String: String] = [:],
+        logic: RuntimeLogic? = nil,
         theme: AppVisualTheme? = nil,
         pages: [AppPage]
     ) {
@@ -44,6 +47,7 @@ struct AppDocument: Codable, Hashable, Identifiable, Sendable {
         self.startPageID = startPageID
         self.capabilities = capabilities
         self.initialState = initialState
+        self.logic = logic
         self.theme = theme
         self.pages = pages
     }
@@ -96,6 +100,9 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
     var options: [String]
     var items: [ComponentItem]
     var action: RuntimeAction
+    var valueBinding: String?
+    var events: [RuntimeEvent]?
+    var control: RuntimeControlSpec?
     var presentation: ComponentPresentation?
     var image: ImageSpec?
     var collection: RecordCollectionSpec?
@@ -118,6 +125,9 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         options: [String] = [],
         items: [ComponentItem] = [],
         action: RuntimeAction = .none,
+        valueBinding: String? = nil,
+        events: [RuntimeEvent]? = nil,
+        control: RuntimeControlSpec? = nil,
         presentation: ComponentPresentation? = nil,
         image: ImageSpec? = nil,
         collection: RecordCollectionSpec? = nil,
@@ -139,6 +149,9 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         self.options = options
         self.items = items
         self.action = action
+        self.valueBinding = valueBinding
+        self.events = events
+        self.control = control
         self.presentation = presentation
         self.image = image
         self.collection = collection
@@ -177,6 +190,7 @@ enum ComponentKind: String, Codable, CaseIterable, Hashable, Sendable {
     case ledger
     case game
     case deviceInput
+    case control
     case divider
 }
 
@@ -294,11 +308,13 @@ struct GameSpec: Codable, Hashable, Sendable {
     var playerName: String
     var collectibleName: String
     var haptics: Bool
+    var program: TinyGameProgram?
 }
 
 enum GameKind: String, Codable, CaseIterable, Hashable, Sendable {
     case snake
     case platformer
+    case custom
 }
 
 enum GameDifficulty: String, Codable, CaseIterable, Hashable, Sendable {

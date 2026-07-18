@@ -244,6 +244,8 @@ final class WorkspaceStore {
             ProjectNotificationStore.removeAll(projectID: project.id)
         }
         projects = [
+            WorkspaceProject(document: SampleDocuments.waterline),
+            WorkspaceProject(document: SampleDocuments.starGarden),
             WorkspaceProject(document: SampleDocuments.dailyBrief),
             WorkspaceProject(document: SampleDocuments.marketPocket),
             WorkspaceProject(document: SampleDocuments.pocketLedger),
@@ -309,6 +311,8 @@ final class WorkspaceStore {
     }
 
     private static let sampleDocuments = [
+        SampleDocuments.waterline,
+        SampleDocuments.starGarden,
         SampleDocuments.dailyBrief,
         SampleDocuments.marketPocket,
         SampleDocuments.pocketLedger,

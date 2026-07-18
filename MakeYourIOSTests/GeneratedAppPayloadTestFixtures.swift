@@ -28,6 +28,7 @@ enum GeneratedAppPayloadTestFixtures {
             capabilities: [],
             startPageID: "home",
             initialState: [],
+            logic: nil,
             pages: [
                 GeneratedAppPayload.Page(
                     id: "home",
@@ -56,6 +57,9 @@ enum GeneratedAppPayloadTestFixtures {
             options: ["USD", "TWD"],
             items: rateItems,
             action: action,
+            valueBinding: nil,
+            events: nil,
+            control: nil,
             presentation: design,
             image: image,
             collection: nil,
@@ -81,6 +85,9 @@ enum GeneratedAppPayloadTestFixtures {
             options: [],
             items: [],
             action: action,
+            valueBinding: nil,
+            events: nil,
+            control: nil,
             presentation: design,
             image: image,
             collection: GeneratedAppPayload.Collection(
@@ -118,6 +125,9 @@ enum GeneratedAppPayloadTestFixtures {
             options: [],
             items: [],
             action: action,
+            valueBinding: nil,
+            events: nil,
+            control: nil,
             presentation: design,
             image: image,
             collection: nil,

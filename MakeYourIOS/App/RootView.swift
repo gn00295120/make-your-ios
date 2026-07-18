@@ -81,6 +81,8 @@ struct RootView: View {
 
     private var demoDocument: AppDocument? {
         switch demoScreen {
+        case "waterline": SampleDocuments.waterline
+        case "star-garden": SampleDocuments.starGarden
         case "converter": SampleDocuments.quickConvert
         case "tasks": SampleDocuments.gentleTasks
         case "muse-journal": SampleDocuments.museJournal
@@ -143,7 +145,7 @@ struct RootView: View {
     }
 
     private static let demoScreenNames: Set<String> = [
-        "converter", "tasks", "muse-journal", "news", "market",
+        "waterline", "star-garden", "converter", "tasks", "muse-journal", "news", "market",
         "ledger", "platformer", "snake", "device"
     ]
 }

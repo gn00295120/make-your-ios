@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -270,6 +271,7 @@ struct SectionHeaderNodeView: View {
 
 struct TextNodeView: View {
     let node: ComponentNode
+    @Bindable var session: RuntimeSessionState
 
     @Environment(\.runtimeDesign) private var design
 
@@ -278,17 +280,25 @@ struct TextNodeView: View {
     }
 
     var body: some View {
-        Text(node.title.isEmpty ? node.value : node.title)
-            .font(variant == .editorial ? design.sectionFont : design.bodyFont)
-            .foregroundStyle(design.primaryForeground)
-            .lineSpacing(variant == .editorial ? 7 : (variant == .compact ? 1 : 4))
-            .multilineTextAlignment(textAlignment)
-            .frame(maxWidth: .infinity, alignment: frameAlignment)
-            .padding(variant == .framed ? design.componentPadding : 0)
-            .background(
-                variant == .framed ? design.surface : .clear,
-                in: RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
-            )
+        VStack(alignment: variant == .centered ? .center : .leading, spacing: 4) {
+            Text(primaryText)
+                .font(variant == .editorial ? design.sectionFont : design.bodyFont)
+                .foregroundStyle(design.primaryForeground)
+                .lineSpacing(variant == .editorial ? 7 : (variant == .compact ? 1 : 4))
+            if !resolvedSubtitle.isEmpty {
+                Text(resolvedSubtitle)
+                    .font(design.captionFont)
+                    .foregroundStyle(design.secondaryForeground)
+            }
+        }
+        .multilineTextAlignment(textAlignment)
+        .frame(maxWidth: .infinity, alignment: frameAlignment)
+        .padding(variant == .framed ? design.componentPadding : 0)
+        .background(
+            variant == .framed ? design.surface : .clear,
+            in: RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+        )
+        .accessibilityIdentifier("runtime.node.\(node.id)")
     }
 
     private var textAlignment: TextAlignment {
@@ -298,11 +308,34 @@ struct TextNodeView: View {
     private var frameAlignment: Alignment {
         variant == .centered ? .center : node.resolvedPresentation.alignment.frameAlignment
     }
+
+    private var resolvedTitle: String {
+        session.resolveTemplate(node.title)
+    }
+
+    private var resolvedSubtitle: String {
+        session.resolveTemplate(node.subtitle)
+    }
+
+    private var primaryText: String {
+        if node.valueBinding?.isEmpty == false {
+            return resolvedValue
+        }
+        return resolvedTitle.isEmpty ? resolvedValue : resolvedTitle
+    }
+
+    private var resolvedValue: String {
+        if let valueBinding = node.valueBinding, !valueBinding.isEmpty {
+            return session.binding(for: valueBinding, fallback: session.resolveTemplate(node.value))
+        }
+        return session.resolveTemplate(node.value)
+    }
 }
 
 struct MetricNodeView: View {
     let node: ComponentNode
     let tint: AppTint
+    @Bindable var session: RuntimeSessionState
 
     @Environment(\.runtimeDesign) private var design
 
@@ -336,17 +369,18 @@ struct MetricNodeView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(node.title)
-        .accessibilityValue(node.value)
+        .accessibilityLabel(resolvedTitle)
+        .accessibilityValue(resolvedValue)
+        .accessibilityIdentifier("runtime.node.\(node.id)")
     }
 
     private var compactMetric: some View {
         HStack(spacing: 10) {
-            Label(node.title, systemImage: node.symbol.isEmpty ? "chart.bar.fill" : node.symbol)
+            Label(resolvedTitle, systemImage: node.symbol.isEmpty ? "chart.bar.fill" : node.symbol)
                 .font(design.captionFont.weight(.semibold))
                 .foregroundStyle(design.accent)
             Spacer(minLength: 8)
-            Text(node.value).font(design.sectionFont.monospacedDigit())
+            Text(resolvedValue).font(design.sectionFont.monospacedDigit())
         }
     }
 
@@ -355,7 +389,7 @@ struct MetricNodeView: View {
             metricContent(alignment: .leading)
             ProgressView(value: normalizedProgress)
                 .tint(design.accent)
-                .accessibilityLabel(node.title)
+                .accessibilityLabel(resolvedTitle)
                 .accessibilityValue(Text(normalizedProgress, format: .percent))
         }
     }
@@ -363,23 +397,38 @@ struct MetricNodeView: View {
     private func metricContent(alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 7) {
             if variant != .numberFirst {
-                Label(node.title, systemImage: node.symbol.isEmpty ? "chart.bar.fill" : node.symbol)
+                Label(resolvedTitle, systemImage: node.symbol.isEmpty ? "chart.bar.fill" : node.symbol)
                     .font(design.captionFont.weight(.semibold))
                     .foregroundStyle(design.accent)
             }
-            Text(node.value).font(design.displayFont.monospacedDigit())
+            Text(resolvedValue).font(design.displayFont.monospacedDigit())
             if variant == .numberFirst {
-                Text(node.title).font(design.captionFont.weight(.semibold)).foregroundStyle(design.accent)
+                Text(resolvedTitle).font(design.captionFont.weight(.semibold)).foregroundStyle(design.accent)
             }
-            if !node.subtitle.isEmpty {
-                Text(node.subtitle).font(design.captionFont).foregroundStyle(design.secondaryForeground)
+            if !resolvedSubtitle.isEmpty {
+                Text(resolvedSubtitle).font(design.captionFont).foregroundStyle(design.secondaryForeground)
             }
         }
         .frame(maxWidth: .infinity, alignment: alignment == .center ? .center : .leading)
     }
 
     private var normalizedProgress: Double {
-        let value = Double(node.value) ?? 0
+        let value = Double(resolvedValue) ?? 0
         return min(max(value > 1 ? value / 100 : value, 0), 1)
+    }
+
+    private var resolvedTitle: String {
+        session.resolveTemplate(node.title)
+    }
+
+    private var resolvedSubtitle: String {
+        session.resolveTemplate(node.subtitle)
+    }
+
+    private var resolvedValue: String {
+        if let valueBinding = node.valueBinding, !valueBinding.isEmpty {
+            return session.binding(for: valueBinding, fallback: session.resolveTemplate(node.value))
+        }
+        return session.resolveTemplate(node.value)
     }
 }

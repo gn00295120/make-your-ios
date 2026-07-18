@@ -6,7 +6,7 @@ final class LiveAIGenerationUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testSavedKeyGeneratesAndRunsValidatedTinyApp() throws {
+    func testSavedKeyGeneratesAndRunsComposableTinyApp() throws {
         guard ProcessInfo.processInfo.arguments.contains("-run-live-ai-e2e") else {
             throw XCTSkip("Run the dedicated MakeYourIOSLiveE2E scheme to authorize one live request.")
         }
@@ -26,9 +26,12 @@ final class LiveAIGenerationUITests: XCTestCase {
         XCTAssertTrue(prompt.waitForExistence(timeout: 10))
         prompt.tap()
         prompt.typeText(
-            "Create a one-page local app named E2E Proof. Add a centered hero titled Generated live "
-                + "and a text block saying GPT response validated. Use only local storage. "
-                + "Do not add network, AI, notification, photo, or device components."
+            "Create a one-page local app named E2E Counter. Declare a project-persisted number state "
+                + "with key total and initial value 0. Add a metric with exact ID total-metric, title "
+                + "Total, and valueBinding total. Add a button with exact ID add-one and title Add one. "
+                + "Its tap event must set total to total plus literal 1. Set its legacy action to none. "
+                + "Use only local storage and safe calculation. Do not add network, AI, notifications, "
+                + "photos, device components, games, or specialized data components."
         )
 
         let generateButton = app.buttons["builder.generate"]
@@ -41,11 +44,22 @@ final class LiveAIGenerationUITests: XCTestCase {
         }
 
         let hostMenu = app.buttons["runtime.host-menu"]
-        let generatedHero = app.staticTexts["Generated live"]
+        let addButton = app.buttons["runtime.node.add-one"]
+        let total = app.descendants(matching: .any)["runtime.node.total-metric"]
         let generationSucceeded = hostMenu.waitForExistence(timeout: 120)
-            && generatedHero.waitForExistence(timeout: 10)
-        attachScreenshot(app, name: generationSucceeded ? "live-generation-success" : "live-generation-failure")
+            && addButton.waitForExistence(timeout: 10)
+            && total.waitForExistence(timeout: 5)
+        if !generationSucceeded {
+            attachScreenshot(app, name: "live-generation-failure")
+        }
         XCTAssertTrue(generationSucceeded, visibleFailure(in: app))
+
+        XCTAssertEqual(total.value as? String, "0")
+        addButton.tap()
+        let updatedValue = NSPredicate(format: "value == %@", "1")
+        let expectation = XCTNSPredicateExpectation(predicate: updatedValue, object: total)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
+        attachScreenshot(app, name: "live-generation-success")
     }
 
     private func visibleFailure(in app: XCUIApplication) -> String {

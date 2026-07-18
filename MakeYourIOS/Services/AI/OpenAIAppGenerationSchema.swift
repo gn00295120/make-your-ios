@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension OpenAIAppGenerationClient {
@@ -224,11 +225,12 @@ extension OpenAIAppGenerationClient {
                 "levelSeed": integer,
                 "playerName": string,
                 "collectibleName": string,
-                "haptics": boolean
+                "haptics": boolean,
+                "program": nullableObject(Self.tinyGameProgramSchema)
             ],
             "required": [
                 "kind", "difficulty", "palette", "targetScore", "levelSeed", "playerName",
-                "collectibleName", "haptics"
+                "collectibleName", "haptics", "program"
             ]
         ]
         let deviceInput: [String: Any] = [
@@ -265,6 +267,72 @@ extension OpenAIAppGenerationClient {
             ],
             "required": ["type", "target", "value"]
         ]
+        let operand: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "source": ["type": "string", "enum": RuntimeOperandSource.allCases.map(\.rawValue)],
+                "value": string
+            ],
+            "required": ["source", "value"]
+        ]
+        let expression: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "operation": [
+                    "type": "string",
+                    "enum": RuntimeExpressionOperation.allCases.map(\.rawValue)
+                ],
+                "operands": ["type": "array", "items": operand]
+            ],
+            "required": ["operation", "operands"]
+        ]
+        let condition: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "lhs": operand,
+                "comparison": [
+                    "type": "string",
+                    "enum": RuntimeComparison.allCases.map(\.rawValue)
+                ],
+                "rhs": operand
+            ],
+            "required": ["lhs", "comparison", "rhs"]
+        ]
+        let step: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "kind": ["type": "string", "enum": RuntimeStepKind.allCases.map(\.rawValue)],
+                "target": string,
+                "expression": expression,
+                "condition": nullableObject(condition)
+            ],
+            "required": ["kind", "target", "expression", "condition"]
+        ]
+        let event: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "trigger": ["type": "string", "enum": RuntimeEventTrigger.allCases.map(\.rawValue)],
+                "steps": ["type": "array", "items": step]
+            ],
+            "required": ["trigger", "steps"]
+        ]
+        let control: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "kind": ["type": "string", "enum": RuntimeControlKind.allCases.map(\.rawValue)],
+                "minimum": number,
+                "maximum": number,
+                "step": number,
+                "unit": string
+            ],
+            "required": ["kind", "minimum", "maximum", "step", "unit"]
+        ]
         let node: [String: Any] = [
             "type": "object",
             "additionalProperties": false,
@@ -280,6 +348,9 @@ extension OpenAIAppGenerationClient {
                 "options": stringArray,
                 "items": ["type": "array", "items": item],
                 "action": action,
+                "valueBinding": string,
+                "events": ["type": "array", "items": event],
+                "control": nullableObject(control),
                 "presentation": nodeDesign,
                 "image": nullableObject(image),
                 "collection": nullableObject(collection),
@@ -293,7 +364,8 @@ extension OpenAIAppGenerationClient {
             "required": [
                 "id", "kind", "title", "subtitle", "symbol", "value",
                 "placeholder", "binding", "options", "items", "action",
-                "presentation", "image", "collection", "liveData", "newsFeed",
+                "valueBinding", "events", "control", "presentation", "image", "collection",
+                "liveData", "newsFeed",
                 "marketWatch", "ledger", "game", "deviceInput"
             ]
         ]
@@ -317,6 +389,28 @@ extension OpenAIAppGenerationClient {
             ],
             "required": ["key", "value"]
         ]
+        let stateDefinition: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "key": string,
+                "type": ["type": "string", "enum": RuntimeValueType.allCases.map(\.rawValue)],
+                "persistence": [
+                    "type": "string",
+                    "enum": RuntimePersistence.allCases.map(\.rawValue)
+                ],
+                "initialValue": string
+            ],
+            "required": ["key", "type", "persistence", "initialValue"]
+        ]
+        let logic: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "state": ["type": "array", "items": stateDefinition]
+            ],
+            "required": ["state"]
+        ]
 
         return [
             "type": "object",
@@ -333,11 +427,12 @@ extension OpenAIAppGenerationClient {
                 ],
                 "startPageID": string,
                 "initialState": ["type": "array", "items": stateEntry],
+                "logic": nullableObject(logic),
                 "pages": ["type": "array", "items": page]
             ],
             "required": [
                 "name", "summary", "symbol", "tint", "theme", "capabilities",
-                "startPageID", "initialState", "pages"
+                "startPageID", "initialState", "logic", "pages"
             ]
         ]
     }

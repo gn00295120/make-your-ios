@@ -8,6 +8,8 @@ struct AITextRuntimeView: View {
 
     let node: ComponentNode
     let tint: AppTint
+    @Bindable var session: RuntimeSessionState
+    let onValueChanged: () -> Void
 
     @Environment(AISettingsStore.self) private var aiSettings
     @Environment(\.runtimeDesign) private var design
@@ -182,11 +184,16 @@ struct AITextRuntimeView: View {
         Task {
             do {
                 let config = try aiSettings.runtimeConnectionConfig()
-                output = try await client.complete(
+                let completion = try await client.complete(
                     input: capturedInput,
                     instructions: instructions,
                     config: config
                 )
+                output = completion
+                if !node.binding.isEmpty {
+                    session.set(completion, for: node.binding)
+                    onValueChanged()
+                }
             } catch {
                 errorMessage = error.localizedDescription
             }

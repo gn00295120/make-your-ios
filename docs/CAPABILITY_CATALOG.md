@@ -17,8 +17,8 @@ declarations.
 
 | Capability | Current host behavior | Boundary |
 | --- | --- | --- |
-| `storage.local` | Persists validated project state and project assets | One app sandbox; no access to another tiny app or arbitrary files |
-| `calculation.safe` | Runs host-defined calculations | No Swift, scripts, arbitrary expressions, or executable output |
+| `storage.local` | Persists validated scalar state, specialized project data, and project assets | One app sandbox; no access to another tiny app or arbitrary files |
+| `calculation.safe` | Runs bounded decimal arithmetic, comparisons, and ordered state transactions | No Swift, scripts, loops, arbitrary expressions, or executable output |
 | `notifications.scheduleLocal` | Schedules reviewed local reminders | User action and notification permission; no remote push or silent background work |
 | `photo.pick` | Imports a user-selected photo through the system picker | Cannot enumerate the photo library; normalized project-local image only |
 | `camera.capture` | Presents foreground still-photo capture | Starts after a tap and camera permission; no hidden or background capture |
@@ -46,6 +46,25 @@ News search, topic filtering, and bookmarks run locally. Market watchlists,
 cached results, ledgers, and game state are also local. Provider responses can
 be delayed, unavailable, or subject to provider limits; none are represented as
 guaranteed real-time trading data.
+
+## Runtime blocks are not permissions
+
+Presentation and behavior primitives do not each create a new privacy
+capability. A generated app can combine text/number/boolean state, bindings,
+templates, text and number input, pickers, buttons, toggles, sliders, steppers,
+progress, conditions, calculations, page navigation, and in-app messages without
+requesting a new Apple framework permission. Project persistence derives
+`storage.local`; arithmetic derives `calculation.safe`; notification and haptic
+steps derive their corresponding reviewed capabilities.
+
+Custom game worlds, entity templates, controls, rules, HUD, and deterministic
+simulation are also host-owned local blocks. They use `storage.local` only when
+the game persists host-managed results and `haptics.play` only when feedback is
+enabled. They never grant arbitrary drawing code, scripts, downloaded assets,
+network multiplayer, ads, purchases, or background execution.
+
+See [RUNTIME_BLOCKS.md](RUNTIME_BLOCKS.md) for the complete non-permission
+vocabulary and its current limits.
 
 ## The 11 current device actions
 

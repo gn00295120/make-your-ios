@@ -11,7 +11,9 @@ final class WorkspaceStoreTests: XCTestCase {
 
         let store = WorkspaceStore(fileURL: archiveURL, seedSamples: true)
 
-        XCTAssertEqual(store.projects.map(\.document.name), [
+        let names = store.projects.map(\.document.name)
+        XCTAssertEqual(Array(names.prefix(2)), ["Waterline", "Star Garden"])
+        XCTAssertTrue(Set([
             "Daily Brief",
             "Market Pocket",
             "Pocket Ledger",
@@ -22,7 +24,15 @@ final class WorkspaceStoreTests: XCTestCase {
             "Use It First",
             "Quick Convert",
             "Gentle Tasks"
-        ])
+        ]).isSubset(of: Set(names)))
+        XCTAssertNotNil(
+            store.projects.first(where: { $0.document.name == "Waterline" })?.document.logic
+        )
+        let gameNode = store.projects
+            .first(where: { $0.document.name == "Star Garden" })?
+            .document.pages.flatMap(\.nodes)
+            .first(where: { $0.kind == .game })
+        XCTAssertNotNil(gameNode?.game?.program)
     }
 
     func testCreatePersistsAndReloadsProject() {

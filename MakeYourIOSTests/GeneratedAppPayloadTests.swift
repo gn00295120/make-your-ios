@@ -1,6 +1,7 @@
 import XCTest
 @testable import MakeYourIOS
 
+// swiftlint:disable:next type_body_length
 final class GeneratedAppPayloadTests: XCTestCase {
     private let styledPayloadJSON = """
     {
@@ -175,6 +176,119 @@ final class GeneratedAppPayloadTests: XCTestCase {
         XCTAssertEqual(hero.image?.resolvedMediaRole, .hero)
         XCTAssertEqual(hero.resolvedPresentation.variant, .fullBleed)
         XCTAssertTrue(document.capabilities.contains(.photoPicker))
+        XCTAssertNoThrow(try AppDocumentValidator().validate(document))
+    }
+
+    func testPayloadBuildsTypedLogicEventsAndControl() throws {
+        var payload = GeneratedAppPayloadTestFixtures.personalMoney()
+        payload.logic = GeneratedAppPayload.Logic(state: [
+            GeneratedAppPayload.StateDefinition(
+                key: "tip-percent",
+                type: "number",
+                persistence: "project",
+                initialValue: "15"
+            )
+        ])
+        payload.pages[0].nodes[0].kind = "control"
+        payload.pages[0].nodes[0].binding = "tip-percent"
+        payload.pages[0].nodes[0].valueBinding = "tip-percent"
+        payload.pages[0].nodes[0].events = [GeneratedAppPayload.Event(
+            trigger: "valueChanged",
+            steps: [GeneratedAppPayload.Step(
+                kind: "setState",
+                target: "tip-percent",
+                expression: GeneratedAppPayload.Expression(
+                    operation: "copy",
+                    operands: [GeneratedAppPayload.Operand(source: "state", value: "tip-percent")]
+                ),
+                condition: nil
+            )]
+        )]
+        payload.pages[0].nodes[0].control = GeneratedAppPayload.Control(
+            kind: "slider",
+            minimum: 0,
+            maximum: 30,
+            step: 1,
+            unit: "%"
+        )
+
+        let document = payload.makeDocument(existingID: UUID(), version: 5)
+        let node = document.pages[0].nodes[0]
+
+        XCTAssertEqual(document.logic?.state.first?.type, .number)
+        XCTAssertEqual(document.logic?.state.first?.persistence, .project)
+        XCTAssertEqual(node.kind, .control)
+        XCTAssertEqual(node.valueBinding, "tip-percent")
+        XCTAssertEqual(node.events?.first?.steps.first?.kind, .setState)
+        XCTAssertEqual(node.control?.kind, .slider)
+        XCTAssertNoThrow(try AppDocumentValidator().validate(document))
+    }
+
+    func testPayloadBuildsAValidatedCustomTinyGameProgram() throws {
+        var payload = GeneratedAppPayloadTestFixtures.personalMoney()
+        var node = payload.pages[0].nodes[0]
+        node.id = "generated-game"
+        node.kind = "game"
+        node.title = "Generated Star Garden"
+        node.game = GeneratedAppPayload.Game(
+            kind: "custom",
+            difficulty: "standard",
+            palette: "neon",
+            targetScore: 5,
+            levelSeed: 2_026,
+            playerName: "Glider",
+            collectibleName: "Star",
+            haptics: true,
+            program: SampleDocuments.starGardenProgram
+        )
+        payload.pages[0].nodes = [node]
+
+        let document = payload.makeDocument(existingID: UUID(), version: 6)
+        let game = try XCTUnwrap(document.pages[0].nodes[0].game)
+
+        XCTAssertEqual(game.kind, .custom)
+        XCTAssertEqual(game.program, SampleDocuments.starGardenProgram)
+        XCTAssertNoThrow(try TinyGameCompiler().compile(try XCTUnwrap(game.program)))
+        XCTAssertNoThrow(try AppDocumentValidator().validate(document))
+    }
+
+    func testSchemaShapedCustomGameJSONDecodesThroughTheFullPayloadBoundary() throws {
+        var root = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: Data(styledPayloadJSON.utf8)) as? [String: Any]
+        )
+        var pages = try XCTUnwrap(root["pages"] as? [[String: Any]])
+        var nodes = try XCTUnwrap(pages[0]["nodes"] as? [[String: Any]])
+        var gameNode = nodes[0]
+        root["logic"] = NSNull()
+        gameNode["valueBinding"] = ""
+        gameNode["events"] = []
+        gameNode["control"] = NSNull()
+        gameNode["image"] = NSNull()
+        let programData = try JSONEncoder().encode(SampleDocuments.starGardenProgram)
+        let program = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: programData) as? [String: Any]
+        )
+        gameNode["kind"] = "game"
+        gameNode["game"] = [
+            "kind": "custom",
+            "difficulty": "standard",
+            "palette": "neon",
+            "targetScore": 5,
+            "levelSeed": 2_026,
+            "playerName": "Glider",
+            "collectibleName": "Star",
+            "haptics": true,
+            "program": program
+        ]
+        nodes = [gameNode]
+        pages[0]["nodes"] = nodes
+        root["pages"] = pages
+
+        let payloadData = try JSONSerialization.data(withJSONObject: root)
+        let payload = try JSONDecoder().decode(GeneratedAppPayload.self, from: payloadData)
+        let document = payload.makeDocument(existingID: UUID(), version: 7)
+
+        XCTAssertEqual(document.pages[0].nodes[0].game?.program, SampleDocuments.starGardenProgram)
         XCTAssertNoThrow(try AppDocumentValidator().validate(document))
     }
 }

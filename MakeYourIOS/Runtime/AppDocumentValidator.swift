@@ -4,9 +4,14 @@ struct AppDocumentValidator: Sendable {
     static let maximumPages = 8
     static let maximumNodes = 120
     static let maximumItemsPerNode = 80
+    static let maximumStateDefinitions = 64
+    static let maximumEventsPerNode = 4
+    static let maximumStepsPerEvent = 8
+    static let maximumOperandsPerExpression = 8
 
     func validate(_ document: AppDocument) throws {
         try validateStructure(document)
+        try validateLogic(document)
         try validateDesign(document)
         try validateContent(document)
         try validateCapabilities(document)
@@ -156,6 +161,10 @@ enum AppDocumentValidationError: LocalizedError, Equatable {
     case unnecessaryCapability(AppCapability)
     case invalidVisualTheme
     case unsupportedVariant(ComponentKind, ComponentVariant)
+    case invalidRuntimeLogic
+    case invalidRuntimeReference(String)
+    case invalidRuntimeExpression
+    case runtimeLimitExceeded
 
     var errorDescription: String? {
         switch self {
@@ -187,6 +196,14 @@ enum AppDocumentValidationError: LocalizedError, Equatable {
             "The app theme contains an invalid color or background binding."
         case .unsupportedVariant(let kind, let variant):
             "The \(kind.rawValue) component does not support the \(variant.rawValue) renderer."
+        case .invalidRuntimeLogic:
+            "The tiny app logic contains an invalid state, event, or control definition."
+        case .invalidRuntimeReference(let key):
+            "The tiny app logic refers to missing state \(key)."
+        case .invalidRuntimeExpression:
+            "The tiny app logic contains an invalid or incompatible expression."
+        case .runtimeLimitExceeded:
+            "The tiny app logic exceeds the runtime complexity limits."
         }
     }
 }

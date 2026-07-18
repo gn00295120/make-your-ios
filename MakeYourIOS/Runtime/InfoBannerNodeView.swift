@@ -3,6 +3,7 @@ import SwiftUI
 struct InfoBannerNodeView: View {
     let node: ComponentNode
     let tint: AppTint
+    @Bindable var session: RuntimeSessionState
 
     @Environment(\.runtimeDesign) private var design
 
@@ -35,6 +36,7 @@ struct InfoBannerNodeView: View {
             }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("runtime.node.\(node.id)")
     }
 
     private var bannerIcon: some View {
@@ -46,11 +48,29 @@ struct InfoBannerNodeView: View {
 
     private var bannerCopy: some View {
         VStack(alignment: variant == .centered ? .center : .leading, spacing: 3) {
-            Text(node.title).font(design.captionFont.weight(.semibold))
-            if !node.subtitle.isEmpty {
-                Text(node.subtitle).font(design.captionFont).foregroundStyle(design.secondaryForeground)
+            Text(resolvedTitle).font(design.captionFont.weight(.semibold))
+            if !resolvedSubtitle.isEmpty {
+                Text(resolvedSubtitle).font(design.captionFont).foregroundStyle(design.secondaryForeground)
+            }
+            if !resolvedValue.isEmpty {
+                Text(resolvedValue).font(design.captionFont).foregroundStyle(design.secondaryForeground)
             }
         }
+    }
+
+    private var resolvedTitle: String {
+        session.resolveTemplate(node.title)
+    }
+
+    private var resolvedSubtitle: String {
+        session.resolveTemplate(node.subtitle)
+    }
+
+    private var resolvedValue: String {
+        if let valueBinding = node.valueBinding, !valueBinding.isEmpty {
+            return session.binding(for: valueBinding, fallback: session.resolveTemplate(node.value))
+        }
+        return session.resolveTemplate(node.value)
     }
 
     private var background: Color {

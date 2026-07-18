@@ -76,6 +76,7 @@ final class GeneratedCapabilityPayloadTests: XCTestCase {
             capabilities: declaredCapabilities,
             startPageID: "home",
             initialState: [],
+            logic: nil,
             pages: [
                 GeneratedAppPayload.Page(
                     id: "home",
@@ -112,6 +113,9 @@ final class GeneratedCapabilityPayloadTests: XCTestCase {
             options: [],
             items: [],
             action: GeneratedAppPayload.Action(type: "none", target: "", value: ""),
+            valueBinding: nil,
+            events: nil,
+            control: nil,
             presentation: GeneratedAppPayload.NodeDesign(
                 surface: "card",
                 span: "full",
@@ -202,7 +206,8 @@ final class GeneratedCapabilityPayloadTests: XCTestCase {
                 levelSeed: seed,
                 playerName: "Player",
                 collectibleName: "Spark",
-                haptics: true
+                haptics: true,
+                program: nil
             )
         )
     }

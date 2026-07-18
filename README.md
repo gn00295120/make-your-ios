@@ -10,9 +10,10 @@ renders it with a catalog of precompiled SwiftUI components and capabilities.
 
 ## Demo flow
 
-1. Open **My Apps** and switch between working examples for live news, market
-   quotes, personal accounting, an original platform game, Snake, camera/QR
-   capture, foreign exchange, task reminders, private photos, and reviewed AI.
+1. Open **My Apps** and switch between working examples for composable state and
+   calculations, a rule-driven original game, live news, market quotes, personal
+   accounting, a platform game, Snake, camera/QR capture, foreign exchange,
+   task reminders, private photos, and reviewed AI.
 2. Open **Builder**, choose **Full app** to create features or **Design only** to
    restyle an existing tiny app without changing its behavior, then review the
    generated result before applying it.
@@ -77,12 +78,13 @@ xcodebuild \
   test
 ```
 
-On July 18, 2026, the current source passed 109 unit tests, all three Design
-Studio UI paths (including Accessibility Extra Extra Extra Large), the gated live
-GPT-5.6 generation UI test, strict SwiftLint across 105 Swift files with zero
-violations, a generic Simulator build, and a signed generic iOS build. The live
-test created and opened a validated local-only app named `E2E Proof`; do not run
-that scheme repeatedly unless another billable end-to-end request is intended.
+On July 18, 2026, the current source passed 155 unit tests, six focused runtime
+UI paths, the Design Studio UI paths (including Accessibility Extra Extra Extra
+Large), the gated live GPT-5.6 generation UI test, strict SwiftLint across 128
+Swift files with zero violations, a generic Simulator build, and a signed generic
+iOS build. The live test creates, opens, and operates a validated stateful app;
+do not run that scheme repeatedly unless another billable end-to-end request is
+intended.
 
 ## Architecture
 
@@ -91,7 +93,7 @@ Natural-language request
         ↓
 OpenAI Responses API + strict JSON schema
         ↓
-AppDocument validator (untrusted input boundary)
+AppDocument validator + bounded logic/game compilers (untrusted input boundary)
         ↓
 Design Genome v2 + SwiftUI component runtime + capability broker
         ↓
@@ -129,6 +131,23 @@ rather than opened, and unsupported simulators or devices receive an honest
 fallback. Sharing leaves the app only through the system share sheet after the
 user chooses a destination; clipboard writes also require an explicit tap.
 
+## Composable runtime blocks
+
+Generated tiny apps are no longer limited to choosing a prebuilt card or one
+hard-coded vertical feature. The declarative runtime now includes typed text,
+number, and boolean state; session or per-project persistence; text/number input,
+pickers, toggles, sliders, steppers, progress, dynamic text/metrics/banners and
+buttons; ordered tap/value-change events; finite arithmetic and conditions;
+navigation, alerts, local reminders, and haptics. State templates let several
+native views share one value without downloading or executing code.
+
+Games use a separate bounded Tiny Game Program v2: deterministic fixed-step
+worlds, visual entity templates, spawns, touch controls, variables, timer/contact/
+boundary rules, ordered effects, HUD, win/loss, pause, and restart. The polished
+Snake and platformer presets remain available, while custom programs cover
+original top-down collectors, dodgers, and simple shooters. Every custom program
+is compiled and budget-checked before the runtime accepts it.
+
 ## AI inside generated apps
 
 Mini apps can include an allowlisted `aiAssistant` component. The component has
@@ -140,6 +159,8 @@ Responses API.
 
 See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) for the complete Design
 Genome v2 contract, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the product boundary,
+[docs/RUNTIME_BLOCKS.md](docs/RUNTIME_BLOCKS.md) for the composable behavior and
+game vocabulary,
 [docs/CAPABILITY_CATALOG.md](docs/CAPABILITY_CATALOG.md) for the exact shipping
 capabilities and hardware-limited roadmap, and
 [docs/DEVPOST_SUBMISSION.md](docs/DEVPOST_SUBMISSION.md) for the OpenAI Build

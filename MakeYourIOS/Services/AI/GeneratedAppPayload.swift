@@ -9,6 +9,7 @@ struct GeneratedAppPayload: Decodable {
     var capabilities: [String]
     var startPageID: String
     var initialState: [StateEntry]
+    var logic: Logic?
     var pages: [Page]
 
     func makeDocument(existingID: UUID, version: Int) -> AppDocument {
@@ -29,6 +30,7 @@ struct GeneratedAppPayload: Decodable {
             startPageID: safeStartPageID,
             capabilities: [],
             initialState: makeInitialState(),
+            logic: makeLogic(),
             theme: documentTheme,
             pages: documentPages.isEmpty ? SampleDocuments.blank.pages : documentPages
         )
@@ -78,6 +80,9 @@ private extension GeneratedAppPayload {
                 target: normalizedID(node.action.target, fallback: ""),
                 value: String(node.action.value.prefix(240))
             ),
+            valueBinding: normalizedOptionalID(node.valueBinding),
+            events: makeEvents(node.events),
+            control: kind == .control ? makeControl(node.control) : nil,
             presentation: makePresentation(node.presentation, for: kind),
             image: makeImage(node.image, for: kind, fallbackTitle: node.title),
             collection: kind == .recordCollection ? makeCollection(node.collection) : nil,
@@ -117,10 +122,12 @@ private extension GeneratedAppPayload {
         for kind: ComponentKind
     ) -> ComponentPresentation {
         let requestedSpan = ComponentSpan(rawValue: design.span) ?? .full
-        let supportsCompactSpan = [.text, .metric, .infoBanner, .image].contains(kind)
+        let supportsCompactSpan: Set<ComponentKind> = [
+            .text, .metric, .infoBanner, .image, .control, .button
+        ]
         return ComponentPresentation(
             surface: ComponentSurface(rawValue: design.surface) ?? .automatic,
-            span: supportsCompactSpan ? requestedSpan : .full,
+            span: supportsCompactSpan.contains(kind) ? requestedSpan : .full,
             alignment: ComponentAlignment(rawValue: design.alignment) ?? .leading,
             emphasis: ComponentEmphasis(rawValue: design.emphasis) ?? .regular,
             variant: RendererCatalog.normalizedVariant(
@@ -264,15 +271,17 @@ private extension GeneratedAppPayload {
     private func makeGame(_ game: Game?) -> GameSpec {
         let playerName = nonEmpty(game?.playerName, fallback: "Player")
         let collectibleName = nonEmpty(game?.collectibleName, fallback: "Token")
+        let kind = GameKind(rawValue: game?.kind ?? "") ?? .snake
         return GameSpec(
-            kind: GameKind(rawValue: game?.kind ?? "") ?? .snake,
+            kind: kind,
             difficulty: GameDifficulty(rawValue: game?.difficulty ?? "") ?? .standard,
             palette: GamePalette(rawValue: game?.palette ?? "") ?? .neon,
             targetScore: min(max(game?.targetScore ?? 10, 1), 100),
             levelSeed: min(max(game?.levelSeed ?? 42, 0), 999_999),
             playerName: String(playerName.prefix(30)),
             collectibleName: String(collectibleName.prefix(30)),
-            haptics: game?.haptics ?? true
+            haptics: game?.haptics ?? true,
+            program: kind == .custom ? game?.program : nil
         )
     }
 

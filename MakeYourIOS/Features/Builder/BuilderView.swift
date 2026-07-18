@@ -32,9 +32,9 @@ struct BuilderView: View {
         "Build a focused live news reader",
         "Create a stock watchlist with a chart",
         "Make a personal income and expense ledger",
-        "Design an original platform game",
-        "Add a camera and QR scanner toolkit",
-        "Make the design calmer and clearer"
+        "Build a hydration tracker with calculated progress",
+        "Design an original rule-driven arcade game",
+        "Add a camera and QR scanner toolkit"
     ]
 
     var body: some View {

@@ -34,6 +34,7 @@ enum AppCapabilityResolver {
         if nodes.contains(where: { $0.kind == .game && $0.game?.haptics == true }) {
             capabilities.insert(.haptics)
         }
+        capabilities.formUnion(runtimeStepCapabilities(for: nodes))
         if nodes.contains(where: {
             $0.kind == .liveDataList || $0.kind == .newsFeed || $0.kind == .marketWatch
         }) {
@@ -43,6 +44,30 @@ enum AppCapabilityResolver {
             if let kind = node.deviceInput?.kind {
                 capabilities.insert(kind.requiredCapability)
             }
+        }
+        return capabilities
+    }
+
+    private static func runtimeStepCapabilities(for nodes: [ComponentNode]) -> Set<AppCapability> {
+        let steps = nodes.flatMap { $0.events ?? [] }.flatMap(\.steps)
+        let arithmeticOperations: Set<RuntimeExpressionOperation> = [
+            .add, .subtract, .multiply, .divide, .min, .max
+        ]
+        let numericComparisons: Set<RuntimeComparison> = [
+            .less, .lessOrEqual, .greater, .greaterOrEqual
+        ]
+        var capabilities = Set<AppCapability>()
+        if steps.contains(where: { $0.kind == .scheduleNotification }) {
+            capabilities.insert(.localNotifications)
+        }
+        if steps.contains(where: { $0.kind == .playHaptic }) {
+            capabilities.insert(.haptics)
+        }
+        if steps.contains(where: {
+            arithmeticOperations.contains($0.expression.operation)
+                || $0.condition.map { numericComparisons.contains($0.comparison) } == true
+        }) {
+            capabilities.insert(.safeCalculation)
         }
         return capabilities
     }

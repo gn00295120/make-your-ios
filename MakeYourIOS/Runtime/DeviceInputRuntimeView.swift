@@ -14,6 +14,7 @@ struct DeviceInputRuntimeView: View {
     let tint: AppTint
     let theme: AppVisualTheme
     @Bindable var session: RuntimeSessionState
+    let onValueChanged: () -> Void
 
     @Environment(LocalAssetStore.self) private var assetStore
     @Environment(\.openURL) private var openURL
@@ -253,7 +254,8 @@ private extension DeviceInputRuntimeView {
     }
 
     private var actionPayload: String {
-        let configured = node.value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let configured = session.resolveTemplate(node.value)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         return configured.isEmpty
             ? session.binding(for: node.binding, fallback: "")
             : configured
@@ -359,6 +361,7 @@ private extension DeviceInputRuntimeView {
             assetRevision += 1
             result = spec.resultLabel
             session.set(result, for: node.binding)
+            onValueChanged()
             try stateStore.save(
                 StoredResult(value: result),
                 projectID: projectID,
@@ -376,6 +379,7 @@ private extension DeviceInputRuntimeView {
         guard !trimmed.isEmpty else { return }
         result = String(trimmed.prefix(2_000))
         session.set(result, for: node.binding)
+        onValueChanged()
         do {
             try stateStore.save(
                 StoredResult(value: result),

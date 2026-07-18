@@ -42,6 +42,53 @@ extension GeneratedAppPayload {
         var presentation: PageDesign
     }
 
+    struct Logic: Decodable {
+        var state: [StateDefinition]
+    }
+
+    struct StateDefinition: Decodable {
+        var key: String
+        var type: String
+        var persistence: String
+        var initialValue: String
+    }
+
+    struct Event: Decodable {
+        var trigger: String
+        var steps: [Step]
+    }
+
+    struct Step: Decodable {
+        var kind: String
+        var target: String
+        var expression: Expression
+        var condition: Condition?
+    }
+
+    struct Expression: Decodable {
+        var operation: String
+        var operands: [Operand]
+    }
+
+    struct Operand: Decodable {
+        var source: String
+        var value: String
+    }
+
+    struct Condition: Decodable {
+        var lhs: Operand
+        var comparison: String
+        var rhs: Operand
+    }
+
+    struct Control: Decodable {
+        var kind: String
+        var minimum: Double
+        var maximum: Double
+        var step: Double
+        var unit: String
+    }
+
     struct NodeDesign: Decodable {
         var surface: String
         var span: String
@@ -128,6 +175,7 @@ extension GeneratedAppPayload {
         var playerName: String
         var collectibleName: String
         var haptics: Bool
+        var program: TinyGameProgram?
     }
 
     struct DeviceInput: Decodable {
@@ -149,6 +197,9 @@ extension GeneratedAppPayload {
         var options: [String]
         var items: [Item]
         var action: Action
+        var valueBinding: String?
+        var events: [Event]?
+        var control: Control?
         var presentation: NodeDesign
         var image: Image?
         var collection: Collection?

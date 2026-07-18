@@ -169,7 +169,8 @@ extension SampleDocuments {
                             levelSeed: 2_026,
                             playerName: "Nova",
                             collectibleName: "Star",
-                            haptics: true
+                            haptics: true,
+                            program: nil
                         )
                     )
                 ],
@@ -213,7 +214,8 @@ extension SampleDocuments {
                             levelSeed: 86,
                             playerName: "Glow",
                             collectibleName: "Spark",
-                            haptics: true
+                            haptics: true,
+                            program: nil
                         )
                     )
                 ],

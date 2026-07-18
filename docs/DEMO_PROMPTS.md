@@ -76,7 +76,27 @@ Use amber tint, native preset, system appearance, system typography, plain backg
 Declare storage.local, camera.capture, camera.scanCode, location.current, contacts.pick, files.import, motion.pedometer, share.present, clipboard.write, and haptics.play. Do not declare photo.pick, http.request, notifications.scheduleLocal, or ai.complete. Do not imply that every action works in Simulator; camera capture, live scanning, pedometer, and meaningful haptic verification require supported physical hardware.
 ```
 
-## Demo 9 — Design-only restyle
+## Demo 9 — Waterline composable tracker
+
+```text
+Create a one-page hydration mini app named “Waterline” using the composable runtime rather than a specialized tracker. Declare project-persisted number state keys water with initial value 0 and goal with initial value 2000. Add a centered hero titled “A calmer way to hydrate”. Add a half-width metric titled “Today” with valueBinding water and subtitle “Daily goal · {{goal}} ml”. Add a half-width progress control titled “Daily progress” bound to water, minimum 0, maximum 2000, step 250, and unit ml. Add three half-width buttons: “Add 250 ml” sets water to water plus 250 and plays a haptic; “Remove 250 ml” first subtracts 250, then uses a second conditional setState step to set water to 0 when the updated value is less than 0; “Reset” sets water to literal 0 only when water is greater than 0. Use tap events and set every legacy action to none. Add one subtle info banner whose text includes “{{water}} of {{goal}} ml”.
+
+Use sky tint, soft preset, light appearance, rounded typography, balanced type scale, bold titles, gradient canvas, soft corners, airy density, subtle elevation, pill controls, subtle motion, and dashboard layout. Declare only storage.local, calculation.safe, and haptics.play. Do not use a hard-coded tracker component, fake metrics, network access, AI, notifications, photos, or device input.
+```
+
+## Demo 10 — Original custom game
+
+```text
+Create a one-page original top-down tiny game named “Star Garden” using game kind custom and Tiny Game Program version 2. The player controls a small glider with four-way touch controls inside a bounded dark garden. Place five collectible stars and three stationary fire hazards. Contacting a star must add one to a bounded score variable, destroy that star, and play light feedback. Reaching score 5 must win. Contacting a fire hazard must lose. Show score in the HUD and include the host-owned Start, Pause, Restart, and exit controls. Use a deterministic seed, keep every initial entity fully inside the world, and keep all tags, templates, controls, variables, triggers, targets, and effects valid and reachable.
+
+Use amber tint, bold preset, dark appearance, rounded expressive typography, gradient canvas, round corners, regular density, floating elevation, pill controls, expressive motion, story layout, and an immersive game presentation. Use only rectangle, circle, or allowed SF Symbol visuals. Declare storage.local and haptics.play only. Do not use copyrighted names, characters, levels, external images, audio, arbitrary code, network multiplayer, ads, or purchases.
+```
+
+Custom game generation is intentionally more demanding than a preset. Before a
+competition recording, run this exact prompt on the release build and exercise
+all five collections, the hazard loss path, restart, and the host exit menu.
+
+## Demo 11 — Design-only restyle
 
 First open an existing functional tiny app, switch Builder to **Design only**,
 and use this prompt. After generation, verify the review summary and confirm the
