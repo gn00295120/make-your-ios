@@ -17,6 +17,7 @@ struct AppRuntimeView: View {
     @State private var selectedPageID: String
     @State private var session: RuntimeSessionState
     @State private var audioHost: RuntimeAudioHost
+    @State private var speechHost: RuntimeSpeechHost
     private let logicEngine: RuntimeLogicEngine
 
     init(projectID: UUID, document: AppDocument) {
@@ -35,6 +36,7 @@ struct AppRuntimeView: View {
             stateDefinitions: logicEngine.stateDefinitions
         ))
         _audioHost = State(initialValue: RuntimeAudioHost())
+        _speechHost = State(initialValue: RuntimeSpeechHost())
     }
 
     private var selectedPage: AppPage {
@@ -81,6 +83,7 @@ struct AppRuntimeView: View {
                         capabilities: document.capabilities,
                         session: session,
                         audioHost: audioHost,
+                        speechHost: speechHost,
                         onEvent: perform,
                         onLegacyAction: performLegacy
                     )
@@ -111,12 +114,16 @@ struct AppRuntimeView: View {
             switch newValue {
             case .active:
                 audioHost.sceneDidBecomeActive()
+                speechHost.sceneDidBecomeActive()
             case .inactive:
                 audioHost.sceneDidBecomeInactive()
+                speechHost.sceneDidBecomeInactive()
             case .background:
                 audioHost.sceneDidEnterBackground()
+                speechHost.sceneDidEnterBackground()
             @unknown default:
                 audioHost.sceneDidEnterBackground()
+                speechHost.sceneDidEnterBackground()
             }
         }
         .alert(

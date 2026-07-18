@@ -116,6 +116,7 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
     var calendarEvent: RuntimeCalendarEventSpec?
     var documentExport: RuntimeDocumentExportSpec?
     var voiceNote: RuntimeVoiceNoteSpec?
+    var speechTranscript: RuntimeSpeechTranscriptSpec?
 
     init(
         id: String = UUID().uuidString,
@@ -144,7 +145,8 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         map: RuntimeMapSpec? = nil,
         calendarEvent: RuntimeCalendarEventSpec? = nil,
         documentExport: RuntimeDocumentExportSpec? = nil,
-        voiceNote: RuntimeVoiceNoteSpec? = nil
+        voiceNote: RuntimeVoiceNoteSpec? = nil,
+        speechTranscript: RuntimeSpeechTranscriptSpec? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -173,6 +175,7 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         self.calendarEvent = calendarEvent
         self.documentExport = documentExport
         self.voiceNote = voiceNote
+        self.speechTranscript = speechTranscript
     }
 
     var resolvedPresentation: ComponentPresentation {
@@ -208,6 +211,7 @@ enum ComponentKind: String, Codable, CaseIterable, Hashable, Sendable {
     case calendarEvent
     case documentExport
     case voiceNote
+    case speechTranscript
     case divider
 }
 

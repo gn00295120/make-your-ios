@@ -25,7 +25,8 @@ final class ExpandedAppDocumentValidatorTests: XCTestCase {
             [
                 .calendarWrite, .cameraCapture, .clipboardWrite, .codeScanner, .contactPicker,
                 .currentLocation, .documentExport, .documentPicker, .haptics, .localStorage,
-                .mapSearch, .microphoneRecordLocal, .pedometer, .shareSheet
+                .mapSearch, .microphoneRecordLocal, .pedometer, .shareSheet,
+                .speechTranscribeOnDevice
             ]
         )
         XCTAssertFalse(

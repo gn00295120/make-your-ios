@@ -134,9 +134,20 @@ This prompt exercises the bounded microphone adapter. Use a supported physical
 iPhone to verify real recording quality and foreground interruption behavior.
 
 ```text
-Create a one-page calm personal mini app named “Voice Pocket”. Add a full-width hero titled “A thought, kept private” and one full-width voiceNote titled “Quick reflection” with binding quick-reflection, maximumDurationSeconds 30, and recordButtonLabel “Record a reflection”. Explain in its subtitle that recording begins only after a tap, stays on this iPhone, stops outside the foreground, and is never uploaded or transcribed. Add an info banner reminding the user that the fixed playback and delete controls are always available.
+Create a one-page calm personal mini app named “Voice Pocket”. Add a full-width hero titled “A thought, kept private” and one full-width voiceNote titled “Quick reflection” with binding quick-reflection, maximumDurationSeconds 30, and recordButtonLabel “Record a reflection”. Explain in its subtitle that recording begins only after a tap, stays on this iPhone, stops outside the foreground, and is never uploaded or automatically transcribed. Add an info banner reminding the user that the fixed playback and delete controls are always available.
 
 Use plum tint, soft preset, system appearance, rounded typography, plain canvas, soft corners, airy density, subtle elevation, pill controls, subtle motion, and a form layout. Declare exactly storage.local and microphone.recordLocal. Do not add AI, network, speech recognition, background recording, notifications, photos, files, or other device components.
+```
+
+## Demo 14 — Reviewed On-Device Transcript
+
+This prompt composes local recording and the bounded Speech adapter. Verify it
+on a physical iPhone with an installed on-device model for the chosen language.
+
+```text
+Create a one-page private mini app named “Voice to Notes”. Declare project-persisted text state reviewed-transcript initially empty. Add a full-width voiceNote titled “Local recording” with binding source-voice, maximumDurationSeconds 30, and recordButtonLabel “Record locally”. Add a full-width speechTranscript titled “Turn it into editable text” with binding reviewed-transcript, sourceBinding source-voice, an empty localeIdentifier so the host uses the device speech language, and buttonLabel “Review on-device transcript”. Add a text component titled “Saved note” whose valueBinding is reviewed-transcript and whose fallback says “Your accepted transcript will appear here.”
+
+Explain accurately that the voice clip is never uploaded, transcription starts only after another tap, requires a supported on-device language model, has no network fallback, and opens an editable review before storing at most 2,000 characters. Declare exactly storage.local, microphone.recordLocal, and speech.transcribeOnDevice. Do not add live dictation, automatic transcription, AI, HTTP, background recording or recognition, notifications, photos, or other device components.
 ```
 
 ## Verification checklist
@@ -148,8 +159,8 @@ For each prompt used in a release or competition demo:
 3. confirm the generated document passes validation and becomes the active version;
 4. exercise the core native behavior, including denial/offline/unavailable states
    relevant to that prompt; and
-5. use a supported physical iPhone for camera, microphone, live scanner,
-   pedometer, and haptic evidence.
+5. use a supported physical iPhone for camera, microphone, on-device speech,
+   live scanner, pedometer, and haptic evidence.
 
 ## Recording rule
 

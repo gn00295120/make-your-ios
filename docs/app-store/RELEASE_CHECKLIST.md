@@ -51,17 +51,17 @@ capability changes currently in the source tree.
 
 Current source verification snapshot (2026-07-19):
 
-- 203/203 unit tests and all 9/9 non-billable UI paths passed on an iPhone 17 Pro
+- 211/211 unit tests and all 9/9 non-billable UI paths passed on an iPhone 17 Pro
   Simulator. The separately gated live GPT-5.6 test requires an API key saved in
   that Simulator and was not counted after its app data was reset.
-- Strict SwiftLint checked 150 Swift files with zero violations; `git diff
+- Strict SwiftLint checked 155 Swift files with zero violations; `git diff
   --check`, a clean Release Simulator build, an Apple Development-signed Release
   iOS build, and strict local code-signature verification passed.
-- The built iPhone app contains camera, microphone, contact, When In Use
-  location, motion, and write-only calendar usage descriptions plus
+- The built iPhone app contains camera, microphone, Speech Recognition, contact,
+  When In Use location, motion, and write-only calendar usage descriptions plus
   `PrivacyInfo.xcprivacy`.
 - An earlier expanded-capability build was installed on the connected iPhone,
-  but the exact Design Genome v2 candidate has not yet had a fresh physical
+  but the exact 20-capability candidate has not yet had a fresh physical
   install. Camera/scanner and permission interaction gates below deliberately
   remain unchecked.
 - Live BBC RSS, live Twelve Data AAPL demo data, the generated `E2E Proof`
@@ -74,8 +74,9 @@ Current source verification snapshot (2026-07-19):
 - [ ] Run the full unit suite, strict SwiftLint, `git diff --check`, release
   build, archive validation, and strict code-signature verification; record the
   actual results without copying the historical 43-test count.
-- [ ] Confirm the archive contains camera, microphone, contact, When In Use
-  location, motion, and calendar usage descriptions, plus the current privacy manifest.
+- [ ] Confirm the archive contains camera, microphone, Speech Recognition,
+  contact, When In Use location, motion, and calendar usage descriptions, plus
+  the current privacy manifest.
 - [ ] Fresh-install the exact candidate on TestFlight and confirm all twelve seeded
   tiny apps appear.
 - [ ] Exercise capability review for generated documents and verify missing or
@@ -94,6 +95,11 @@ Current source verification snapshot (2026-07-19):
   supported barcode and visible-text scanning, one-time location, today's
   pedometer count, first-run microphone grant/deny, voice recording/playback/
   deletion, permission-overlay resume, inactive/background stop, and haptic feedback.
+- [ ] On the same physical iPhone, test Speech Recognition grant/deny, automatic
+  and explicit supported locales, a locale without an installed on-device model,
+  editable transcript review, Cancel without storage, Use Transcript with atomic
+  persistence, `valueChanged`, AI text prefill without automatic sending, and
+  inactive/background cancellation. Confirm no network-recognizer fallback.
 - [ ] On the target iOS release, test contact cancellation/selection, bounded
   text/JSON/CSV import, share cancellation/destination choice, and tap-initiated
   clipboard write.

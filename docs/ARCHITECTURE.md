@@ -30,7 +30,7 @@ testable, accessible, and bounded.
 ## Capability catalog
 
 Capabilities are host intents, not raw Apple frameworks. The current document
-vocabulary declares exactly 19 capabilities:
+vocabulary declares exactly 20 capabilities:
 
 - `storage.local`
 - `calculation.safe`
@@ -45,6 +45,7 @@ vocabulary declares exactly 19 capabilities:
 - `maps.search`
 - `calendar.createEvent`
 - `microphone.recordLocal`
+- `speech.transcribeOnDevice`
 - `motion.pedometer`
 - `share.present`
 - `clipboard.write`
@@ -68,11 +69,13 @@ Apple's single-contact picker, bounded text-file import, one-time pedometer
 reads, reviewed sharing, clipboard writes, haptic feedback, MapKit display and
 place search, reviewed write-only calendar creation, and bounded text/JSON/CSV
 export through Apple's save panel, plus a bounded foreground-only local voice
-note. Permission- or gesture-gated operations start
+note and reviewed on-device transcription of that note. Permission- or gesture-gated operations start
 only at the documented user action, check availability, and sanitize and bound
 their inputs and outputs. Maps do not request the user's location, calendar
 creation cannot read existing events, exports cannot choose a destination, and
 voice recordings cannot continue in the background or reach AI/network adapters.
+Speech transcription verifies the locale, requires on-device support, exposes
+an editable review, commits accepted text atomically, and has no network fallback.
 Scanned URLs are never opened or forwarded to AI by default. Adding a generated
 version that needs a new capability first presents a host-controlled review
 sheet.
@@ -139,7 +142,8 @@ specialized host features. It provides six typed values (`text`, `number`,
 `boolean`, canonical `date`, bounded string `list`, and bounded string `object`),
 session or project persistence, and finite ordered events. Lists and objects are
 flat containers with at most 64 entries, not nested or schemaful records. Inputs,
-pickers, date/time controls, AI results, and device results can write a binding;
+pickers, date/time controls, accepted speech transcripts, AI results, and device
+results can write a binding;
 text, metrics, banners, buttons, progress, and `collectionView` can render the
 same state through bindings or bounded `{{state-key}}` templates. Ordinary UI
 templates expose a structured-value summary rather than raw JSON; the reviewed
@@ -198,13 +202,17 @@ The builder sends only the semantic slot and visual metadata to the model.
 Runtime AI does not read the asset store. A user-selected Design Studio canvas
 photo stays at the host-owned `design-canvas-background` binding and cannot be
 replaced by model output; local voice bytes likewise never enter a generation or
-runtime-AI request.
+runtime-AI request. The speech adapter can read only the explicitly linked local
+voice binding after a tap, requires an on-device model, and exposes editable text
+for review. Only the accepted text state—not the audio—may then be used as a
+visible, editable AI input prefill.
 
 ## AI inside a mini app
 
 `ai.complete` is not a general model tool or autonomous agent. It is a fixed
-host component with a focused, document-defined text task. The user enters or
-chooses text, then reviews the exact task and payload in a confirmation sheet.
+host component with a focused, document-defined text task. The user enters text
+or edits a visible state prefill such as an accepted transcript, then reviews
+the exact task and payload in a confirmation sheet.
 Only after confirmation does the host make a direct Responses API request using
 the user's Keychain-backed credential. Images, other controls, task data, other
 projects, and the document itself are excluded. The AI badge and disclosure are
@@ -270,7 +278,8 @@ and small credentials are stored using
   fixed-provider exchange/news/market views, playable Snake and original
   platform games, bounded custom rule-driven games, image slots, camera and code/text scanning, one-time location,
   contact/file pickers, MapKit place views, reviewed write-only calendar events,
-  reviewed document export, foreground local voice notes, pedometer,
+  reviewed document export, foreground local voice notes, reviewed on-device
+  speech transcripts, pedometer,
   share/clipboard/haptics, text-only AI
   assistants, banners, dividers, navigation, page layouts, and presentation
   tokens.
@@ -284,5 +293,5 @@ and small credentials are stored using
 Future releases should add schemaful record relationships and bounded collection
 filter/sort/iteration primitives, moving-platform and dynamic-solid game
 physics, versioned JSON Patch editing, per-project SQLite namespaces, automated
-accessibility and snapshot checks, and additional narrowly reviewed capabilities
-such as speech recognition and precompiled App Intents.
+accessibility and snapshot checks, live microphone dictation, and additional
+narrowly reviewed capabilities such as precompiled App Intents.

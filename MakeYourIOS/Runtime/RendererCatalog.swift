@@ -43,6 +43,7 @@ enum RendererCatalog {
         .calendarEvent: [.automatic, .compact, .cards, .framed],
         .documentExport: [.automatic, .compact, .cards, .framed],
         .voiceNote: [.automatic, .compact, .cards, .framed],
+        .speechTranscript: [.automatic, .compact, .cards, .framed],
         .divider: [.automatic, .compact]
     ]
 }

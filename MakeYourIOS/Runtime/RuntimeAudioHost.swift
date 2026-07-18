@@ -35,6 +35,10 @@ final class RuntimeAudioHost {
     private var pendingRecordingRequest: PendingRecordingRequest?
     private var sceneIsActive = true
 
+    var isInUse: Bool {
+        activity != .idle || pendingRecordingRequest != nil
+    }
+
     func requestAndStartRecording(ownerID: String, maximumDurationSeconds: Int) async throws {
         guard activity == .idle, pendingRecordingRequest == nil else {
             throw RuntimeAudioError.audioInUse

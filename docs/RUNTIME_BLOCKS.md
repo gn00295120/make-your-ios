@@ -20,8 +20,8 @@ ship together.
 | Conditions | equals, not-equals, numeric/date ordering, logical empty, non-empty | Typed validation before activation |
 | Effects | set state, page navigation, in-app message, reviewed local notification, success haptic | Host derives capabilities and owns OS permission prompts |
 | Specialized data | task reminders, generic typed record collections, ledger, FX converter/watchlist, news, market watchlist | Each is a compiled adapter with isolated persistence; arbitrary SQL/HTTP is unavailable |
-| Media and device | private image and voice-note slots plus the 11 device actions in the capability catalog | Tap initiated, sanitized, bounded, foreground-only where applicable, and hardware-gated |
-| Native services | MapKit coordinate/place display and search, reviewed write-only calendar event, reviewed text/JSON/CSV export, local AAC voice note | Fixed host adapters; no location history, calendar reads, silent route/file handoff, background recording, or audio upload |
+| Media and device | private image and voice-note slots, reviewed on-device transcript, plus the 11 device actions in the capability catalog | Tap initiated, sanitized, bounded, foreground-only where applicable, and hardware-gated |
+| Native services | MapKit coordinate/place display and search, reviewed write-only calendar event, reviewed text/JSON/CSV export, local AAC voice note and on-device Speech transcription | Fixed host adapters; no location history, calendar reads, silent route/file handoff, background recording, audio upload, or speech network fallback |
 | AI | reviewed text-only assistant with optional result binding | User confirms the exact payload; no automatic project/device context |
 | Games | Snake/platformer presets plus Tiny Game Program v3 | Deterministic fixed-step interpreter; no downloaded or executable game code; stored V2 programs remain compatible |
 
@@ -47,7 +47,7 @@ iOS scene is active. It is a UI automation primitive, not background execution:
 the host neither catches up missed ticks nor schedules silent work after the app
 leaves the foreground.
 
-## Native map, calendar, export, and voice blocks
+## Native map, calendar, export, voice, and speech blocks
 
 - `map` renders a bounded MapKit region for a configured coordinate or Apple
   Maps place query, keeps optional search visible, returns at most eight markers,
@@ -68,10 +68,19 @@ leaves the foreground.
   the configured limit or when the app leaves the foreground, and always offers
   playback, pause/resume, replacement, and deletion. The clip is capped at 1 MiB,
   checked for a playable M4A container before persistence, protected with the
-  project's local assets, and never uploaded or transcribed. A protected staging
+  project's local assets, and never uploaded or automatically transcribed. A protected staging
   file exists only while recording; crash leftovers are removed on the next app
   launch. Regeneration keeps clips for still-referenced bindings and deletes
   clips whose voice blocks were removed.
+- `speechTranscript` references an existing `voiceNote` binding and a distinct
+  text-state destination. It requests Speech permission only after a tap,
+  validates the requested locale against Apple's supported set, requires
+  on-device recognition, and does not start if that local model is unavailable.
+  The host caps the result at 2,000 characters and opens an editable review
+  sheet; Cancel stores nothing, while Use Transcript commits state atomically
+  before firing `valueChanged`. Recognition cancels outside the foreground and
+  never falls back to a network recognizer. An accepted transcript can drive
+  text, metrics, templates, exports, events, or a visible editable AI prefill.
 
 ## Tiny Game Program v3
 
@@ -112,6 +121,9 @@ sensor-only behavior.
   typed record collections or the ledger, with optional reminders.
 - Camera utilities and field tools combine device results with dynamic state and
   explicit share/copy actions.
+- Voice notebooks combine a local recording with reviewed on-device
+  transcription, then bind the accepted text into display, export, events, or
+  an editable AI input prefill.
 - AI writing, planning, tutoring, and transformation tools use the reviewed
   assistant, then bind its result into another native component or event.
 - Original arcade ideas use the custom game interpreter; polished Snake and
@@ -123,8 +135,8 @@ sensor-only behavior.
 graph cannot iterate a collection, represent nested or schemaful records in its
 flat list/object state, mutate specialized task/ledger records, run a background
 timer, call an arbitrary URL, load a plugin, or create a new Apple entitlement.
-Moving-platform or dynamic-solid game physics, speech recognition, App Intents
-or Shortcuts, and extension targets still require new
+Moving-platform or dynamic-solid game physics, live microphone dictation,
+App Intents or Shortcuts, and extension targets still require new
 typed host blocks, privacy boundaries, schema changes, and release tests before
 GPT may use them.
 

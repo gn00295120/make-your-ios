@@ -5,6 +5,7 @@ extension AppDocumentValidator {
         for node in document.pages.flatMap(\.nodes) {
             try validateNode(node)
         }
+        try validateSpeechTranscriptReferences(document)
         try validateActions(document)
     }
 
@@ -47,6 +48,7 @@ extension AppDocumentValidator {
         case .calendarEvent: try validateCalendarEvent(node)
         case .documentExport: try validateDocumentExport(node)
         case .voiceNote: try validateVoiceNote(node)
+        case .speechTranscript: try validateSpeechTranscript(node)
         default: break
         }
     }
@@ -63,7 +65,8 @@ extension AppDocumentValidator {
     }
 
     private func validateAIAssistant(_ node: ComponentNode) throws {
-        guard !node.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        guard !node.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              node.valueBinding?.isEmpty != false || node.valueBinding != node.binding else {
             throw AppDocumentValidationError.invalidComponentConfiguration(.aiAssistant)
         }
     }
@@ -219,6 +222,36 @@ extension AppDocumentValidator {
         }
     }
 
+    private func validateSpeechTranscript(_ node: ComponentNode) throws {
+        guard let transcript = node.speechTranscript,
+              !node.binding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !transcript.sourceBinding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              transcript.sourceBinding.count <= 120,
+              transcript.sourceBinding != node.binding,
+              RuntimeSpeechLocale.isValid(transcript.localeIdentifier),
+              !transcript.buttonLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              transcript.buttonLabel.count <= 60 else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(.speechTranscript)
+        }
+    }
+
+    private func validateSpeechTranscriptReferences(_ document: AppDocument) throws {
+        let nodes = document.pages.flatMap(\.nodes)
+        let voiceBindings = Set(
+            nodes.filter { $0.kind == .voiceNote }.map(\.binding)
+        )
+        let stateTypes = (document.logic?.state ?? []).reduce(into: [:]) { result, definition in
+            result[definition.key] = definition.type
+        }
+        for node in nodes where node.kind == .speechTranscript {
+            guard let sourceBinding = node.speechTranscript?.sourceBinding,
+                  voiceBindings.contains(sourceBinding),
+                  stateTypes[node.binding] == .text else {
+                throw AppDocumentValidationError.invalidComponentConfiguration(.speechTranscript)
+            }
+        }
+    }
+
     private func validateSpecializedConfiguration(_ node: ComponentNode) throws {
         let configurations: [(ComponentKind, Bool)] = [
             (.recordCollection, node.collection != nil),
@@ -232,7 +265,8 @@ extension AppDocumentValidator {
             (.map, node.map != nil),
             (.calendarEvent, node.calendarEvent != nil),
             (.documentExport, node.documentExport != nil),
-            (.voiceNote, node.voiceNote != nil)
+            (.voiceNote, node.voiceNote != nil),
+            (.speechTranscript, node.speechTranscript != nil)
         ]
         let configuredKinds = configurations.compactMap { $0.1 ? $0.0 : nil }
         let specializedKinds = Set(configurations.map { $0.0 })

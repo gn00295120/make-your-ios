@@ -3,14 +3,23 @@ import Foundation
 extension SampleDocuments {
     static let captureKit = AppDocument(
         name: "Device Lab",
-        summary: "Compose private audio, camera, scanner, location, files, contacts, motion, and sharing.",
+        summary: "Compose private audio, on-device transcripts, camera, scanner, files, and sharing.",
         symbol: "qrcode.viewfinder",
         tint: .amber,
         capabilities: [
             .calendarWrite, .cameraCapture, .clipboardWrite, .codeScanner, .contactPicker,
             .currentLocation, .documentExport, .documentPicker, .haptics, .localStorage,
-            .mapSearch, .microphoneRecordLocal, .pedometer, .shareSheet
+            .mapSearch, .microphoneRecordLocal, .pedometer, .shareSheet,
+            .speechTranscribeOnDevice
         ],
+        logic: RuntimeLogic(state: [
+            RuntimeStateDefinition(
+                key: "quick-transcript",
+                type: .text,
+                persistence: .project,
+                initialValue: ""
+            )
+        ]),
         theme: .preset(.native),
         pages: [
             AppPage(
@@ -21,6 +30,14 @@ extension SampleDocuments {
                     calendarEventNode,
                     documentExportNode,
                     voiceNoteNode,
+                    speechTranscriptNode,
+                    ComponentNode(
+                        id: "saved-transcript",
+                        kind: .text,
+                        title: "Saved transcript",
+                        value: "Your reviewed transcript will appear here.",
+                        valueBinding: "quick-transcript"
+                    ),
                     deviceNode(
                         id: "receipt-photo",
                         kind: .cameraPhoto,
@@ -204,6 +221,27 @@ extension SampleDocuments {
         voiceNote: RuntimeVoiceNoteSpec(
             maximumDurationSeconds: 30,
             recordButtonLabel: "Record a voice note"
+        )
+    )
+
+    private static let speechTranscriptNode = ComponentNode(
+        id: "speech-transcript",
+        kind: .speechTranscript,
+        title: "On-device transcript",
+        subtitle: "Review and edit the text before this tiny app saves it.",
+        symbol: "text.bubble.fill",
+        binding: "quick-transcript",
+        presentation: ComponentPresentation(
+            surface: .outlined,
+            span: .full,
+            alignment: .leading,
+            emphasis: .regular,
+            variant: .automatic
+        ),
+        speechTranscript: RuntimeSpeechTranscriptSpec(
+            sourceBinding: "quick-voice-note",
+            localeIdentifier: "",
+            buttonLabel: "Review on-device transcript"
         )
     )
 

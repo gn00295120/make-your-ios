@@ -11,7 +11,7 @@ permission copy, validation rules, tests, and review surface all ship together.
 
 ## Available to AI-generated tiny apps
 
-The current runtime has exactly 19 host capabilities. The host derives the
+The current runtime has exactly 20 host capabilities. The host derives the
 required set from the generated document and rejects both missing and unused
 declarations.
 
@@ -30,6 +30,7 @@ declarations.
 | `maps.search` | Displays a bounded MapKit region and searches Apple Maps | No current-location access, location history, arbitrary map provider, or silent route launch |
 | `calendar.createEvent` | Creates one event after an editable review sheet and confirmation | EventKit write-only access; cannot enumerate, edit, or delete existing events |
 | `microphone.recordLocal` | Records and plays one project-local AAC voice note | Visible tap and microphone permission; 5–60 seconds, maximum 1 MiB, no background capture or upload |
+| `speech.transcribeOnDevice` | Transcribes one linked project-local voice note | Visible tap and Speech permission; requires supported on-device recognition, editable review before storage, and no network fallback |
 | `motion.pedometer` | Reads today's aggregate step count once | Starts after a tap; no raw motion stream or background monitoring |
 | `share.present` | Presents configured text in Apple's share sheet | Nothing leaves MakeYour until the user selects a destination |
 | `clipboard.write` | Writes configured text to the system clipboard | Tap-initiated and write-only; no clipboard reads or background writes |
@@ -100,9 +101,9 @@ does not replace a real-device permission and accuracy test. Contact, document,
 and share flows use system-controlled UI and must also be smoke-tested on the
 target iOS release before shipping.
 
-## Current native map, calendar, export, and voice blocks
+## Current native map, calendar, export, voice, and speech blocks
 
-These four capabilities use dedicated generated component kinds rather than
+These five capabilities use dedicated generated component kinds rather than
 `deviceInput` actions:
 
 | Component | Capability | Current behavior |
@@ -111,6 +112,7 @@ These four capabilities use dedicated generated component kinds rather than
 | `calendarEvent` | `calendar.createEvent` | Resolves bounded text templates, shows title/location/notes/start/end for review, then requests write-only EventKit access and adds one confirmed event |
 | `documentExport` | `files.export` | Shows the resolved content preview, enforces size limits for text/JSON/CSV, validates JSON syntax, and opens Apple's `fileExporter` destination chooser after a tap |
 | `voiceNote` | `microphone.recordLocal` | Records one 5–60 second AAC clip after a tap, stops when the app leaves the foreground, and always exposes local play/pause/delete controls |
+| `speechTranscript` | `speech.transcribeOnDevice` | Reads only a linked local `voiceNote`, requires an exact supported locale and on-device model, then presents an editable transcript before committing at most 2,000 characters to text state |
 
 The map block does not request location permission. The calendar block uses
 `NSCalendarsWriteOnlyAccessUsageDescription` and never reads the user's existing
@@ -118,7 +120,11 @@ events. The export block does not receive broad Files access or write before the
 user chooses a destination. The voice block uses `NSMicrophoneUsageDescription`,
 keeps at most one validated, playable 1 MiB clip in its project binding, prunes
 removed bindings after regeneration, clears crash-staged audio on next launch,
-and never transcribes, uploads, or records in the background.
+and never automatically transcribes, uploads, or records in the background. The
+separate speech block uses `NSSpeechRecognitionUsageDescription`, verifies the
+requested locale rather than accepting recognizer fallback, requires
+`supportsOnDeviceRecognition`, sets `requiresOnDeviceRecognition`, cancels when
+it leaves the foreground, and fails closed instead of using network recognition.
 
 ## Safe next candidates, not yet supported
 
@@ -126,7 +132,6 @@ These are plausible additions because each can be expressed as a narrow,
 separately reviewed host adapter. They remain roadmap items and are not in the
 AI schema today.
 
-- tap-initiated speech recognition with a visible transcript review;
 - precompiled App Intent or Shortcuts actions with explicit input/output types.
 
 Each candidate still needs a product-specific privacy boundary, availability

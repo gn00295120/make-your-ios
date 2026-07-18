@@ -119,8 +119,8 @@ struct OpenAIAppGenerationClient: Sendable {
     Preserve stable page, node, item, and binding IDs when editing existing behavior. Use concise kebab-case
     IDs for new elements. For each specialized node, fill only its matching configuration object and return
     null for control, image, collection, liveData, newsFeed, marketWatch, ledger, game, deviceInput, map,
-    calendarEvent, documentExport, and voiceNote when unrelated. Return an empty valueBinding and events array when a
-    node has no dynamic behavior.
+    calendarEvent, documentExport, voiceNote, and speechTranscript when unrelated. Return an empty valueBinding
+    and events array when a node has no dynamic behavior.
     List only capabilities actually used; the host independently derives and enforces the exact capability set.
     Keep the experience focused: one to three pages and no more than twelve components per page.
     Use concise, friendly interface copy and semantic iOS patterns.
@@ -134,7 +134,7 @@ struct OpenAIAppGenerationClient: Sendable {
     actions, data configuration, and IDs. Change only theme, page presentation, node presentation, and
     image presentation metadata. Never remove working behavior merely to achieve a visual style.
     Use half-width spans only for text, metric, infoBanner, image, control, collectionView, calendarEvent,
-    documentExport, voiceNote, and button nodes.
+    documentExport, voiceNote, speechTranscript, and button nodes.
     Use image nodes, or an optional hero image, as private media slots. Choose a semantic media role,
     focal point, mask, and overlay. Set a meaningful kebab-case binding and alt text. A theme background
     may reference a local backgroundAssetBinding; use an empty string when no selectable background is
@@ -143,7 +143,10 @@ struct OpenAIAppGenerationClient: Sendable {
     If the user asks for an AI feature, use aiAssistant and declare ai.complete. Put its focused task
     instruction in value, input hint in placeholder, quick prompts in options, and button label in action.value.
     AI components may only transform text that the user explicitly reviews and sends. Give the AI node a
-    binding when its result should become shared state for another component or a valueChanged event.
+    binding when its result should become shared state for another component or a valueChanged event. To load
+    reviewed text state such as a saved speechTranscript into the AI editor, set valueBinding to that text key;
+    the user can edit the prefill and must still confirm before anything is sent. Keep this input key different
+    from the AI output binding.
     Use logic for safe cross-component state and calculations. Declare at most 64 state entries with unique
     kebab-case keys, an explicit text, number, boolean, date, list, or object type, session or project
     persistence, and a valid initialValue. Number initial values must be finite numeric strings; boolean values
@@ -246,8 +249,19 @@ struct OpenAIAppGenerationClient: Sendable {
     Use voiceNote for one user-controlled local recording slot. Give it a stable binding, a 5...60 second
     maximumDurationSeconds, and a clear recordButtonLabel. The host always exposes playback and deletion,
     records only in the visible foreground after a tap, stores one bounded AAC clip in that tiny app's sandbox,
-    stops at the configured limit or when the app leaves the foreground, and never uploads or transcribes the
-    audio. Declare microphone.recordLocal.
+    stops at the configured limit or when the app leaves the foreground, and never uploads or automatically
+    transcribes the audio. Only an explicitly paired speechTranscript may transcribe it after another tap.
+    Declare microphone.recordLocal.
+    Use speechTranscript only to transcribe a voiceNote already present in the same document. Its sourceBinding
+    must exactly match that voiceNote binding, while the speechTranscript node's own binding is a different
+    destination for the reviewed text. Declare that destination as text state with session or project persistence,
+    and use it in a visible text, export, event, or AI input prefill so the result is useful. Set localeIdentifier
+    to an empty string for the device language or a short locale such as en-US or zh-TW, and provide a short
+    buttonLabel. The host requests Speech permission only after a tap, requires Apple's on-device recognition,
+    never falls back to a network recognizer, and shows the bounded transcript for explicit review before storing
+    it. Declare speech.transcribeOnDevice in addition
+    to the voiceNote's microphone.recordLocal. Never claim live dictation, automatic transcription, background
+    speech recognition, guaranteed language availability, or silent storage.
     For taskList and checklist, seed realistic example items that the user can replace. Their specialized
     internal records are not exposed as logic state, so do not claim that a metric derives from their contents.
     For a standalone legacy scheduleNotification button without events, action.target is delay minutes and

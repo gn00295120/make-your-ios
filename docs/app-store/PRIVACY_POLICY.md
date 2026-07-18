@@ -1,6 +1,6 @@
 # MakeYour Privacy Policy
 
-Effective date: July 18, 2026
+Effective date: July 19, 2026
 
 MakeYour is designed as a local, private workspace for creating and using native
 mini apps on iPhone. This policy explains what stays on the device, what may be
@@ -13,7 +13,7 @@ container. Depending on the tiny apps a user creates, this can include records,
 tasks, ledgers, game scores, news bookmarks, market and currency watchlists,
 cached provider results, AI consent settings, selected or captured project
 images (including an optional Design Studio canvas background), bounded voice
-notes, scanned text or codes, a one-time coordinate, a selected contact summary,
+notes and accepted on-device transcripts, scanned text or codes, a one-time coordinate, a selected contact summary,
 imported text, or today's aggregate step count.
 
 The user's OpenAI API key and any optional Twelve Data API key are stored
@@ -30,7 +30,9 @@ enable AI requests.
 When generating or revising a mini app, MakeYour sends the builder instruction
 and the current declarative app document directly from the device to OpenAI. When
 using an AI helper inside a mini app, MakeYour first displays the exact task and
-user-entered text on a confirmation screen. Only that reviewed task and text are
+user-entered or visibly prefilled text on a confirmation screen. An accepted
+local transcript can become an editable prefill, but its audio is not attached.
+Only that reviewed task and text are
 sent after the user taps Send.
 
 MakeYour does not attach selected photos, canvas backgrounds, voice recordings,
@@ -68,8 +70,8 @@ publisher's original page, where that publisher's policy applies.
 Generated tiny apps may use only host-owned device actions compiled into
 MakeYour. Camera capture, QR/barcode/text scanning, a current coordinate, a
 single-contact picker, selected text-file import, today's pedometer count, and a
-local voice note start only after the user taps. Camera, microphone, location,
-and motion access use the
+local voice note or linked on-device transcript start only after the user taps.
+Camera, microphone, Speech Recognition, location, and motion access use the
 corresponding iOS permission or system-controlled picker. There is no hidden
 camera or microphone use, continuous location tracking, address-book
 enumeration, arbitrary file browsing, raw motion streaming, or background
@@ -87,9 +89,20 @@ A voice-note component records one mono AAC clip for 5–60 seconds, capped at
 1 MiB. Recording stops at its configured limit or when MakeYour leaves the
 foreground. The clip remains in the requesting tiny app's protected local asset
 directory until replaced, deleted, or its binding is removed by app regeneration;
-MakeYour does not transcribe or upload it. A protected, backup-excluded staging
+MakeYour does not automatically transcribe or upload it. A protected, backup-excluded staging
 file is used only while recording, and any crash leftover is removed at the next
 app launch. Incomplete or unplayable audio is rejected rather than persisted.
+
+If a tiny app contains an explicitly linked speech-transcript component, the
+user may tap it to request Apple's Speech Recognition permission and process
+that one local clip. MakeYour first verifies the requested locale and that the
+recognizer supports on-device recognition, then requires on-device processing.
+If those checks fail, transcription is unavailable; MakeYour does not fall back
+to a network recognizer. Recognition cancels outside the foreground. The result
+is capped at 2,000 characters and remains editable in a review sheet. Cancel
+stores nothing; Use Transcript stores the accepted text in the tiny app's local
+state. That accepted text is sent to OpenAI only if the user later places or
+keeps it in an AI editor and separately confirms the exact AI request.
 
 Sharing and clipboard actions also require a tap. A share action presents
 Apple's share sheet, and data leaves MakeYour only after the user chooses a

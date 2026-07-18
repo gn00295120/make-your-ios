@@ -31,6 +31,9 @@ final class OpenAIAppGenerationClientTests: XCTestCase {
         XCTAssertTrue(instructions.contains("When the request is design-only"))
         XCTAssertTrue(instructions.contains("Palette values must be #RRGGBB"))
         XCTAssertTrue(instructions.contains("Never invent an asset ID, file path, URL"))
+        XCTAssertTrue(instructions.contains("requires Apple's on-device recognition"))
+        XCTAssertTrue(instructions.contains("never falls back to a network recognizer"))
+        XCTAssertTrue(instructions.contains("saved speechTranscript into the AI editor"))
     }
 
     func testIncompleteResponseSurfacesSpecificRetryableError() {

@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 import Observation
 import UIKit
@@ -34,6 +35,7 @@ final class LocalAssetStore {
     private let fileManager: FileManager
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private(set) var revision: UInt64 = 0
 
     init(rootURL: URL? = nil) {
         fileManager = .default
@@ -52,6 +54,7 @@ final class LocalAssetStore {
             manifestKeyPath: \.assetsByBinding,
             fileExtension: "jpg"
         )
+        revision &+= 1
     }
     func image(projectID: UUID, binding: String) -> UIImage? {
         guard let url = storedAssetURL(
@@ -83,6 +86,7 @@ final class LocalAssetStore {
             manifestKeyPath: \.audioByBinding,
             fileExtension: "m4a"
         )
+        revision &+= 1
     }
     func voiceRecordingURL(projectID: UUID, binding: String) -> URL? {
         storedAssetURL(
@@ -102,6 +106,7 @@ final class LocalAssetStore {
             manifestKeyPath: \.assetsByBinding,
             fileExtension: "jpg"
         )
+        revision &+= 1
     }
 
     func deleteVoiceRecording(projectID: UUID, binding: String) throws {
@@ -110,6 +115,7 @@ final class LocalAssetStore {
             manifestKeyPath: \.audioByBinding,
             fileExtension: "m4a"
         )
+        revision &+= 1
     }
 
     func retainVoiceRecordings(projectID: UUID, bindings: Set<String>) throws {

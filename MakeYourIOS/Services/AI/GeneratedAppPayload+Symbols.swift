@@ -18,6 +18,7 @@ extension GeneratedAppPayload {
         "person.crop.circle.badge.plus", "doc.badge.plus", "figure.walk.motion",
         "square.and.arrow.up", "doc.on.clipboard", "waveform",
         "square.and.arrow.up.on.square", "calendar.badge.plus", "mappin.and.ellipse", "mic.fill",
+        "text.bubble.fill",
         "newspaper.fill", "bookmark.fill", "dollarsign.circle.fill", "chart.xyaxis.line",
         "arrow.up.right", "arrow.down.right", "figure.run", "trophy.fill"
     ]

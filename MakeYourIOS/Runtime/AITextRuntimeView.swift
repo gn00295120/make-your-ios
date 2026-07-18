@@ -18,11 +18,18 @@ struct AITextRuntimeView: View {
     @State private var pendingRequest: PendingRequest?
     @State private var isRunning = false
     @State private var errorMessage: String?
+    @State private var lastLoadedPrefill = ""
+    @FocusState private var inputIsFocused: Bool
 
     private let client = OpenAITextCompletionClient()
 
     private var trimmedInput: String {
         input.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var statePrefill: String {
+        guard let valueBinding = node.valueBinding, !valueBinding.isEmpty else { return "" }
+        return session.binding(for: valueBinding)
     }
 
     private var variant: ComponentVariant {
@@ -53,6 +60,7 @@ struct AITextRuntimeView: View {
             }
 
             TextEditor(text: $input)
+                .focused($inputIsFocused)
                 .frame(minHeight: variant == .compact ? 72 : 96)
                 .scrollContentBackground(.hidden)
                 .padding(12)
@@ -123,7 +131,7 @@ struct AITextRuntimeView: View {
             }
 
             Label(
-                "Only the text you review is sent to OpenAI. Photos and other app data stay local.",
+                "Only the editable text shown above can be sent. Photos, audio, and hidden fields stay local.",
                 systemImage: "hand.raised.fill"
             )
             .font(.caption2)
@@ -162,6 +170,8 @@ struct AITextRuntimeView: View {
             )
                 .presentationDetents([.medium, .large])
         }
+        .onAppear(perform: loadStatePrefill)
+        .onChange(of: statePrefill) { _, _ in loadStatePrefill() }
     }
 
     private func prepareRequest() {
@@ -172,6 +182,13 @@ struct AITextRuntimeView: View {
         }
         errorMessage = nil
         pendingRequest = PendingRequest(input: trimmedInput)
+    }
+
+    private func loadStatePrefill() {
+        guard !statePrefill.isEmpty, !inputIsFocused, !isRunning,
+              input.isEmpty || input == lastLoadedPrefill else { return }
+        input = String(statePrefill.prefix(4_000))
+        lastLoadedPrefill = input
     }
 
     private func sendConfirmedRequest(_ request: PendingRequest) {
@@ -191,7 +208,9 @@ struct AITextRuntimeView: View {
                 )
                 output = completion
                 if !node.binding.isEmpty {
-                    session.set(completion, for: node.binding)
+                    var proposedValues = session.values
+                    proposedValues[node.binding] = completion
+                    try session.commit(proposedValues)
                     onValueChanged()
                 }
             } catch {

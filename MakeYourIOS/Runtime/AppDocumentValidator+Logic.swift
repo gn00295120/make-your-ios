@@ -25,6 +25,9 @@ extension AppDocumentValidator {
         for node in document.pages.flatMap(\.nodes) {
             if let valueBinding = node.valueBinding {
                 try validateStateReference(valueBinding, stateTypes: stateTypes)
+                if node.kind == .aiAssistant, stateTypes[valueBinding] != .text {
+                    throw AppDocumentValidationError.invalidRuntimeLogic
+                }
             }
             try validateDeclaredBindingType(node, stateTypes: stateTypes)
             if node.kind == .control {
@@ -124,7 +127,8 @@ extension AppDocumentValidator {
         }
         if events.contains(where: { $0.trigger == .valueChanged }) {
             let supportedKinds: Set<ComponentKind> = [
-                .textInput, .numberInput, .picker, .aiAssistant, .deviceInput, .control
+                .textInput, .numberInput, .picker, .aiAssistant, .deviceInput, .control,
+                .speechTranscript
             ]
             guard supportedKinds.contains(node.kind) else {
                 throw AppDocumentValidationError.invalidRuntimeLogic
@@ -159,7 +163,7 @@ extension AppDocumentValidator {
         guard let stateType = stateTypes[node.binding] else { return }
         let expectedType: RuntimeValueType?
         switch node.kind {
-        case .textInput, .picker, .aiAssistant, .deviceInput:
+        case .textInput, .picker, .aiAssistant, .deviceInput, .speechTranscript:
             expectedType = .text
         case .numberInput:
             expectedType = .number

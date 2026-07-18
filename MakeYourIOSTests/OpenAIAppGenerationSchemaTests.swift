@@ -49,6 +49,7 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
         XCTAssertTrue(values.contains(AppCapability.cameraCapture.rawValue))
         XCTAssertTrue(values.contains(AppCapability.codeScanner.rawValue))
         XCTAssertTrue(values.contains(AppCapability.microphoneRecordLocal.rawValue))
+        XCTAssertTrue(values.contains(AppCapability.speechTranscribeOnDevice.rawValue))
 
         let componentKinds = try XCTUnwrap(
             findEnums(named: "kind", in: root).first(where: {
@@ -66,13 +67,14 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
         XCTAssertTrue(componentKinds.contains(ComponentKind.deviceInput.rawValue))
         XCTAssertTrue(componentKinds.contains(ComponentKind.control.rawValue))
         XCTAssertTrue(componentKinds.contains(ComponentKind.voiceNote.rawValue))
+        XCTAssertTrue(componentKinds.contains(ComponentKind.speechTranscript.rawValue))
 
         try assertRendererSchema(in: root)
         try assertLogicSchema(in: root)
 
         for propertyName in [
             "image", "collection", "liveData", "newsFeed", "marketWatch", "ledger", "game",
-            "deviceInput", "control", "voiceNote"
+            "deviceInput", "control", "voiceNote", "speechTranscript"
         ] {
             let property = try XCTUnwrap(
                 try findProperty(named: propertyName, in: root) as? [String: Any]

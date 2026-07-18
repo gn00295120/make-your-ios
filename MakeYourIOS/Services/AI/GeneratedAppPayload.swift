@@ -95,7 +95,10 @@ private extension GeneratedAppPayload {
             map: kind == .map ? makeMap(node.map) : nil,
             calendarEvent: kind == .calendarEvent ? makeCalendarEvent(node.calendarEvent) : nil,
             documentExport: kind == .documentExport ? makeDocumentExport(node.documentExport) : nil,
-            voiceNote: kind == .voiceNote ? makeVoiceNote(node.voiceNote) : nil
+            voiceNote: kind == .voiceNote ? makeVoiceNote(node.voiceNote) : nil,
+            speechTranscript: kind == .speechTranscript
+                ? makeSpeechTranscript(node.speechTranscript)
+                : nil
         )
     }
 
@@ -128,7 +131,7 @@ private extension GeneratedAppPayload {
         let requestedSpan = ComponentSpan(rawValue: design.span) ?? .full
         let supportsCompactSpan: Set<ComponentKind> = [
             .text, .metric, .infoBanner, .image, .control, .collectionView,
-            .calendarEvent, .documentExport, .voiceNote, .button
+            .calendarEvent, .documentExport, .voiceNote, .speechTranscript, .button
         ]
         return ComponentPresentation(
             surface: ComponentSurface(rawValue: design.surface) ?? .automatic,

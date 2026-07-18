@@ -36,6 +36,12 @@ final class NativeRuntimeUITests: XCTestCase {
         scrollUntilVisible(recordVoiceNote, in: app)
         XCTAssertTrue(recordVoiceNote.isHittable)
         XCTAssertFalse(app.alerts.firstMatch.exists)
+
+        let transcript = app.buttons["Review on-device transcript"]
+        scrollUntilVisible(transcript, in: app)
+        XCTAssertTrue(transcript.exists)
+        XCTAssertFalse(transcript.isEnabled)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
         XCTAssertTrue(app.buttons["runtime.host-menu"].isHittable)
     }
 

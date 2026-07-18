@@ -4,6 +4,7 @@ struct RuntimeVoiceNoteView: View {
     let projectID: UUID
     let node: ComponentNode
     let audioHost: RuntimeAudioHost
+    let speechHost: RuntimeSpeechHost
 
     @Environment(LocalAssetStore.self) private var assetStore
     @Environment(\.runtimeDesign) private var design
@@ -155,7 +156,10 @@ struct RuntimeVoiceNoteView: View {
             }
             .buttonStyle(.borderedProminent)
             .frame(minHeight: 44)
-            .disabled(activity == .otherAudio || isPersisting || isRequestingRecording)
+            .disabled(
+                activity == .otherAudio || isPersisting || isRequestingRecording
+                    || speechHost.isProcessing
+            )
             .accessibilityIdentifier("runtime.voice.\(node.id).record")
 
             if hasRecording {
@@ -174,7 +178,7 @@ struct RuntimeVoiceNoteView: View {
             }
             .buttonStyle(.bordered)
             .frame(minHeight: 44)
-            .disabled(activity == .otherAudio || isPersisting)
+            .disabled(activity == .otherAudio || isPersisting || speechHost.isProcessing)
             .accessibilityIdentifier("runtime.voice.\(node.id).playback")
 
             Button(role: .destructive) {
@@ -184,7 +188,7 @@ struct RuntimeVoiceNoteView: View {
             }
             .buttonStyle(.bordered)
             .frame(minWidth: 44, minHeight: 44)
-            .disabled(isPersisting)
+            .disabled(isPersisting || speechHost.isProcessing)
             .accessibilityLabel("Delete voice note")
             .accessibilityIdentifier("runtime.voice.\(node.id).delete")
         }
@@ -218,7 +222,7 @@ struct RuntimeVoiceNoteView: View {
 
 private extension RuntimeVoiceNoteView {
     private func startRecording() {
-        guard !isRequestingRecording else { return }
+        guard !isRequestingRecording, !speechHost.isProcessing else { return }
         statusMessage = nil
         if activity == .playing || activity == .paused {
             audioHost.stopPlayback(ownerID: ownerID)
@@ -274,6 +278,7 @@ private extension RuntimeVoiceNoteView {
     }
 
     private func togglePlayback() {
+        guard !speechHost.isProcessing else { return }
         statusMessage = nil
         do {
             switch activity {
@@ -298,6 +303,7 @@ private extension RuntimeVoiceNoteView {
     }
 
     private func deleteRecording() {
+        guard !speechHost.isProcessing else { return }
         audioHost.stopPlayback(ownerID: ownerID)
         do {
             try assetStore.deleteVoiceRecording(projectID: projectID, binding: node.binding)

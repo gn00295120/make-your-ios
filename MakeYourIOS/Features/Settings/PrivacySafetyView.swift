@@ -12,7 +12,8 @@ struct PrivacySafetyView: View {
                 privacyRow(
                     symbol: "photo.fill",
                     title: "Selected and captured data",
-                    detail: "Photos, voice notes, scans, chosen contacts, files, location, and step results "
+                    detail: "Photos, voice audio, accepted transcripts, scans, chosen contacts, files, "
+                        + "location, and step results "
                         + "stay in project-local storage and are never attached to AI requests automatically."
                 )
                 privacyRow(
@@ -29,6 +30,7 @@ struct PrivacySafetyView: View {
                 )
                 Text(
                     "An AI tool inside a mini app sends only the task and text shown on its review screen. "
+                        + "An accepted transcript may appear as editable text, but audio is never attached. "
                         + "It does not attach photos, records, other projects, or device data."
                 )
                 Text(

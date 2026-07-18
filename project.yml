@@ -34,6 +34,7 @@ targets:
         INFOPLIST_KEY_NSMotionUsageDescription: MakeYour reads today’s step count only when you tap a tiny app pedometer component.
         INFOPLIST_KEY_NSCalendarsWriteOnlyAccessUsageDescription: MakeYour adds a calendar event only after you review it and tap Add Event.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: MakeYour records a local voice note only after you tap Record inside a tiny app.
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: MakeYour transcribes a linked local voice note only after you tap, using on-device recognition when available.
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: false
     scheme:

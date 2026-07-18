@@ -29,13 +29,13 @@
   <p>News uses fixed BBC World, BBC Technology, and NPR News RSS feeds; local search, topics, and bookmarks are not sent to those providers. Market data uses fixed Twelve Data endpoints. AAPL supports demo access; other symbols require your own Twelve Data key. Quotes can be delayed or rate-limited and are not financial advice.</p>
 
   <h2>Why is a device action unavailable?</h2>
-  <p>Camera capture, live QR/barcode/text scanning, pedometer data, and meaningful haptics require supported physical iPhone hardware and may be unavailable in Simulator. Camera, location, and motion also require the corresponding iOS permission. MakeYour starts these actions only after you tap.</p>
+  <p>Camera capture, live QR/barcode/text scanning, pedometer data, on-device speech models, and meaningful haptics require supported physical iPhone hardware and may be unavailable in Simulator. Camera, microphone, Speech Recognition, location, and motion also require the corresponding iOS permission. MakeYour starts these actions only after you tap.</p>
 
   <h2>What can device actions access?</h2>
-  <p>Scanning returns inert text and never opens a URL automatically. Location is one-shot, contacts come only from Apple's single-contact picker, text-file import is bounded to one selected file, and pedometer access returns today's aggregate steps. Sharing uses Apple's destination chooser; clipboard access is tap-initiated and write-only. There is no background camera, location, contact, file, or motion access.</p>
+  <p>Scanning returns inert text and never opens a URL automatically. Location is one-shot, contacts come only from Apple's single-contact picker, text-file import is bounded to one selected file, and pedometer access returns today's aggregate steps. Voice notes stay local and are never uploaded or automatically transcribed. A linked transcript requires on-device recognition, never falls back to the network, and remains editable until you accept it. Sharing uses Apple's destination chooser; clipboard access is tap-initiated and write-only. There is no background camera, microphone, speech, location, contact, file, or motion access.</p>
 
   <h2>Does AI see photos or records?</h2>
-  <p>No. A tiny-app AI helper sends only text entered into that helper after the exact task and text are shown for confirmation. Photos, records, scans, coordinates, contacts, imported files, step counts, other apps, and general device data are not attached automatically.</p>
+  <p>No. A tiny-app AI helper sends only text entered or visibly prefilled into that helper after the exact task and text are shown for confirmation. An accepted transcript may become an editable prefill, but audio is never attached. Photos, records, scans, coordinates, contacts, imported files, step counts, other apps, and general device data are not attached automatically.</p>
 
   <h2>Delete my data</h2>
   <p>Long-press an app in My Apps and choose Delete to remove its document, project-local state and images, and local notifications. Remove host-level OpenAI and Twelve Data keys with the in-app controls before uninstalling. Uninstall removes sandboxed projects, assets, caches, and runtime state, but does not guarantee deletion of Keychain items.</p>

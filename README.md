@@ -78,8 +78,8 @@ xcodebuild \
   test
 ```
 
-On July 19, 2026, the current source passed 203 unit tests and all nine
-non-billable UI tests, strict SwiftLint across 150 Swift files with zero
+On July 19, 2026, the current source passed 211 unit tests and all nine
+non-billable UI tests, strict SwiftLint across 155 Swift files with zero
 violations, `git diff --check`, a clean Release Simulator build, and a signed
 Release iOS build with strict code-signature verification. The separately gated
 live test creates, opens, and operates a validated stateful app; it requires an
@@ -123,19 +123,22 @@ project-local asset store, and keeps the bytes outside the generated document
 and AI prompt. Media metadata can safely describe role, focal point, mask,
 overlay, aspect, and content mode without exposing the underlying asset.
 
-Device features use the same bounded 19-capability model. A generated document
+Device features use the same bounded 20-capability model. A generated document
 may request host-owned camera, QR/barcode/text scanner, one-time location, Apple
 contact picker, bounded text-file import, today's pedometer count, share sheet,
 clipboard write, or haptic components. It can also use a bounded MapKit
 coordinate/place-search view, create one reviewed event with EventKit write-only
 access, export reviewed text/JSON/CSV through Apple's file exporter, and keep one
-foreground-only voice note in a project-local slot. Access
+foreground-only voice note in a project-local slot, and turn that note into an
+editable on-device transcript after a second tap. Access
 that needs a user gesture or permission starts only after the user taps;
 captured results stay in that tiny app by default, scanned URLs are shown as text
 rather than opened, and unsupported simulators or devices receive an honest
 fallback. Maps do not read the user's location, calendar creation cannot read
 existing events, no export occurs until the user chooses a destination, and
 voice notes are never uploaded or recorded after the app leaves the foreground.
+Speech transcription has no network fallback and stores text only after the user
+reviews and accepts the editable result.
 The host rejects incomplete audio, protects temporary recording files, removes
 crash leftovers on the next launch, and deletes a clip when regeneration removes
 its voice binding.
@@ -167,7 +170,8 @@ programs remain compatible.
 ## AI inside generated apps
 
 Mini apps can include an allowlisted `aiAssistant` component. The component has
-a focused task and accepts only text the user explicitly enters. Before every
+a focused task and accepts only text the user explicitly enters or reviews as a
+visible state prefill, including an accepted local transcript. Before every
 request, MakeYour shows the exact task and text for review. Photos, task lists,
 other fields, other projects, and the full `AppDocument` are not attached. The
 request uses the user's Keychain-backed API key directly with the OpenAI
@@ -193,7 +197,8 @@ and the release checklist live in [docs/app-store](docs/app-store).
 - Generated documents are size-limited and validated against an allowlist.
 - The runtime exposes local UI, calculations, fixed-provider news/market data,
   project data, selected or captured photos, user-initiated scanning, MapKit
-  search, write-only calendar creation, reviewed document export, opt-in local
+  search, write-only calendar creation, reviewed document export, on-device
+  reviewed voice transcription, opt-in local
   notifications, deterministic games, and reviewed text-only AI requests.
   It does not execute Swift, JavaScript, WebAssembly, or plugins.
 - Mini apps are private workspaces inside one signed host app; they are not

@@ -8,6 +8,7 @@ struct ComponentRenderer: View {
     let capabilities: [AppCapability]
     @Bindable var session: RuntimeSessionState
     let audioHost: RuntimeAudioHost
+    let speechHost: RuntimeSpeechHost
     let onEvent: (RuntimeEventTrigger, ComponentNode) -> Void
     let onLegacyAction: (RuntimeAction, ComponentNode) -> Void
 
@@ -138,7 +139,17 @@ struct ComponentRenderer: View {
             RuntimeVoiceNoteView(
                 projectID: projectID,
                 node: node,
-                audioHost: audioHost
+                audioHost: audioHost,
+                speechHost: speechHost
+            )
+        case .speechTranscript:
+            RuntimeSpeechTranscriptView(
+                projectID: projectID,
+                node: node,
+                session: session,
+                audioHost: audioHost,
+                speechHost: speechHost,
+                onValueChanged: { onEvent(.valueChanged, node) }
             )
         case .divider:
             Divider().padding(.vertical, 4)

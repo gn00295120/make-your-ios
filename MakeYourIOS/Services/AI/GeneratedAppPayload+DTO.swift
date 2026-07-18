@@ -223,6 +223,12 @@ extension GeneratedAppPayload {
         var recordButtonLabel: String
     }
 
+    struct SpeechTranscript: Decodable {
+        var sourceBinding: String
+        var localeIdentifier: String
+        var buttonLabel: String
+    }
+
     struct Node: Decodable {
         var id: String
         var kind: String
@@ -251,6 +257,7 @@ extension GeneratedAppPayload {
         var calendarEvent: CalendarEvent?
         var documentExport: DocumentExport?
         var voiceNote: VoiceNote?
+        var speechTranscript: SpeechTranscript?
     }
 
     struct Item: Decodable {

@@ -88,6 +88,7 @@ enum CapabilityRegistry {
         case .mapSearch: mapSearch
         case .calendarWrite: calendarWrite
         case .microphoneRecordLocal: microphoneRecordLocal
+        case .speechTranscribeOnDevice: speechTranscribeOnDevice
         case .pedometer: pedometer
         case .shareSheet: shareSheet
         case .clipboardWrite: clipboardWrite
@@ -248,6 +249,19 @@ enum CapabilityRegistry {
             + "the tiny app's local sandbox and are never uploaded or captured in the background.",
         frameworkOrPermissionNote: "AVFAudio foreground recording with NSMicrophoneUsageDescription; "
             + "maximum 60 seconds per local AAC clip."
+    )
+
+    private static let speechTranscribeOnDevice = CapabilityMetadata(
+        capability: .speechTranscribeOnDevice,
+        category: .media,
+        privacyRisk: .high,
+        availability: .permissionGated,
+        requiresExplicitUserAction: true,
+        hostEnforcedSummary: "Transcribes one referenced local voice note only after a visible tap, "
+            + "requires on-device recognition, and shows the result for review before storing it.",
+        frameworkOrPermissionNote: "Speech SFSpeechURLRecognitionRequest with "
+            + "requiresOnDeviceRecognition and NSSpeechRecognitionUsageDescription; "
+            + "network fallback is unavailable."
     )
 
     private static let pedometer = CapabilityMetadata(

@@ -36,6 +36,33 @@ struct RuntimeVoiceNoteSpec: Codable, Hashable, Sendable {
     var recordButtonLabel: String
 }
 
+struct RuntimeSpeechTranscriptSpec: Codable, Hashable, Sendable {
+    var sourceBinding: String
+    var localeIdentifier: String
+    var buttonLabel: String
+}
+
+enum RuntimeSpeechLocale {
+    static func isValid(_ value: String) -> Bool {
+        guard value.count <= 35, value.utf8.count <= 35 else { return false }
+        if value.isEmpty { return true }
+        guard value.count >= 2,
+              value.first != "-", value.first != "_",
+              value.last != "-", value.last != "_",
+              !value.contains("--"), !value.contains("__") else { return false }
+        return value.unicodeScalars.allSatisfy { scalar in
+            scalar.isASCII
+                && (CharacterSet.alphanumerics.contains(scalar) || scalar == "-" || scalar == "_")
+        }
+    }
+
+    static func normalized(_ value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isValid(trimmed) else { return "" }
+        return trimmed.replacingOccurrences(of: "_", with: "-")
+    }
+}
+
 enum RuntimeDocumentFormat: String, Codable, CaseIterable, Hashable, Sendable {
     case plainText
     case json

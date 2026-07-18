@@ -52,6 +52,8 @@ immediately inside one trusted host, and change it later with another sentence?
   local media slot.
 - Supports project-local photo slots without putting image bytes or paths in the
   generated document or builder prompt.
+- Composes a local voice-note block with reviewed on-device speech transcription;
+  unsupported languages fail closed and never fall back to network recognition.
 - Lets generated apps include focused AI assistants with an exact-payload review
   before every text-only request.
 - Keeps multiple private mini apps in an App Library and lets the user switch,
@@ -76,7 +78,8 @@ pickers, actions, checklists, typed date/list/object state, bounded collection a
 date operations, currency, tasks, generic records, news, markets, ledgers,
 deterministic games, private images, device inputs, MapKit place views, reviewed
 write-only calendar creation, reviewed document export, text-only AI assistants,
-and information banners. The general list/object values are bounded flat string
+local voice notes, reviewed on-device transcripts, and information banners. The
+general list/object values are bounded flat string
 containers rather than a full structured-record language. Design Genome v2 adds
 semantic tokens, four real page compositions, safe media treatments, and
 per-renderer variants without arbitrary generated layout code. The runtime owns
@@ -122,8 +125,8 @@ and GPT-5.6 Design-only proposals.
 - Persistent multi-app library with replacement versions.
 - Project-local, metadata-stripped image persistence with duplicate/delete lifecycle.
 - Design Genome v2, Design Studio, and a function-preserving AI Design-only path.
-- The expanded source passes 203 unit tests, all nine non-billable UI paths,
-  and strict SwiftLint across 150 Swift files with zero violations. A dedicated,
+- The expanded source passes 211 unit tests, all nine non-billable UI paths,
+  and strict SwiftLint across 155 Swift files with zero violations. A dedicated,
   explicitly billable GPT-5.6 generation E2E remains available for a Simulator
   with a saved review key.
 - Visual verification of editorial, split/card, and immersive treatments on an
@@ -142,8 +145,8 @@ the execution boundary.
 - Versioned JSON Patch feature edits and cross-version rollback.
 - Per-project SQLite namespaces and migrations.
 - Broader automated accessibility and snapshot diagnostics fed back to the model.
-- Additional carefully reviewed capabilities for speech recognition,
-  precompiled App Intents, and allowlisted HTTPS data sources.
+- Live microphone dictation, precompiled App Intents, and additional allowlisted
+  HTTPS data sources with separately reviewed boundaries.
 - Early App Review guidance before broadening runtime programmability.
 
 ## Final demo storyboard (1:35.30)
@@ -184,6 +187,8 @@ line use a held frame from the real app library rather than concept mockups.
 - [x] Expand the runtime further to 19 reviewed capabilities, typed collections,
   native map/calendar/export/voice blocks, Tiny Game v3, 203 unit tests, and nine
   non-billable UI tests.
+- [x] Add the 20th reviewed capability: tap-initiated, on-device-only transcription
+  of a linked local voice note with editable review and atomic text-state commit.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
 - [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at

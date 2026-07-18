@@ -20,6 +20,7 @@ enum AppCapabilityResolver {
             .calendarEvent: .calendarWrite,
             .documentExport: .documentExport,
             .voiceNote: .microphoneRecordLocal,
+            .speechTranscript: .speechTranscribeOnDevice,
             .liveDataList: .network,
             .newsFeed: .network,
             .marketWatch: .network
