@@ -30,7 +30,7 @@ testable, accessible, and bounded.
 ## Capability catalog
 
 Capabilities are host intents, not raw Apple frameworks. The current document
-vocabulary declares exactly 18 capabilities:
+vocabulary declares exactly 19 capabilities:
 
 - `storage.local`
 - `calculation.safe`
@@ -44,6 +44,7 @@ vocabulary declares exactly 18 capabilities:
 - `files.export`
 - `maps.search`
 - `calendar.createEvent`
+- `microphone.recordLocal`
 - `motion.pedometer`
 - `share.present`
 - `clipboard.write`
@@ -66,11 +67,13 @@ includes camera capture, QR/barcode/text scanning, one-time foreground location,
 Apple's single-contact picker, bounded text-file import, one-time pedometer
 reads, reviewed sharing, clipboard writes, haptic feedback, MapKit display and
 place search, reviewed write-only calendar creation, and bounded text/JSON/CSV
-export through Apple's save panel. Permission- or gesture-gated operations start
+export through Apple's save panel, plus a bounded foreground-only local voice
+note. Permission- or gesture-gated operations start
 only at the documented user action, check availability, and sanitize and bound
 their inputs and outputs. Maps do not request the user's location, calendar
 creation cannot read existing events, exports cannot choose a destination, and
-scanned URLs are never opened or forwarded to AI by default. Adding a generated
+voice recordings cannot continue in the background or reach AI/network adapters.
+Scanned URLs are never opened or forwarded to AI by default. Adding a generated
 version that needs a new capability first presents a host-controlled review
 sheet.
 
@@ -179,18 +182,23 @@ The exact shipping vocabulary and extension rules live in
 
 ## Private media boundary
 
-Generated image nodes and canvas backgrounds contain a semantic binding and
-display instructions only. They never contain user image bytes, local paths, or
-Photos identifiers. The
+Generated image nodes, canvas backgrounds, and voice notes contain semantic
+bindings and display/limit instructions only. They never contain user media
+bytes, local paths, or Photos identifiers. The
 host's `LocalAssetStore` maps `(project ID, binding)` to an opaque local asset,
 normalizes selected images to bounded JPEGs, strips source metadata through
-re-encoding, applies data protection, and excludes the asset directory from
-backup. Duplicate and delete operations include the project's private assets.
+re-encoding, stores validated AAC voice clips up to 1 MiB, applies data
+protection, and excludes the asset directory from backup. Duplicate and delete
+operations include both image and audio assets. Recording first uses a protected,
+backup-excluded staging directory; the next app launch removes any crash
+leftovers. Full app regeneration reconciles voice bindings, preserving a clip
+only while the resulting document still references it.
 
 The builder sends only the semantic slot and visual metadata to the model.
 Runtime AI does not read the asset store. A user-selected Design Studio canvas
 photo stays at the host-owned `design-canvas-background` binding and cannot be
-replaced by model output.
+replaced by model output; local voice bytes likewise never enter a generation or
+runtime-AI request.
 
 ## AI inside a mini app
 
@@ -262,7 +270,8 @@ and small credentials are stored using
   fixed-provider exchange/news/market views, playable Snake and original
   platform games, bounded custom rule-driven games, image slots, camera and code/text scanning, one-time location,
   contact/file pickers, MapKit place views, reviewed write-only calendar events,
-  reviewed document export, pedometer, share/clipboard/haptics, text-only AI
+  reviewed document export, foreground local voice notes, pedometer,
+  share/clipboard/haptics, text-only AI
   assistants, banners, dividers, navigation, page layouts, and presentation
   tokens.
 - BYOK: OpenAI Responses API; editable model; device-only Keychain storage.
@@ -276,4 +285,4 @@ Future releases should add schemaful record relationships and bounded collection
 filter/sort/iteration primitives, moving-platform and dynamic-solid game
 physics, versioned JSON Patch editing, per-project SQLite namespaces, automated
 accessibility and snapshot checks, and additional narrowly reviewed capabilities
-such as foreground audio, speech recognition, and precompiled App Intents.
+such as speech recognition and precompiled App Intents.

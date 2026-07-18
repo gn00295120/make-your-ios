@@ -42,6 +42,7 @@ enum RendererCatalog {
         .map: [.automatic, .compact, .cards, .framed, .fullBleed],
         .calendarEvent: [.automatic, .compact, .cards, .framed],
         .documentExport: [.automatic, .compact, .cards, .framed],
+        .voiceNote: [.automatic, .compact, .cards, .framed],
         .divider: [.automatic, .compact]
     ]
 }

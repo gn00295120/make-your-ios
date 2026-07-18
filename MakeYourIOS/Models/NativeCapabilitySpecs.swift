@@ -31,6 +31,11 @@ struct RuntimeDocumentExportSpec: Codable, Hashable, Sendable {
     var buttonLabel: String
 }
 
+struct RuntimeVoiceNoteSpec: Codable, Hashable, Sendable {
+    var maximumDurationSeconds: Int
+    var recordButtonLabel: String
+}
+
 enum RuntimeDocumentFormat: String, Codable, CaseIterable, Hashable, Sendable {
     case plainText
     case json

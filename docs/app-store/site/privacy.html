@@ -14,28 +14,29 @@
   <p class="lede">Effective July 18, 2026. MakeYour is a local workspace for creating and using native tiny apps on iPhone.</p>
 
   <h2>Data on your iPhone</h2>
-  <p>Tiny-app documents, records, tasks, ledgers, game scores, bookmarks, watchlists, cached provider results, consent settings, selected or captured images (including an optional Design Studio canvas background), and user-initiated device results stay in MakeYour's local app container. Your OpenAI key and any optional Twelve Data key are stored separately in iOS Keychain with When Unlocked, This Device Only protection. MakeYour has no user-account or sync server.</p>
+  <p>Tiny-app documents, records, tasks, ledgers, game scores, bookmarks, watchlists, cached provider results, consent settings, selected or captured images (including an optional Design Studio canvas background), bounded voice notes, and user-initiated device results stay in MakeYour's local app container. Your OpenAI key and any optional Twelve Data key are stored separately in iOS Keychain with When Unlocked, This Device Only protection. MakeYour has no user-account or sync server.</p>
 
   <h2>OpenAI requests</h2>
-  <p>AI is optional and requires your own API key and consent. App generation sends your builder instruction and current declarative app document directly to OpenAI. An AI helper inside a mini app shows the exact task and text before every request, and sends them only after you tap Send. Photos, canvas backgrounds, records, notification contents, other projects, and general device data are not attached. Generated documents contain only semantic image bindings and visual metadata, never image bytes or local paths.</p>
+  <p>AI is optional and requires your own API key and consent. App generation sends your builder instruction and current declarative app document directly to OpenAI. An AI helper inside a mini app shows the exact task and text before every request, and sends them only after you tap Send. Photos, canvas backgrounds, voice recordings, records, notification contents, other projects, and general device data are not attached. Generated documents contain only semantic media bindings and visual or duration metadata, never media bytes or local paths.</p>
   <p>OpenAI processes requests under the agreement and controls associated with your OpenAI API account. Review <a href="https://platform.openai.com/docs/models/default-usage-policies-by-endpoint">OpenAI API data controls</a> and the terms for your account before enabling AI.</p>
 
   <h2>Fixed-provider data</h2>
   <p>Live FX Watch sends selected ISO currency codes to the fixed <a href="https://frankfurter.dev/">Frankfurter API</a>. Daily Brief fetches only built-in BBC World, BBC Technology, and NPR News RSS feeds; search, topics, and bookmarks stay local. Market Pocket sends a symbol and chart parameters to <a href="https://twelvedata.com/">Twelve Data</a>, using its AAPL demo access or your optional Twelve Data key. Opening an article leaves MakeYour for the original publisher, whose policy applies.</p>
-  <p>These adapters do not send project records, photos, captured device results, or your OpenAI key. Providers and network operators may process technical information such as an IP address to deliver, limit, and secure requests.</p>
+  <p>These adapters do not send project records, photos, voice recordings, captured device results, or your OpenAI key. Providers and network operators may process technical information such as an IP address to deliver, limit, and secure requests.</p>
 
   <h2>Device actions</h2>
-  <p>Camera capture, QR/barcode/text scanning, one current coordinate, Apple's single-contact picker, one selected text file, and today's aggregate step count start only after you tap. There is no hidden capture, background location, address-book enumeration, arbitrary file browsing, or background motion stream. Scanned values are inert text and scanned URLs are not opened automatically.</p>
+  <p>Camera capture, QR/barcode/text scanning, one current coordinate, Apple's single-contact picker, one selected text file, today's aggregate step count, and local voice recording start only after you tap. There is no hidden camera or microphone capture, background recording or location, address-book enumeration, arbitrary file browsing, or background motion stream. Voice notes are validated mono AAC clips of 5–60 seconds, capped at 1 MiB, stored only in the requesting tiny app, and never uploaded or transcribed. Protected recording-stage files are excluded from backup and crash leftovers are removed on the next launch. Scanned values are inert text and scanned URLs are not opened automatically.</p>
   <p>One selected UTF-8 text, JSON, or CSV file may be read up to 256 KB, with at most 2,000 characters stored. Contact selection stores the displayed name, first phone number, and first email when available. Sharing sends nothing until you choose a destination in Apple's share sheet. Clipboard access is tap-initiated and write-only; other apps may access clipboard content under iOS rules. Haptics collect no data.</p>
 
   <h2>Collection and tracking</h2>
-  <p>The MakeYour developer does not receive user projects, photos, captured device results, keys, prompts, results, bookmarks, watchlists, analytics, advertising identifiers, or usage profiles on a MakeYour server. The app has no advertising SDK, analytics SDK, data broker integration, or cross-app tracking.</p>
+  <p>The MakeYour developer does not receive user projects, photos, voice recordings, captured device results, keys, prompts, results, bookmarks, watchlists, analytics, advertising identifiers, or usage profiles on a MakeYour server. The app has no advertising SDK, analytics SDK, data broker integration, or cross-app tracking.</p>
   <p>Because reviewed text may be processed by OpenAI in connection with your account, the App Store label conservatively lists Other User Content for App Functionality, linked to you, and not used for tracking. Third-party processing is limited to providing a feature you request and must protect data consistently with published policies and applicable law.</p>
 
   <h2>Retention, deletion, and consent</h2>
   <ul>
     <li>Remove your OpenAI key from AI Key and your optional Twelve Data key from its market provider-key screen.</li>
-    <li>Delete a tiny app from My Apps to remove its document, local runtime state and images, and its local notifications.</li>
+    <li>Delete a tiny app from My Apps to remove its document, local runtime state, images, voice notes, and local notifications.</li>
+    <li>Regenerating a tiny app deletes a voice note when the resulting app no longer references that voice binding.</li>
     <li>Disable AI consent from AI Key to prevent new AI requests.</li>
     <li>Delete MakeYour from iPhone to remove sandboxed projects, assets, caches, and runtime state.</li>
   </ul>

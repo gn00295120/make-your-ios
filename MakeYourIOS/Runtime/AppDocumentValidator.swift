@@ -102,7 +102,7 @@ struct AppDocumentValidator: Sendable {
         let allNodes = document.pages.flatMap(\.nodes)
         let pageIDs = Set(document.pages.map(\.id))
         let bindingKinds: Set<ComponentKind> = [
-            .textInput, .numberInput, .picker, .image, .deviceInput
+            .textInput, .numberInput, .picker, .image, .deviceInput, .voiceNote
         ]
         let bindings = allNodes
             .filter { bindingKinds.contains($0.kind) }

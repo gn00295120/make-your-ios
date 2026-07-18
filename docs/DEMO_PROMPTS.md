@@ -87,7 +87,7 @@ Use sky tint, soft preset, light appearance, rounded typography, balanced type s
 ## Demo 10 — Original custom game
 
 ```text
-Create a one-page original top-down tiny game named “Star Garden” using game kind custom and Tiny Game Program version 2. The player controls a small glider with four-way touch controls inside a bounded dark garden. Place five collectible stars and three stationary fire hazards. Contacting a star must add one to a bounded score variable, destroy that star, and play light feedback. Reaching score 5 must win. Contacting a fire hazard must lose. Show score in the HUD and include the host-owned Start, Pause, Restart, and exit controls. Use a deterministic seed, keep every initial entity fully inside the world, and keep all tags, templates, controls, variables, triggers, targets, and effects valid and reachable.
+Create a one-page original top-down tiny game named “Star Garden” using game kind custom and Tiny Game Program version 3. The player controls a small dynamic sensor glider with four-way touch controls inside a bounded dark garden. Place five static sensor collectible stars and three static sensor fire hazards. Give every non-none body an explicit sensor physics block with valid velocity limits and zero lifetime. Contacting a star must add one to a bounded score variable, destroy that star, and play light feedback. Reaching score 5 must win. Contacting a fire hazard must lose. Show score in the HUD and include the host-owned Start, Pause, Restart, and exit controls. Use a deterministic seed, keep every initial entity fully inside the world, and keep all tags, templates, controls, variables, triggers, targets, and effects valid and reachable.
 
 Use amber tint, bold preset, dark appearance, rounded expressive typography, gradient canvas, round corners, regular density, floating elevation, pill controls, expressive motion, story layout, and an immersive game presentation. Use only rectangle, circle, or allowed SF Symbol visuals. Declare storage.local and haptics.play only. Do not use copyrighted names, characters, levels, external images, audio, arbitrary code, network multiplayer, ads, or purchases.
 ```
@@ -128,6 +128,17 @@ Add one documentExport titled “Take the plan with you”, fileName “Taipei D
 Use mint tint, native preset, system appearance, rounded typography, plain canvas, soft corners, regular density, plain surfaces, subtle motion, and a form layout. Declare exactly storage.local, calculation.safe, maps.search, calendar.createEvent, and files.export. Do not request location.current, files.import, contacts.pick, notifications.scheduleLocal, http.request, ai.complete, audio, speech recognition, App Intents, background timers, nested objects, or collection iteration.
 ```
 
+## Demo 13 — Private Voice Notebook
+
+This prompt exercises the bounded microphone adapter. Use a supported physical
+iPhone to verify real recording quality and foreground interruption behavior.
+
+```text
+Create a one-page calm personal mini app named “Voice Pocket”. Add a full-width hero titled “A thought, kept private” and one full-width voiceNote titled “Quick reflection” with binding quick-reflection, maximumDurationSeconds 30, and recordButtonLabel “Record a reflection”. Explain in its subtitle that recording begins only after a tap, stays on this iPhone, stops outside the foreground, and is never uploaded or transcribed. Add an info banner reminding the user that the fixed playback and delete controls are always available.
+
+Use plum tint, soft preset, system appearance, rounded typography, plain canvas, soft corners, airy density, subtle elevation, pill controls, subtle motion, and a form layout. Declare exactly storage.local and microphone.recordLocal. Do not add AI, network, speech recognition, background recording, notifications, photos, files, or other device components.
+```
+
 ## Verification checklist
 
 For each prompt used in a release or competition demo:
@@ -137,8 +148,8 @@ For each prompt used in a release or competition demo:
 3. confirm the generated document passes validation and becomes the active version;
 4. exercise the core native behavior, including denial/offline/unavailable states
    relevant to that prompt; and
-5. use a supported physical iPhone for camera, live scanner, pedometer, and
-   haptic evidence.
+5. use a supported physical iPhone for camera, microphone, live scanner,
+   pedometer, and haptic evidence.
 
 ## Recording rule
 

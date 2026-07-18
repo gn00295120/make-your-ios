@@ -20,8 +20,8 @@ ship together.
 | Conditions | equals, not-equals, numeric/date ordering, logical empty, non-empty | Typed validation before activation |
 | Effects | set state, page navigation, in-app message, reviewed local notification, success haptic | Host derives capabilities and owns OS permission prompts |
 | Specialized data | task reminders, generic typed record collections, ledger, FX converter/watchlist, news, market watchlist | Each is a compiled adapter with isolated persistence; arbitrary SQL/HTTP is unavailable |
-| Media and device | private image slots plus the 11 device actions in the capability catalog | Tap initiated, sanitized, bounded, and hardware-gated |
-| Native services | MapKit coordinate/place display and search, reviewed write-only calendar event, reviewed text/JSON/CSV export | Fixed Apple adapters; no location history, calendar reads, silent route launch, or silent file destination |
+| Media and device | private image and voice-note slots plus the 11 device actions in the capability catalog | Tap initiated, sanitized, bounded, foreground-only where applicable, and hardware-gated |
+| Native services | MapKit coordinate/place display and search, reviewed write-only calendar event, reviewed text/JSON/CSV export, local AAC voice note | Fixed host adapters; no location history, calendar reads, silent route/file handoff, background recording, or audio upload |
 | AI | reviewed text-only assistant with optional result binding | User confirms the exact payload; no automatic project/device context |
 | Games | Snake/platformer presets plus Tiny Game Program v3 | Deterministic fixed-step interpreter; no downloaded or executable game code; stored V2 programs remain compatible |
 
@@ -47,7 +47,7 @@ iOS scene is active. It is a UI automation primitive, not background execution:
 the host neither catches up missed ticks nor schedules silent work after the app
 leaves the foreground.
 
-## Native map, calendar, and export blocks
+## Native map, calendar, export, and voice blocks
 
 - `map` renders a bounded MapKit region for a configured coordinate or Apple
   Maps place query, keeps optional search visible, returns at most eight markers,
@@ -63,6 +63,15 @@ leaves the foreground.
   reviewed surface may resolve a list or object to its canonical JSON; ordinary
   UI templates still show only a summary. It cannot silently select or
   overwrite a destination.
+- `voiceNote` requests microphone permission only after the user taps Record,
+  captures one 5–60 second mono AAC clip into a project-local binding, stops at
+  the configured limit or when the app leaves the foreground, and always offers
+  playback, pause/resume, replacement, and deletion. The clip is capped at 1 MiB,
+  checked for a playable M4A container before persistence, protected with the
+  project's local assets, and never uploaded or transcribed. A protected staging
+  file exists only while recording; crash leftovers are removed on the next app
+  launch. Regeneration keeps clips for still-referenced bindings and deletes
+  clips whose voice blocks were removed.
 
 ## Tiny Game Program v3
 
@@ -114,8 +123,8 @@ sensor-only behavior.
 graph cannot iterate a collection, represent nested or schemaful records in its
 flat list/object state, mutate specialized task/ledger records, run a background
 timer, call an arbitrary URL, load a plugin, or create a new Apple entitlement.
-Moving-platform or dynamic-solid game physics, foreground audio, speech
-recognition, App Intents or Shortcuts, and extension targets still require new
+Moving-platform or dynamic-solid game physics, speech recognition, App Intents
+or Shortcuts, and extension targets still require new
 typed host blocks, privacy boundaries, schema changes, and release tests before
 GPT may use them.
 

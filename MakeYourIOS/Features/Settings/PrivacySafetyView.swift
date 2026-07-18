@@ -12,8 +12,8 @@ struct PrivacySafetyView: View {
                 privacyRow(
                     symbol: "photo.fill",
                     title: "Selected and captured data",
-                    detail: "Photos, scans, chosen contacts, files, location, and step results stay in "
-                        + "project-local storage and are never attached to AI requests automatically."
+                    detail: "Photos, voice notes, scans, chosen contacts, files, location, and step results "
+                        + "stay in project-local storage and are never attached to AI requests automatically."
                 )
                 privacyRow(
                     symbol: "key.fill",

@@ -13,8 +13,10 @@ struct AppRuntimeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedPageID: String
     @State private var session: RuntimeSessionState
+    @State private var audioHost: RuntimeAudioHost
     private let logicEngine: RuntimeLogicEngine
 
     init(projectID: UUID, document: AppDocument) {
@@ -32,6 +34,7 @@ struct AppRuntimeView: View {
             persistentKeys: logicEngine.persistentKeys,
             stateDefinitions: logicEngine.stateDefinitions
         ))
+        _audioHost = State(initialValue: RuntimeAudioHost())
     }
 
     private var selectedPage: AppPage {
@@ -77,6 +80,7 @@ struct AppRuntimeView: View {
                         theme: theme,
                         capabilities: document.capabilities,
                         session: session,
+                        audioHost: audioHost,
                         onEvent: perform,
                         onLegacyAction: performLegacy
                     )
@@ -103,6 +107,18 @@ struct AppRuntimeView: View {
         .tint(design.accent)
         .fontDesign(theme.typography.fontDesign)
         .preferredColorScheme(theme.appearance.colorScheme)
+        .onChange(of: scenePhase) { _, newValue in
+            switch newValue {
+            case .active:
+                audioHost.sceneDidBecomeActive()
+            case .inactive:
+                audioHost.sceneDidBecomeInactive()
+            case .background:
+                audioHost.sceneDidEnterBackground()
+            @unknown default:
+                audioHost.sceneDidEnterBackground()
+            }
+        }
         .alert(
             "MakeYour",
             isPresented: Binding(

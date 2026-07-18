@@ -78,8 +78,8 @@ xcodebuild \
   test
 ```
 
-On July 19, 2026, the current source passed 189 unit tests and all nine
-non-billable UI tests, strict SwiftLint across 141 Swift files with zero
+On July 19, 2026, the current source passed 203 unit tests and all nine
+non-billable UI tests, strict SwiftLint across 150 Swift files with zero
 violations, `git diff --check`, a clean Release Simulator build, and a signed
 Release iOS build with strict code-signature verification. The separately gated
 live test creates, opens, and operates a validated stateful app; it requires an
@@ -123,17 +123,22 @@ project-local asset store, and keeps the bytes outside the generated document
 and AI prompt. Media metadata can safely describe role, focal point, mask,
 overlay, aspect, and content mode without exposing the underlying asset.
 
-Device features use the same bounded 18-capability model. A generated document
+Device features use the same bounded 19-capability model. A generated document
 may request host-owned camera, QR/barcode/text scanner, one-time location, Apple
 contact picker, bounded text-file import, today's pedometer count, share sheet,
 clipboard write, or haptic components. It can also use a bounded MapKit
 coordinate/place-search view, create one reviewed event with EventKit write-only
-access, and export reviewed text/JSON/CSV through Apple's file exporter. Access
+access, export reviewed text/JSON/CSV through Apple's file exporter, and keep one
+foreground-only voice note in a project-local slot. Access
 that needs a user gesture or permission starts only after the user taps;
 captured results stay in that tiny app by default, scanned URLs are shown as text
 rather than opened, and unsupported simulators or devices receive an honest
 fallback. Maps do not read the user's location, calendar creation cannot read
-existing events, and no export occurs until the user chooses a destination.
+existing events, no export occurs until the user chooses a destination, and
+voice notes are never uploaded or recorded after the app leaves the foreground.
+The host rejects incomplete audio, protects temporary recording files, removes
+crash leftovers on the next launch, and deletes a clip when regeneration removes
+its voice binding.
 
 ## Composable runtime blocks
 

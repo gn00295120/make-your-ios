@@ -51,14 +51,15 @@ capability changes currently in the source tree.
 
 Current source verification snapshot (2026-07-19):
 
-- 189/189 unit tests and all 9/9 non-billable UI paths passed on an iPhone 17 Pro
+- 203/203 unit tests and all 9/9 non-billable UI paths passed on an iPhone 17 Pro
   Simulator. The separately gated live GPT-5.6 test requires an API key saved in
   that Simulator and was not counted after its app data was reset.
-- Strict SwiftLint checked 141 Swift files with zero violations; `git diff
+- Strict SwiftLint checked 150 Swift files with zero violations; `git diff
   --check`, a clean Release Simulator build, an Apple Development-signed Release
   iOS build, and strict local code-signature verification passed.
-- The built iPhone app contains camera, contact, When In Use location, motion,
-  and write-only calendar usage descriptions plus `PrivacyInfo.xcprivacy`.
+- The built iPhone app contains camera, microphone, contact, When In Use
+  location, motion, and write-only calendar usage descriptions plus
+  `PrivacyInfo.xcprivacy`.
 - An earlier expanded-capability build was installed on the connected iPhone,
   but the exact Design Genome v2 candidate has not yet had a fresh physical
   install. Camera/scanner and permission interaction gates below deliberately
@@ -73,8 +74,8 @@ Current source verification snapshot (2026-07-19):
 - [ ] Run the full unit suite, strict SwiftLint, `git diff --check`, release
   build, archive validation, and strict code-signature verification; record the
   actual results without copying the historical 43-test count.
-- [ ] Confirm the archive contains camera, contact, When In Use location, and
-  motion usage descriptions, plus the current privacy manifest.
+- [ ] Confirm the archive contains camera, microphone, contact, When In Use
+  location, motion, and calendar usage descriptions, plus the current privacy manifest.
 - [ ] Fresh-install the exact candidate on TestFlight and confirm all twelve seeded
   tiny apps appear.
 - [ ] Exercise capability review for generated documents and verify missing or
@@ -91,13 +92,17 @@ Current source verification snapshot (2026-07-19):
   states.
 - [ ] On a supported physical iPhone, test camera grant/deny/capture, QR,
   supported barcode and visible-text scanning, one-time location, today's
-  pedometer count, and haptic feedback.
+  pedometer count, first-run microphone grant/deny, voice recording/playback/
+  deletion, permission-overlay resume, inactive/background stop, and haptic feedback.
 - [ ] On the target iOS release, test contact cancellation/selection, bounded
   text/JSON/CSV import, share cancellation/destination choice, and tap-initiated
   clipboard write.
 - [ ] Verify that deleting a tiny app removes its document, runtime state,
-  project images, and pending/delivered local notifications while leaving
+  project images and voice notes, and pending/delivered local notifications while leaving
   host-level API keys available to other projects.
+- [ ] Regenerate away a voice block, confirm its clip cannot reappear when the
+  binding is added again, then force-quit during recording and confirm next-launch
+  staging cleanup.
 - [ ] Record a current-build demo showing real OpenAI generation, capability
   review, two contrasting generated tiny apps, and smooth project switching.
 - [ ] Capture new screenshots and App Review attachments if the selected build

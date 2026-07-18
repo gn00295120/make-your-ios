@@ -33,6 +33,7 @@ targets:
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: MakeYour requests one current location only when you tap a tiny app location component.
         INFOPLIST_KEY_NSMotionUsageDescription: MakeYour reads today’s step count only when you tap a tiny app pedometer component.
         INFOPLIST_KEY_NSCalendarsWriteOnlyAccessUsageDescription: MakeYour adds a calendar event only after you review it and tap Add Event.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: MakeYour records a local voice note only after you tap Record inside a tiny app.
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: false
     scheme:

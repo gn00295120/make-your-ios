@@ -288,6 +288,15 @@ extension OpenAIAppGenerationClient {
             ],
             "required": ["fileName", "format", "contentTemplate", "buttonLabel"]
         ]
+        let voiceNote: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "maximumDurationSeconds": integer,
+                "recordButtonLabel": string
+            ],
+            "required": ["maximumDurationSeconds", "recordButtonLabel"]
+        ]
         let item: [String: Any] = [
             "type": "object",
             "additionalProperties": false,
@@ -407,7 +416,8 @@ extension OpenAIAppGenerationClient {
                 "deviceInput": nullableObject(deviceInput),
                 "map": nullableObject(map),
                 "calendarEvent": nullableObject(calendarEvent),
-                "documentExport": nullableObject(documentExport)
+                "documentExport": nullableObject(documentExport),
+                "voiceNote": nullableObject(voiceNote)
             ],
             "required": [
                 "id", "kind", "title", "subtitle", "symbol", "value",
@@ -415,7 +425,7 @@ extension OpenAIAppGenerationClient {
                 "valueBinding", "events", "control", "presentation", "image", "collection",
                 "liveData", "newsFeed",
                 "marketWatch", "ledger", "game", "deviceInput", "map",
-                "calendarEvent", "documentExport"
+                "calendarEvent", "documentExport", "voiceNote"
             ]
         ]
         let page: [String: Any] = [

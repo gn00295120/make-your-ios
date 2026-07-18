@@ -7,6 +7,7 @@ struct ComponentRenderer: View {
     let theme: AppVisualTheme
     let capabilities: [AppCapability]
     @Bindable var session: RuntimeSessionState
+    let audioHost: RuntimeAudioHost
     let onEvent: (RuntimeEventTrigger, ComponentNode) -> Void
     let onLegacyAction: (RuntimeAction, ComponentNode) -> Void
 
@@ -133,6 +134,12 @@ struct ComponentRenderer: View {
             RuntimeCalendarEventView(node: node, session: session)
         case .documentExport:
             RuntimeDocumentExportView(node: node, session: session)
+        case .voiceNote:
+            RuntimeVoiceNoteView(
+                projectID: projectID,
+                node: node,
+                audioHost: audioHost
+            )
         case .divider:
             Divider().padding(.vertical, 4)
         }

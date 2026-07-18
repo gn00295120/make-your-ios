@@ -41,17 +41,18 @@ Device and data boundaries:
 - A generated map component displays a configured coordinate or searches only Apple Maps. It does not request current-location access or location history. Opening directions requires a tap and hands the selected place to Apple Maps.
 - A generated calendar component shows the complete proposed event in a review sheet, then requests EventKit write-only access only when the reviewer taps Add Event. It can add that one event to the default writable calendar but cannot enumerate, read, edit, or delete existing events. The build includes `NSCalendarsWriteOnlyAccessUsageDescription`: “MakeYour adds a calendar event only after you review it and tap Add Event.”
 - A generated document-export component shows the resolved content preview and opens Apple's destination chooser only after a tap. Plain text, JSON, and CSV exports are bounded to 2,000 characters/8 KB; the tiny app cannot choose a destination or overwrite a file silently.
+- A generated voice-note component requests microphone access only after the reviewer taps Record. It stores one validated mono AAC clip of 5–60 seconds (maximum 1 MiB) in that tiny app's protected local asset directory, always exposes play/pause/delete controls, and stops when the app loses the active foreground. Permission-sheet inactivity is handled separately so first-time approval resumes only after the app is active. Protected crash-staged files are swept on next launch, and regeneration deletes audio for removed bindings. Audio is never transcribed, uploaded, or attached to an AI request. The build includes `NSMicrophoneUsageDescription`: “MakeYour records a local voice note only after you tap Record inside a tiny app.”
 - Pedometer access reads only today's aggregate step count after a tap, with no raw or background motion stream.
 - The share sheet sends nothing until the reviewer chooses a destination. Clipboard access is tap-initiated and write-only. Haptics collect no data.
-- Deleting a tiny app removes its document, local runtime state and project images, and its local notifications. Host-level API keys must be removed separately because other tiny apps may use them.
+- Deleting a tiny app removes its document, local runtime state, project images and voice notes, and its local notifications. Host-level API keys must be removed separately because other tiny apps may use them.
 
 Privacy and storage:
 
 - OpenAI and optional Twelve Data API keys use iOS Keychain with When Unlocked, This Device Only protection.
 - Requests go directly from the device to the named provider; the developer operates no account, analytics, or proxy server.
 - Projects, records, bookmarks, cached responses, and captured results stay on device unless the user deliberately shares text or opens an external article.
-- User-selected component images and Design Studio canvas photos stay in the tiny app's project-local asset store. Generated documents contain only semantic bindings and visual metadata; image bytes and local paths are not sent to GPT-5.6.
-- Privacy & Safety is accessible from the AI Key screen and contains a catalog of all 18 host capabilities.
+- User-selected component images, Design Studio canvas photos, and voice notes stay in the tiny app's project-local asset store. Generated documents contain only semantic bindings and presentation or duration metadata; media bytes and local paths are not sent to GPT-5.6.
+- Privacy & Safety is accessible from the AI Key screen and contains a catalog of all 19 host capabilities.
 
 Fixed network services:
 

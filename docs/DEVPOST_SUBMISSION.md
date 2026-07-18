@@ -122,8 +122,8 @@ and GPT-5.6 Design-only proposals.
 - Persistent multi-app library with replacement versions.
 - Project-local, metadata-stripped image persistence with duplicate/delete lifecycle.
 - Design Genome v2, Design Studio, and a function-preserving AI Design-only path.
-- The expanded source passes 189 unit tests, all nine non-billable UI paths,
-  and strict SwiftLint across 141 Swift files with zero violations. A dedicated,
+- The expanded source passes 203 unit tests, all nine non-billable UI paths,
+  and strict SwiftLint across 150 Swift files with zero violations. A dedicated,
   explicitly billable GPT-5.6 generation E2E remains available for a Simulator
   with a saved review key.
 - Visual verification of editorial, split/card, and immersive treatments on an
@@ -142,8 +142,8 @@ the execution boundary.
 - Versioned JSON Patch feature edits and cross-version rollback.
 - Per-project SQLite namespaces and migrations.
 - Broader automated accessibility and snapshot diagnostics fed back to the model.
-- Additional carefully reviewed capabilities for foreground audio, speech
-  recognition, precompiled App Intents, and allowlisted HTTPS data sources.
+- Additional carefully reviewed capabilities for speech recognition,
+  precompiled App Intents, and allowlisted HTTPS data sources.
 - Early App Review guidance before broadening runtime programmability.
 
 ## Final demo storyboard (1:35.30)
@@ -181,8 +181,8 @@ line use a held frame from the real app library rather than concept mockups.
   tests using the README instructions.
 - [x] After submission, expand the current source to Design Genome v2 and pass
   109 unit tests, three Design Studio UI paths, and one live GPT-5.6 E2E.
-- [x] Expand the runtime further to 18 reviewed capabilities, typed collections,
-  native map/calendar/export blocks, Tiny Game v3, 189 unit tests, and nine
+- [x] Expand the runtime further to 19 reviewed capabilities, typed collections,
+  native map/calendar/export/voice blocks, Tiny Game v3, 203 unit tests, and nine
   non-billable UI tests.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.

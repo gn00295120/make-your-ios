@@ -87,6 +87,7 @@ enum CapabilityRegistry {
         case .documentExport: documentExport
         case .mapSearch: mapSearch
         case .calendarWrite: calendarWrite
+        case .microphoneRecordLocal: microphoneRecordLocal
         case .pedometer: pedometer
         case .shareSheet: shareSheet
         case .clipboardWrite: clipboardWrite
@@ -235,6 +236,18 @@ enum CapabilityRegistry {
             + "the tiny app cannot enumerate, edit, or delete existing calendar data.",
         frameworkOrPermissionNote: "EventKit write-only event access requested at use time with "
             + "NSCalendarsWriteOnlyAccessUsageDescription."
+    )
+
+    private static let microphoneRecordLocal = CapabilityMetadata(
+        capability: .microphoneRecordLocal,
+        category: .media,
+        privacyRisk: .high,
+        availability: .permissionGated,
+        requiresExplicitUserAction: true,
+        hostEnforcedSummary: "Records one bounded voice note only after a visible tap; recordings stay in "
+            + "the tiny app's local sandbox and are never uploaded or captured in the background.",
+        frameworkOrPermissionNote: "AVFAudio foreground recording with NSMicrophoneUsageDescription; "
+            + "maximum 60 seconds per local AAC clip."
     )
 
     private static let pedometer = CapabilityMetadata(

@@ -46,6 +46,7 @@ extension AppDocumentValidator {
         case .map: try validateMap(node)
         case .calendarEvent: try validateCalendarEvent(node)
         case .documentExport: try validateDocumentExport(node)
+        case .voiceNote: try validateVoiceNote(node)
         default: break
         }
     }
@@ -208,6 +209,16 @@ extension AppDocumentValidator {
         }
     }
 
+    private func validateVoiceNote(_ node: ComponentNode) throws {
+        guard let voiceNote = node.voiceNote,
+              !node.binding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              (5...60).contains(voiceNote.maximumDurationSeconds),
+              !voiceNote.recordButtonLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              voiceNote.recordButtonLabel.count <= 60 else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(.voiceNote)
+        }
+    }
+
     private func validateSpecializedConfiguration(_ node: ComponentNode) throws {
         let configurations: [(ComponentKind, Bool)] = [
             (.recordCollection, node.collection != nil),
@@ -220,7 +231,8 @@ extension AppDocumentValidator {
             (.control, node.control != nil),
             (.map, node.map != nil),
             (.calendarEvent, node.calendarEvent != nil),
-            (.documentExport, node.documentExport != nil)
+            (.documentExport, node.documentExport != nil),
+            (.voiceNote, node.voiceNote != nil)
         ]
         let configuredKinds = configurations.compactMap { $0.1 ? $0.0 : nil }
         let specializedKinds = Set(configurations.map { $0.0 })

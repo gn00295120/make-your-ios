@@ -119,7 +119,7 @@ struct OpenAIAppGenerationClient: Sendable {
     Preserve stable page, node, item, and binding IDs when editing existing behavior. Use concise kebab-case
     IDs for new elements. For each specialized node, fill only its matching configuration object and return
     null for control, image, collection, liveData, newsFeed, marketWatch, ledger, game, deviceInput, map,
-    calendarEvent, and documentExport when unrelated. Return an empty valueBinding and events array when a
+    calendarEvent, documentExport, and voiceNote when unrelated. Return an empty valueBinding and events array when a
     node has no dynamic behavior.
     List only capabilities actually used; the host independently derives and enforces the exact capability set.
     Keep the experience focused: one to three pages and no more than twelve components per page.
@@ -134,7 +134,7 @@ struct OpenAIAppGenerationClient: Sendable {
     actions, data configuration, and IDs. Change only theme, page presentation, node presentation, and
     image presentation metadata. Never remove working behavior merely to achieve a visual style.
     Use half-width spans only for text, metric, infoBanner, image, control, collectionView, calendarEvent,
-    documentExport, and button nodes.
+    documentExport, voiceNote, and button nodes.
     Use image nodes, or an optional hero image, as private media slots. Choose a semantic media role,
     focal point, mask, and overlay. Set a meaningful kebab-case binding and alt text. A theme background
     may reference a local backgroundAssetBinding; use an empty string when no selectable background is
@@ -243,6 +243,11 @@ struct OpenAIAppGenerationClient: Sendable {
     direct list or object placeholder emits its bounded canonical JSON into this reviewed export only.
     The host displays a preview, validates JSON, normalizes the file name and extension, and opens Apple's save
     panel only after a tap. It cannot silently choose or overwrite a destination. Declare files.export.
+    Use voiceNote for one user-controlled local recording slot. Give it a stable binding, a 5...60 second
+    maximumDurationSeconds, and a clear recordButtonLabel. The host always exposes playback and deletion,
+    records only in the visible foreground after a tap, stores one bounded AAC clip in that tiny app's sandbox,
+    stops at the configured limit or when the app leaves the foreground, and never uploads or transcribes the
+    audio. Declare microphone.recordLocal.
     For taskList and checklist, seed realistic example items that the user can replace. Their specialized
     internal records are not exposed as logic state, so do not claim that a metric derives from their contents.
     For a standalone legacy scheduleNotification button without events, action.target is delay minutes and

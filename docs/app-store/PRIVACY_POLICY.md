@@ -12,9 +12,9 @@ MakeYour stores mini-app documents and runtime state in the app's local
 container. Depending on the tiny apps a user creates, this can include records,
 tasks, ledgers, game scores, news bookmarks, market and currency watchlists,
 cached provider results, AI consent settings, selected or captured project
-images (including an optional Design Studio canvas background), scanned text or
-codes, a one-time coordinate, a selected contact summary, imported text, or
-today's aggregate step count.
+images (including an optional Design Studio canvas background), bounded voice
+notes, scanned text or codes, a one-time coordinate, a selected contact summary,
+imported text, or today's aggregate step count.
 
 The user's OpenAI API key and any optional Twelve Data API key are stored
 separately in iOS Keychain using When Unlocked, This Device Only protection.
@@ -33,11 +33,11 @@ using an AI helper inside a mini app, MakeYour first displays the exact task and
 user-entered text on a confirmation screen. Only that reviewed task and text are
 sent after the user taps Send.
 
-MakeYour does not attach selected photos or canvas backgrounds, local records,
-notification contents, other projects, or general device data to an AI request.
-Generated documents contain only semantic image bindings and visual metadata,
-never image bytes or local paths. The API key is used only as the authorization
-header for the direct OpenAI request.
+MakeYour does not attach selected photos, canvas backgrounds, voice recordings,
+local records, notification contents, other projects, or general device data to
+an AI request. Generated documents contain only semantic media bindings and
+visual or duration metadata, never media bytes or local paths. The API key is
+used only as the authorization header for the direct OpenAI request.
 
 OpenAI processes these requests under the agreement and data controls associated
 with the user's OpenAI API account. Users should review OpenAI's
@@ -57,8 +57,8 @@ and either Twelve Data's public AAPL demo credential or the user's own Twelve
 Data API key to the fixed Twelve Data endpoints. The key is associated with the
 user's relationship with Twelve Data, not a MakeYour account.
 
-These adapters do not send project records, photos, captured device results, or
-the OpenAI API key. As with any network request, the provider and network
+These adapters do not send project records, photos, voice recordings, captured
+device results, or the OpenAI API key. As with any network request, the provider and network
 operators may process technical information such as an IP address to deliver,
 limit, and secure the service. Opening a news article leaves MakeYour for the
 publisher's original page, where that publisher's policy applies.
@@ -67,11 +67,13 @@ publisher's original page, where that publisher's policy applies.
 
 Generated tiny apps may use only host-owned device actions compiled into
 MakeYour. Camera capture, QR/barcode/text scanning, a current coordinate, a
-single-contact picker, selected text-file import, and today's pedometer count
-start only after the user taps. Camera, location, and motion access use the
+single-contact picker, selected text-file import, today's pedometer count, and a
+local voice note start only after the user taps. Camera, microphone, location,
+and motion access use the
 corresponding iOS permission or system-controlled picker. There is no hidden
-camera use, continuous location tracking, address-book enumeration, arbitrary
-file browsing, raw motion streaming, or background sensor monitoring.
+camera or microphone use, continuous location tracking, address-book
+enumeration, arbitrary file browsing, raw motion streaming, or background
+sensor monitoring.
 
 Camera photos and captured results are stored in the requesting tiny app's local
 project state. QR codes and other scanned values are treated as inert text;
@@ -80,6 +82,14 @@ Text-file import accepts one user-selected UTF-8 text, JSON, or CSV file up to
 256 KB and stores no more than 2,000 characters. The contact picker stores only
 the selected contact's displayed name, first phone number, and first email
 address when available.
+
+A voice-note component records one mono AAC clip for 5–60 seconds, capped at
+1 MiB. Recording stops at its configured limit or when MakeYour leaves the
+foreground. The clip remains in the requesting tiny app's protected local asset
+directory until replaced, deleted, or its binding is removed by app regeneration;
+MakeYour does not transcribe or upload it. A protected, backup-excluded staging
+file is used only while recording, and any crash leftover is removed at the next
+app launch. Incomplete or unplayable audio is rejected rather than persisted.
 
 Sharing and clipboard actions also require a tap. A share action presents
 Apple's share sheet, and data leaves MakeYour only after the user chooses a
@@ -90,8 +100,8 @@ action plays local tactile feedback and collects no sensor data.
 
 ## Data collection and tracking
 
-The developer of MakeYour does not receive or store user projects, photos,
-captured device results, API keys, prompts, AI results, news bookmarks, market
+The developer of MakeYour does not receive or store user projects, photos, voice
+recordings, captured device results, API keys, prompts, AI results, news bookmarks, market
 or currency watchlists, analytics, advertising IDs, or usage profiles on a
 MakeYour server. MakeYour contains no advertising SDK, analytics SDK, data
 broker integration, or cross-app tracking.
@@ -115,7 +125,7 @@ host-level credential, or deletes MakeYour from the device. A user can:
 - remove the OpenAI API key from the AI Key screen;
 - remove the Twelve Data key from the market provider-key screen;
 - delete a tiny app from My Apps to remove its document, project-local runtime
-  state and images, and its pending or delivered local notifications; and
+  state, images, and voice notes, and its pending or delivered local notifications; and
 - delete MakeYour from iPhone to remove the app's sandboxed projects, assets,
   caches, and runtime state.
 

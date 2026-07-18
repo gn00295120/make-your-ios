@@ -10,6 +10,7 @@ struct MakeYourIOSApp: App {
 #endif
 
     init() {
+        RuntimeVoiceRecordingFiles.removeAllStagedRecordings()
         let assets = LocalAssetStore()
         _assetStore = State(initialValue: assets)
         _workspaceStore = State(initialValue: WorkspaceStore(assetStore: assets))

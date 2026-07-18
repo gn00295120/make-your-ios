@@ -35,12 +35,12 @@ daily-history endpoints. AAPL supports the provider's public demo access; other
 symbols require your own Twelve Data key. Quotes can be delayed, unavailable,
 or rate-limited and are not financial advice.
 
-### Why is camera, scanning, steps, or haptics unavailable?
+### Why is camera, microphone, scanning, steps, or haptics unavailable?
 
 Still-photo capture, VisionKit QR/barcode/text scanning, pedometer data, and
 meaningful haptic feedback require supported physical iPhone hardware. They may
 show an unavailable message in Simulator or on unsupported devices. Camera,
-location, and motion actions also require the matching iOS permission. MakeYour
+microphone, location, and motion actions also require the matching iOS permission. MakeYour
 requests access only after you tap the action; you can review or change access
 in iOS Settings.
 
@@ -55,13 +55,17 @@ in iOS Settings.
 - Document import reads one selected UTF-8 text, JSON, or CSV file up to 256 KB
   and stores at most 2,000 characters.
 - Pedometer reads today's aggregate step count once, not raw/background motion.
+- Voice recording captures one 5–60 second local AAC clip after a tap, stops
+  outside the active foreground, validates the finished audio before saving,
+  and is never uploaded or transcribed. Regeneration removes a saved clip when
+  its voice binding no longer exists.
 - Share presents Apple's destination chooser. Clipboard access writes configured
   text only after a tap and never reads the clipboard. Haptics collect no data.
 
 ### How do I remove my data?
 
 Long-press an app in My Apps and choose Delete to remove its document and
-project-local runtime state and images, plus its pending and delivered local
+project-local runtime state, images, and voice notes, plus its pending and delivered local
 notifications. Remove the OpenAI key from AI Key and any Twelve Data key from
 the market provider-key screen before uninstalling. Deleting MakeYour from the
 iPhone removes its sandboxed projects, assets, caches, and runtime state, but
@@ -70,14 +74,14 @@ iOS does not guarantee that uninstalling removes Keychain items.
 ### Does AI see my photos or records?
 
 No. Tiny-app AI helpers accept text entered into that helper. The exact task and
-text appear on a confirmation screen before every request. Photos, records,
-scans, coordinates, contacts, imported files, step counts, other apps, and
+text appear on a confirmation screen before every request. Photos, voice notes,
+records, scans, coordinates, contacts, imported files, step counts, other apps, and
 general device data are not attached automatically.
 
 ## When contacting support
 
 Include the MakeYour version and build, iOS version, device model, the feature
 being used, whether it was Simulator or a physical iPhone, and the exact error
-text. Never send an API key, private prompt, selected/captured image, scanned
-value, coordinate, contact, imported text, or personal record in a support
+text. Never send an API key, private prompt, selected/captured image or voice
+note, scanned value, coordinate, contact, imported text, or personal record in a support
 message.

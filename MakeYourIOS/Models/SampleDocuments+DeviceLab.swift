@@ -3,13 +3,13 @@ import Foundation
 extension SampleDocuments {
     static let captureKit = AppDocument(
         name: "Device Lab",
-        summary: "Compose private camera, scanner, location, files, contacts, motion, sharing, and haptics.",
+        summary: "Compose private audio, camera, scanner, location, files, contacts, motion, and sharing.",
         symbol: "qrcode.viewfinder",
         tint: .amber,
         capabilities: [
             .calendarWrite, .cameraCapture, .clipboardWrite, .codeScanner, .contactPicker,
             .currentLocation, .documentExport, .documentPicker, .haptics, .localStorage,
-            .mapSearch, .pedometer, .shareSheet
+            .mapSearch, .microphoneRecordLocal, .pedometer, .shareSheet
         ],
         theme: .preset(.native),
         pages: [
@@ -20,6 +20,7 @@ extension SampleDocuments {
                     mapNode,
                     calendarEventNode,
                     documentExportNode,
+                    voiceNoteNode,
                     deviceNode(
                         id: "receipt-photo",
                         kind: .cameraPhoto,
@@ -183,6 +184,26 @@ extension SampleDocuments {
             format: .plainText,
             contentTemplate: "A private tiny app made in MakeYour.",
             buttonLabel: "Review and export"
+        )
+    )
+
+    private static let voiceNoteNode = ComponentNode(
+        id: "voice-note",
+        kind: .voiceNote,
+        title: "Private voice note",
+        subtitle: "Record one short thought that stays inside this tiny app.",
+        symbol: "mic.fill",
+        binding: "quick-voice-note",
+        presentation: ComponentPresentation(
+            surface: .outlined,
+            span: .full,
+            alignment: .leading,
+            emphasis: .regular,
+            variant: .automatic
+        ),
+        voiceNote: RuntimeVoiceNoteSpec(
+            maximumDurationSeconds: 30,
+            recordButtonLabel: "Record a voice note"
         )
     )
 

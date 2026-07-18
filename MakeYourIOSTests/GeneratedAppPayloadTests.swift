@@ -276,6 +276,32 @@ final class GeneratedAppPayloadTests: XCTestCase {
         XCTAssertNoThrow(try AppDocumentValidator().validate(document))
     }
 
+    func testPayloadBuildsBoundedLocalVoiceNote() throws {
+        var payload = GeneratedAppPayloadTestFixtures.personalMoney()
+        var voiceNode = payload.pages[0].nodes[0]
+        voiceNode.id = "daily-voice"
+        voiceNode.kind = "voiceNote"
+        voiceNode.title = "Daily thought"
+        voiceNode.binding = "daily-thought"
+        voiceNode.voiceNote = GeneratedAppPayload.VoiceNote(
+            maximumDurationSeconds: 120,
+            recordButtonLabel: "Record my thought"
+        )
+        payload.pages[0].nodes = [voiceNode]
+
+        let document = payload.makeDocument(existingID: UUID(), version: 7)
+        let node = document.pages[0].nodes[0]
+
+        XCTAssertEqual(node.kind, .voiceNote)
+        XCTAssertEqual(node.voiceNote?.maximumDurationSeconds, 60)
+        XCTAssertEqual(node.voiceNote?.recordButtonLabel, "Record my thought")
+        XCTAssertEqual(
+            Set(document.capabilities),
+            Set([.localStorage, .microphoneRecordLocal])
+        )
+        XCTAssertNoThrow(try AppDocumentValidator().validate(document))
+    }
+
     func testPayloadBuildsAValidatedCustomTinyGameProgram() throws {
         var payload = GeneratedAppPayloadTestFixtures.personalMoney()
         var node = payload.pages[0].nodes[0]

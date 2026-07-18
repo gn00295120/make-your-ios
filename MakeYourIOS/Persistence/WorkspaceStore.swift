@@ -79,6 +79,11 @@ final class WorkspaceStore {
     func replaceDocument(projectID: UUID, with document: AppDocument, prompt: String) throws {
         try AppDocumentValidator().validate(document)
         guard let index = projects.firstIndex(where: { $0.id == projectID }) else { return }
+        let previousProject = projects[index]
+        let previousSelectedProjectID = selectedProjectID
+        let voiceBindings = Set(document.pages.flatMap(\.nodes)
+            .filter { $0.kind == .voiceNote }
+            .map { $0.binding.trimmingCharacters(in: .whitespacesAndNewlines) })
 
         var nextDocument = document
         nextDocument.id = projects[index].document.id
@@ -89,7 +94,20 @@ final class WorkspaceStore {
         projects[index].lastPrompt = prompt
         projects[index].updatedAt = .now
         selectedProjectID = projectID
-        persist()
+        do {
+            try persistArchive()
+            lastPersistenceError = nil
+        } catch {
+            projects[index] = previousProject
+            selectedProjectID = previousSelectedProjectID
+            lastPersistenceError = error.localizedDescription
+            throw error
+        }
+        do {
+            try assetStore.retainVoiceRecordings(projectID: projectID, bindings: voiceBindings)
+        } catch {
+            lastPersistenceError = error.localizedDescription
+        }
     }
 
     func applyTheme(_ preset: VisualThemePreset, to projectID: UUID) {
@@ -279,14 +297,18 @@ final class WorkspaceStore {
 
     private func persist() {
         do {
-            let directory = fileURL.deletingLastPathComponent()
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let data = try encoder.encode(Archive(projects: projects, selectedProjectID: selectedProjectID))
-            try data.write(to: fileURL, options: .atomic)
+            try persistArchive()
             lastPersistenceError = nil
         } catch {
             lastPersistenceError = error.localizedDescription
         }
+    }
+
+    private func persistArchive() throws {
+        let directory = fileURL.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let archive = Archive(projects: projects, selectedProjectID: selectedProjectID)
+        try encoder.encode(archive).write(to: fileURL, options: .atomic)
     }
 
     private func reconcilePhotoPickerCapability(in document: inout AppDocument) {

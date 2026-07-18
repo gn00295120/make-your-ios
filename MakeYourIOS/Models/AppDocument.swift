@@ -115,6 +115,7 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
     var map: RuntimeMapSpec?
     var calendarEvent: RuntimeCalendarEventSpec?
     var documentExport: RuntimeDocumentExportSpec?
+    var voiceNote: RuntimeVoiceNoteSpec?
 
     init(
         id: String = UUID().uuidString,
@@ -142,7 +143,8 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         deviceInput: DeviceInputSpec? = nil,
         map: RuntimeMapSpec? = nil,
         calendarEvent: RuntimeCalendarEventSpec? = nil,
-        documentExport: RuntimeDocumentExportSpec? = nil
+        documentExport: RuntimeDocumentExportSpec? = nil,
+        voiceNote: RuntimeVoiceNoteSpec? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -170,6 +172,7 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         self.map = map
         self.calendarEvent = calendarEvent
         self.documentExport = documentExport
+        self.voiceNote = voiceNote
     }
 
     var resolvedPresentation: ComponentPresentation {
@@ -204,6 +207,7 @@ enum ComponentKind: String, Codable, CaseIterable, Hashable, Sendable {
     case map
     case calendarEvent
     case documentExport
+    case voiceNote
     case divider
 }
 
