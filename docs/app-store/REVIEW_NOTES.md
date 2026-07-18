@@ -38,6 +38,9 @@ Device and data boundaries:
 - Location requests one foreground coordinate. There is no continuous, visit, geofence, or background tracking.
 - Apple's contact picker reveals only the one contact the reviewer selects. MakeYour does not enumerate the address book.
 - File import reads only one selected UTF-8 text, JSON, or CSV file up to 256 KB and stores at most 2,000 characters.
+- A generated map component displays a configured coordinate or searches only Apple Maps. It does not request current-location access or location history. Opening directions requires a tap and hands the selected place to Apple Maps.
+- A generated calendar component shows the complete proposed event in a review sheet, then requests EventKit write-only access only when the reviewer taps Add Event. It can add that one event to the default writable calendar but cannot enumerate, read, edit, or delete existing events. The build includes `NSCalendarsWriteOnlyAccessUsageDescription`: “MakeYour adds a calendar event only after you review it and tap Add Event.”
+- A generated document-export component shows the resolved content preview and opens Apple's destination chooser only after a tap. Plain text, JSON, and CSV exports are bounded to 2,000 characters/8 KB; the tiny app cannot choose a destination or overwrite a file silently.
 - Pedometer access reads only today's aggregate step count after a tap, with no raw or background motion stream.
 - The share sheet sends nothing until the reviewer chooses a destination. Clipboard access is tap-initiated and write-only. Haptics collect no data.
 - Deleting a tiny app removes its document, local runtime state and project images, and its local notifications. Host-level API keys must be removed separately because other tiny apps may use them.
@@ -48,7 +51,7 @@ Privacy and storage:
 - Requests go directly from the device to the named provider; the developer operates no account, analytics, or proxy server.
 - Projects, records, bookmarks, cached responses, and captured results stay on device unless the user deliberately shares text or opens an external article.
 - User-selected component images and Design Studio canvas photos stay in the tiny app's project-local asset store. Generated documents contain only semantic bindings and visual metadata; image bytes and local paths are not sent to GPT-5.6.
-- Privacy & Safety is accessible from the AI Key screen and contains a catalog of all 15 host capabilities.
+- Privacy & Safety is accessible from the AI Key screen and contains a catalog of all 18 host capabilities.
 
 Fixed network services:
 
@@ -75,6 +78,8 @@ Market and currency data may be delayed and are not trading advice. Notification
 - a recording from the selected build showing real OpenAI generation and the
   capability review sheet;
 - a physical-iPhone recording or review note confirming camera, scanner,
-  pedometer, and haptic behavior; and
-- a clean-install check confirming all ten examples and honest hardware-denied,
+  pedometer, haptic, and write-only calendar behavior;
+- a current-build check of MapKit search/directions and the document-export
+  preview, cancellation, and successful destination flow; and
+- a clean-install check confirming all twelve seeded examples and honest hardware-denied,
   permission-denied, and offline states.

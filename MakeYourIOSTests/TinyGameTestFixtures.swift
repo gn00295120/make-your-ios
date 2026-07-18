@@ -1,6 +1,129 @@
 @testable import MakeYourIOS
 
+// swiftlint:disable:next type_body_length
 enum TinyGameTestFixtures {
+    // swiftlint:disable:next function_body_length
+    static func platformerProgram(
+        playerY: Int = 404,
+        playerVelocityY: Int = 0,
+        projectileLifetime: Int = 6,
+        projectileMaximumActive: Int = 2
+    ) -> TinyGameProgram {
+        let player = TinyGameEntityTemplate(
+            id: "runner",
+            role: .player,
+            visual: TinyGameVisualSpec(kind: .rectangle, colorRole: .accent),
+            body: .dynamic,
+            movement: .platformerAxis,
+            width: 24,
+            height: 32,
+            velocityY: playerVelocityY,
+            speed: 8,
+            tags: ["hero"],
+            physics: TinyGamePhysicsSpec(
+                collisionMode: .solid,
+                maximumVelocityX: 20,
+                maximumVelocityY: 32
+            )
+        )
+        let ground = TinyGameEntityTemplate(
+            id: "ground",
+            role: .decoration,
+            visual: TinyGameVisualSpec(kind: .rectangle, colorRole: .surface),
+            body: .static,
+            width: 320,
+            height: 40,
+            tags: ["ground"],
+            physics: TinyGamePhysicsSpec(collisionMode: .solid)
+        )
+        let oneWay = TinyGameEntityTemplate(
+            id: "cloud-platform",
+            role: .decoration,
+            visual: TinyGameVisualSpec(kind: .rectangle, colorRole: .primary),
+            body: .static,
+            width: 140,
+            height: 16,
+            tags: ["platform"],
+            physics: TinyGamePhysicsSpec(collisionMode: .oneWayPlatform)
+        )
+        let projectile = TinyGameEntityTemplate(
+            id: "spark",
+            role: .projectile,
+            visual: TinyGameVisualSpec(kind: .circle, colorRole: .collectible),
+            body: .kinematic,
+            movement: .constant,
+            width: 12,
+            height: 12,
+            velocityX: 18,
+            tags: ["friendly"],
+            physics: TinyGamePhysicsSpec(
+                collisionMode: .sensor,
+                maximumVelocityX: 18,
+                maximumVelocityY: 18,
+                lifetimeTicks: projectileLifetime
+            )
+        )
+
+        return TinyGameProgram(
+            version: 3,
+            seed: 303,
+            tickRate: .thirty,
+            world: TinyGameWorldSpec(
+                width: 320,
+                height: 480,
+                gravityY: 4,
+                edgeBehavior: .solid
+            ),
+            templates: [player, ground, oneWay, projectile],
+            spawns: [
+                TinyGameEntitySpawn(id: "runner-one", templateID: "runner", x: 80, y: playerY),
+                TinyGameEntitySpawn(id: "ground-one", templateID: "ground", x: 160, y: 440),
+                TinyGameEntitySpawn(
+                    id: "cloud-one",
+                    templateID: "cloud-platform",
+                    x: 160,
+                    y: 320
+                )
+            ],
+            controls: [
+                TinyGameControlSpec(
+                    id: "move",
+                    kind: .horizontal,
+                    label: "Move",
+                    symbol: "arrow.left.and.right",
+                    targetTag: "player",
+                    speed: 8
+                ),
+                TinyGameControlSpec(
+                    id: "jump",
+                    kind: .actionButton,
+                    label: "Jump",
+                    symbol: "arrow.up",
+                    targetTag: "player",
+                    action: TinyGameControlActionSpec(
+                        kind: .jump,
+                        impulse: 18,
+                        cooldownTicks: 4
+                    )
+                ),
+                TinyGameControlSpec(
+                    id: "fire",
+                    kind: .actionButton,
+                    label: "Fire",
+                    symbol: "bolt.fill",
+                    targetTag: "player",
+                    spawnTemplateID: "spark",
+                    action: TinyGameControlActionSpec(
+                        kind: .projectile,
+                        cooldownTicks: 1,
+                        maximumActive: projectileMaximumActive,
+                        offsetX: 22
+                    )
+                )
+            ]
+        )
+    }
+
     // A full vertical fixture is kept together so tests exercise the same generated document.
     // swiftlint:disable:next function_body_length
     static func catcherProgram(
@@ -104,6 +227,7 @@ enum TinyGameTestFixtures {
         }
 
         return TinyGameProgram(
+            version: 2,
             seed: 91,
             tickRate: .thirty,
             world: TinyGameWorldSpec(width: 320, height: 480, edgeBehavior: .destroy),

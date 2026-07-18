@@ -35,14 +35,16 @@ extension AppDocumentValidator {
     }
 }
 
-private extension AppDocumentValidator {
+extension AppDocumentValidator {
+    // Exhaustive state-value validation for the generated runtime interpreter.
+    // swiftlint:disable:next cyclomatic_complexity
     func validateStateDefinition(_ definition: RuntimeStateDefinition) throws {
         let trimmedKey = definition.key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedKey.isEmpty,
               trimmedKey == definition.key,
               definition.key.count <= 60,
               definition.key.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "-" }),
-              definition.initialValue.count <= 800 else {
+              definition.initialValue.count <= RuntimeLogicEngine.maximumValueLength else {
             throw AppDocumentValidationError.invalidRuntimeLogic
         }
 
@@ -55,6 +57,18 @@ private extension AppDocumentValidator {
             }
         case .boolean:
             guard ["true", "false"].contains(definition.initialValue) else {
+                throw AppDocumentValidationError.invalidRuntimeLogic
+            }
+        case .date:
+            guard RuntimeValueCodec.date(from: definition.initialValue) != nil else {
+                throw AppDocumentValidationError.invalidRuntimeLogic
+            }
+        case .list:
+            guard (try? RuntimeValueCodec.decodedList(definition.initialValue)) != nil else {
+                throw AppDocumentValidationError.invalidRuntimeLogic
+            }
+        case .object:
+            guard (try? RuntimeValueCodec.decodedObject(definition.initialValue)) != nil else {
                 throw AppDocumentValidationError.invalidRuntimeLogic
             }
         }
@@ -90,6 +104,11 @@ private extension AppDocumentValidator {
                   (control.minimum...control.maximum).contains(initialValue) else {
                 throw AppDocumentValidationError.invalidComponentConfiguration(.control)
             }
+        case .datePicker, .timePicker, .dateTimePicker:
+            guard state.type == .date,
+                  RuntimeValueCodec.date(from: state.initialValue) != nil else {
+                throw AppDocumentValidationError.invalidComponentConfiguration(.control)
+            }
         }
     }
 
@@ -99,7 +118,8 @@ private extension AppDocumentValidator {
         pageIDs: Set<String>
     ) throws {
         let events = node.events ?? []
-        guard events.count <= Self.maximumEventsPerNode else {
+        guard events.count <= Self.maximumEventsPerNode,
+              Set(events.map(\.trigger)).count == events.count else {
             throw AppDocumentValidationError.runtimeLimitExceeded
         }
         if events.contains(where: { $0.trigger == .valueChanged }) {
@@ -115,6 +135,16 @@ private extension AppDocumentValidator {
         for event in events {
             guard event.steps.count <= Self.maximumStepsPerEvent else {
                 throw AppDocumentValidationError.runtimeLimitExceeded
+            }
+            switch event.trigger {
+            case .timer:
+                guard let interval = event.intervalSeconds, (1...3_600).contains(interval) else {
+                    throw AppDocumentValidationError.invalidRuntimeLogic
+                }
+            case .tap, .valueChanged, .appear:
+                guard event.intervalSeconds == nil else {
+                    throw AppDocumentValidationError.invalidRuntimeLogic
+                }
             }
             for step in event.steps {
                 try validateStep(step, stateTypes: stateTypes, pageIDs: pageIDs)
@@ -134,6 +164,11 @@ private extension AppDocumentValidator {
         case .numberInput:
             expectedType = .number
         case .control:
+            expectedType = nil
+        case .collectionView:
+            guard [.list, .object].contains(stateType) else {
+                throw AppDocumentValidationError.invalidRuntimeLogic
+            }
             expectedType = nil
         default:
             return
@@ -181,82 +216,6 @@ private extension AppDocumentValidator {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
-    func validateExpression(
-        _ expression: RuntimeExpression,
-        expectedType: RuntimeValueType?,
-        stateTypes: [String: RuntimeValueType]
-    ) throws -> RuntimeValueType {
-        let operands = expression.operands
-        guard !operands.isEmpty,
-              operands.count <= Self.maximumOperandsPerExpression else {
-            throw AppDocumentValidationError.invalidRuntimeExpression
-        }
-
-        let resultType: RuntimeValueType
-        switch expression.operation {
-        case .literal:
-            guard operands.count == 1, operands[0].source == .literal else {
-                throw AppDocumentValidationError.invalidRuntimeExpression
-            }
-            resultType = try operandType(
-                operands[0],
-                expectedLiteralType: expectedType,
-                stateTypes: stateTypes
-            )
-        case .copy:
-            guard operands.count == 1 else {
-                throw AppDocumentValidationError.invalidRuntimeExpression
-            }
-            resultType = try operandType(
-                operands[0],
-                expectedLiteralType: expectedType,
-                stateTypes: stateTypes
-            )
-        case .add, .multiply, .min, .max:
-            guard operands.count >= 2 else {
-                throw AppDocumentValidationError.invalidRuntimeExpression
-            }
-            try operands.forEach {
-                guard try operandType(
-                    $0,
-                    expectedLiteralType: .number,
-                    stateTypes: stateTypes
-                ) == .number else {
-                    throw AppDocumentValidationError.invalidRuntimeExpression
-                }
-            }
-            resultType = .number
-        case .subtract, .divide:
-            guard operands.count == 2 else {
-                throw AppDocumentValidationError.invalidRuntimeExpression
-            }
-            try operands.forEach {
-                guard try operandType(
-                    $0,
-                    expectedLiteralType: .number,
-                    stateTypes: stateTypes
-                ) == .number else {
-                    throw AppDocumentValidationError.invalidRuntimeExpression
-                }
-            }
-            if expression.operation == .divide,
-               operands[1].source == .literal,
-               runtimeNumber(operands[1].value) == 0 {
-                throw AppDocumentValidationError.invalidRuntimeExpression
-            }
-            resultType = .number
-        case .concatenate:
-            try operands.forEach { _ = try operandType($0, expectedLiteralType: nil, stateTypes: stateTypes) }
-            resultType = .text
-        }
-
-        guard expectedType == nil || resultType == expectedType else {
-            throw AppDocumentValidationError.invalidRuntimeExpression
-        }
-        return resultType
-    }
-
     func validateCondition(
         _ condition: RuntimeCondition,
         stateTypes: [String: RuntimeValueType]
@@ -279,7 +238,7 @@ private extension AppDocumentValidator {
                 throw AppDocumentValidationError.invalidRuntimeExpression
             }
         case .less, .lessOrEqual, .greater, .greaterOrEqual:
-            guard lhsType == .number, rhsType == .number else {
+            guard lhsType == rhsType, [.number, .date].contains(lhsType) else {
                 throw AppDocumentValidationError.invalidRuntimeExpression
             }
         case .isEmpty, .isNotEmpty:
@@ -313,9 +272,16 @@ private extension AppDocumentValidator {
                 return .boolean
             }
             return .text
+        case .currentDate:
+            guard operand.value.isEmpty else {
+                throw AppDocumentValidationError.invalidRuntimeExpression
+            }
+            return .date
         }
     }
 
+    // Exhaustive literal validation for each generated state type.
+    // swiftlint:disable:next cyclomatic_complexity
     func validateLiteral(_ value: String, as type: RuntimeValueType) throws {
         switch type {
         case .text:
@@ -326,6 +292,18 @@ private extension AppDocumentValidator {
             }
         case .boolean:
             guard ["true", "false"].contains(value) else {
+                throw AppDocumentValidationError.invalidRuntimeExpression
+            }
+        case .date:
+            guard RuntimeValueCodec.date(from: value) != nil else {
+                throw AppDocumentValidationError.invalidRuntimeExpression
+            }
+        case .list:
+            guard (try? RuntimeValueCodec.decodedList(value)) != nil else {
+                throw AppDocumentValidationError.invalidRuntimeExpression
+            }
+        case .object:
+            guard (try? RuntimeValueCodec.decodedObject(value)) != nil else {
                 throw AppDocumentValidationError.invalidRuntimeExpression
             }
         }
@@ -344,7 +322,11 @@ private extension AppDocumentValidator {
         for operand: RuntimeOperand,
         stateTypes: [String: RuntimeValueType]
     ) -> RuntimeValueType? {
-        operand.source == .state ? stateTypes[operand.value] : nil
+        switch operand.source {
+        case .state: stateTypes[operand.value]
+        case .currentDate: .date
+        case .literal: nil
+        }
     }
 
     func validateNonEmptyLiteralMessage(_ expression: RuntimeExpression) throws {

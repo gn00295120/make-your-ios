@@ -91,7 +91,10 @@ private extension GeneratedAppPayload {
             marketWatch: kind == .marketWatch ? makeMarketWatch(node.marketWatch) : nil,
             ledger: kind == .ledger ? makeLedger(node.ledger) : nil,
             game: kind == .game ? makeGame(node.game) : nil,
-            deviceInput: kind == .deviceInput ? makeDeviceInput(node.deviceInput) : nil
+            deviceInput: kind == .deviceInput ? makeDeviceInput(node.deviceInput) : nil,
+            map: kind == .map ? makeMap(node.map) : nil,
+            calendarEvent: kind == .calendarEvent ? makeCalendarEvent(node.calendarEvent) : nil,
+            documentExport: kind == .documentExport ? makeDocumentExport(node.documentExport) : nil
         )
     }
 
@@ -123,7 +126,8 @@ private extension GeneratedAppPayload {
     ) -> ComponentPresentation {
         let requestedSpan = ComponentSpan(rawValue: design.span) ?? .full
         let supportsCompactSpan: Set<ComponentKind> = [
-            .text, .metric, .infoBanner, .image, .control, .button
+            .text, .metric, .infoBanner, .image, .control, .collectionView,
+            .calendarEvent, .documentExport, .button
         ]
         return ComponentPresentation(
             surface: ComponentSurface(rawValue: design.surface) ?? .automatic,
@@ -297,6 +301,48 @@ private extension GeneratedAppPayload {
         )
     }
 
+    private func makeMap(_ map: Map?) -> RuntimeMapSpec {
+        RuntimeMapSpec(
+            mode: RuntimeMapMode(rawValue: map?.mode ?? "") ?? .coordinate,
+            query: String((map?.query ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(120)),
+            latitude: min(max(safeFiniteValue(map?.latitude), -90), 90),
+            longitude: min(max(safeFiniteValue(map?.longitude), -180), 180),
+            spanMeters: min(max(safeFiniteValue(map?.spanMeters), 250), 100_000),
+            allowsSearch: map?.allowsSearch ?? false,
+            allowsDirections: map?.allowsDirections ?? false
+        )
+    }
+
+    private func makeCalendarEvent(_ event: CalendarEvent?) -> RuntimeCalendarEventSpec {
+        RuntimeCalendarEventSpec(
+            eventTitle: String(nonEmpty(event?.eventTitle, fallback: "New event").prefix(120)),
+            notes: String((event?.notes ?? "").prefix(500)),
+            location: String((event?.location ?? "").prefix(160)),
+            startOffsetMinutes: min(max(event?.startOffsetMinutes ?? 60, 0), 10_080),
+            durationMinutes: min(max(event?.durationMinutes ?? 60, 5), 1_440),
+            allowsEditing: event?.allowsEditing ?? true
+        )
+    }
+
+    private func makeDocumentExport(_ export: DocumentExport?) -> RuntimeDocumentExportSpec {
+        let requestedName = export?.fileName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let fileName = requestedName.isEmpty ? "MakeYour Export" : requestedName
+        let format = RuntimeDocumentFormat(rawValue: export?.format ?? "") ?? .plainText
+        let requestedContent = export?.contentTemplate ?? ""
+        return RuntimeDocumentExportSpec(
+            fileName: RuntimeDocumentExportCodec.normalizedFileName(
+                String(fileName.prefix(80)),
+                format: format
+            ),
+            format: format,
+            contentTemplate: String(nonEmpty(
+                requestedContent,
+                fallback: "Export created in MakeYour."
+            ).prefix(2_000)),
+            buttonLabel: String(nonEmpty(export?.buttonLabel, fallback: "Export").prefix(60))
+        )
+    }
+
     private func makeInitialState() -> [String: String] {
         initialState.reduce(into: [:]) { result, entry in
             result[normalizedID(entry.key, fallback: "value")] = String(entry.value.prefix(200))
@@ -343,26 +389,4 @@ private extension GeneratedAppPayload {
         return value
     }
 
-}
-
-extension GeneratedAppPayload {
-    static let allowedSymbols: Set<String> = [
-        "sparkles", "wand.and.stars", "square.grid.2x2.fill", "checkmark.circle.fill",
-        "arrow.left.arrow.right.circle.fill", "globe.asia.australia.fill", "lock.shield.fill",
-        "sun.max.fill", "paperplane.fill", "figure.walk", "pencil.line", "hand.raised.fill",
-        "drop.fill", "heart.fill", "star.fill", "bell.fill", "bell.badge.fill", "clock.fill",
-        "calendar", "chart.bar.fill", "chart.line.uptrend.xyaxis", "list.bullet.clipboard.fill",
-        "creditcard.fill", "cart.fill", "fork.knife", "airplane", "tram.fill", "house.fill",
-        "person.fill", "briefcase.fill", "book.fill", "graduationcap.fill", "bolt.fill",
-        "leaf.fill", "flame.fill", "moon.stars.fill", "camera.fill", "photo.fill",
-        "location.fill", "map.fill", "gift.fill", "gamecontroller.fill", "music.note",
-        "headphones", "message.fill", "envelope.fill", "phone.fill", "link",
-        "externaldrive", "function", "network", "circle.fill", "quote.bubble.fill",
-        "photo.badge.plus", "photo.on.rectangle", "party.popper.fill", "iphone",
-        "qrcode.viewfinder", "barcode.viewfinder", "text.viewfinder",
-        "person.crop.circle.badge.plus", "doc.badge.plus", "figure.walk.motion",
-        "square.and.arrow.up", "doc.on.clipboard", "waveform",
-        "newspaper.fill", "bookmark.fill", "dollarsign.circle.fill", "chart.xyaxis.line",
-        "arrow.up.right", "arrow.down.right", "figure.run", "trophy.fill"
-    ]
 }

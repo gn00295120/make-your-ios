@@ -30,7 +30,7 @@ testable, accessible, and bounded.
 ## Capability catalog
 
 Capabilities are host intents, not raw Apple frameworks. The current document
-vocabulary declares:
+vocabulary declares exactly 18 capabilities:
 
 - `storage.local`
 - `calculation.safe`
@@ -41,6 +41,9 @@ vocabulary declares:
 - `location.current`
 - `contacts.pick`
 - `files.import`
+- `files.export`
+- `maps.search`
+- `calendar.createEvent`
 - `motion.pedometer`
 - `share.present`
 - `clipboard.write`
@@ -58,14 +61,18 @@ user-initiated QR/barcode/text scanning, fixed-provider network components, and
 reviewed text-only AI completion. General HTTP is not exposed as an arbitrary
 generated network primitive.
 
-Device components are native host adapters. The current catalog includes camera
-capture, QR/barcode/text scanning, one-time foreground location, Apple’s
-single-contact picker, bounded text-file import, one-time pedometer reads,
-reviewed sharing, clipboard writes, and haptic feedback. They request access
-only after a tap, check availability, sanitize and bound outputs, persist results
-within the project boundary, and never open scanned URLs or forward results to
-AI by default. Adding a generated version that needs a new capability first
-presents a host-controlled review sheet.
+Device and native-service components are host adapters. The current catalog
+includes camera capture, QR/barcode/text scanning, one-time foreground location,
+Apple's single-contact picker, bounded text-file import, one-time pedometer
+reads, reviewed sharing, clipboard writes, haptic feedback, MapKit display and
+place search, reviewed write-only calendar creation, and bounded text/JSON/CSV
+export through Apple's save panel. Permission- or gesture-gated operations start
+only at the documented user action, check availability, and sanitize and bound
+their inputs and outputs. Maps do not request the user's location, calendar
+creation cannot read existing events, exports cannot choose a destination, and
+scanned URLs are never opened or forwarded to AI by default. Adding a generated
+version that needs a new capability first presents a host-controlled review
+sheet.
 
 `CapabilityRegistry` is the platform ledger for every compiled host ability. It
 records category, privacy risk, availability mode, user-action requirement,
@@ -125,34 +132,47 @@ The complete token and renderer contract lives in
 ## Composable behavior graph
 
 `RuntimeLogic` is the safe behavior layer between static components and
-specialized host features. It provides three typed scalar values (`text`,
-`number`, and `boolean`), session or project persistence, and finite ordered
-events. Inputs, pickers, controls, AI results, and device results can write a
-binding; text, metrics, banners, buttons, and progress views can render the same
-state through bindings or bounded `{{state-key}}` templates.
+specialized host features. It provides six typed values (`text`, `number`,
+`boolean`, canonical `date`, bounded string `list`, and bounded string `object`),
+session or project persistence, and finite ordered events. Lists and objects are
+flat containers with at most 64 entries, not nested or schemaful records. Inputs,
+pickers, date/time controls, AI results, and device results can write a binding;
+text, metrics, banners, buttons, progress, and `collectionView` can render the
+same state through bindings or bounded `{{state-key}}` templates. Ordinary UI
+templates expose a structured-value summary rather than raw JSON; the reviewed
+document-export surface may deliberately resolve canonical list/object JSON.
 
 Events may run only a validated list of steps: set state, navigate, show an
-in-app message, schedule a local notification, or play a haptic. Expressions are
-flat literal/state operands with copy, concatenate, add, subtract, multiply,
-divide, minimum, and maximum operations. Conditions provide typed equality,
-numeric ordering, and empty/non-empty checks. There are no event-emitting steps,
-loops, timers, recursion, callbacks, or dynamic dispatch, so generated logic
-cannot create an unbounded execution chain.
+in-app message, schedule a local notification, or play a haptic. Each node may
+have at most one event for each `tap`, `valueChanged`, `appear`, and `timer`
+trigger. `appear` runs once for a rendered node instance; timers use a validated
+1–3,600 second interval and dispatch only while the node is rendered and the iOS
+scene is active, with no background work or missed-tick catch-up. Expressions
+are flat literal/state/current-date operands with copy, concatenate, decimal
+arithmetic, bounded list/object mutation and query, and date add/difference
+operations. Conditions provide typed equality, numeric/date ordering, and
+logical empty/non-empty checks. There are no event-emitting steps, loops,
+recursion, callbacks, collection iteration, or dynamic dispatch, so generated
+logic cannot create an unbounded execution chain.
 
 The engine calculates the complete state transaction before committing it. A
-missing reference, invalid type, divide-by-zero, excessive magnitude, or storage
-failure leaves the prior state active. The validator separately limits state,
-events, steps, operands, string lengths, notification delays, and exact host
-capabilities.
+missing reference, invalid type, divide-by-zero, malformed/oversized collection,
+excessive magnitude, or storage failure leaves the prior state active.
+Project-persisted values carry a type fingerprint so a schema change resets only
+the incompatible key, while legacy scalar state can migrate into the current
+envelope. The validator separately limits state, events, steps, operands, string
+lengths, notification delays, timer intervals, and exact host capabilities.
 
 Custom games use a sibling `TinyGameProgram` rather than the general behavior
 graph. Its compiler validates world dimensions, entity and rule references,
 reachability, controls, spawn/effect/contact budgets, and full initial bounds.
-The deterministic fixed-step engine owns movement, contact-begin detection,
-edge-crossing events, ordered rule effects, feedback, terminal states, pause,
-restart, and seeded spawning. This supports original top-down collectors,
-dodgers, and simple shooters; solid-platform jumping continues to use the
-polished platformer preset.
+The deterministic fixed-step engine owns movement, swept sensor contacts,
+static solid and one-way platform resolution, grounded jumps, bounded
+projectiles and cooldowns, edge-crossing events, ordered rule effects, feedback,
+terminal states, pause, restart, and seeded spawning. V3 supports original
+top-down collectors, dodgers, simple shooters, and compact static-platform
+games, while retaining stored V2 program compatibility. Moving platforms and
+dynamic-vs-dynamic solid collisions deliberately fail compilation.
 
 The exact shipping vocabulary and extension rules live in
 [RUNTIME_BLOCKS.md](RUNTIME_BLOCKS.md).
@@ -235,13 +255,16 @@ and small credentials are stored using
 - App Library: create, duplicate, switch, and delete private projects.
 - Builder: prompt, deterministic preview, and generated-document replacement.
 - Runtime: hero, text, metric, input, picker, button, checklist, task list,
-  typed state, toggle/slider/stepper/progress controls, finite calculations and
-  conditions, ordered events,
+  typed text/number/boolean/date/list/object state, date/time and
+  toggle/slider/stepper/progress controls, collection views, finite decimal/date/
+  collection calculations and conditions, ordered foreground events,
   currency converter, generic record collections, a typed ledger,
   fixed-provider exchange/news/market views, playable Snake and original
   platform games, bounded custom rule-driven games, image slots, camera and code/text scanning, one-time location,
-  contact/file pickers, pedometer, share/clipboard/haptics, text-only AI
-  assistants, banners, dividers, navigation, page layouts, and presentation tokens.
+  contact/file pickers, MapKit place views, reviewed write-only calendar events,
+  reviewed document export, pedometer, share/clipboard/haptics, text-only AI
+  assistants, banners, dividers, navigation, page layouts, and presentation
+  tokens.
 - BYOK: OpenAI Responses API; editable model; device-only Keychain storage.
 - Samples: a composable hydration tracker, a custom Star Garden game, live news,
   a market watchlist, a personal ledger, original platform and Snake games, a
@@ -249,7 +272,8 @@ and small credentials are stored using
   editorial currency converter, a local task reminder, and a photo-and-AI
   journal starter.
 
-Future releases should add typed date/list/object state, safe collection queries
-and mutations, versioned JSON Patch editing, per-project SQLite namespaces,
-automated accessibility and snapshot checks, and additional narrowly reviewed
-fixed-provider capabilities.
+Future releases should add schemaful record relationships and bounded collection
+filter/sort/iteration primitives, moving-platform and dynamic-solid game
+physics, versioned JSON Patch editing, per-project SQLite namespaces, automated
+accessibility and snapshot checks, and additional narrowly reviewed capabilities
+such as foreground audio, speech recognition, and precompiled App Intents.

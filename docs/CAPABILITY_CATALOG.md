@@ -11,14 +11,14 @@ permission copy, validation rules, tests, and review surface all ship together.
 
 ## Available to AI-generated tiny apps
 
-The current runtime has exactly 15 host capabilities. The host derives the
+The current runtime has exactly 18 host capabilities. The host derives the
 required set from the generated document and rejects both missing and unused
 declarations.
 
 | Capability | Current host behavior | Boundary |
 | --- | --- | --- |
-| `storage.local` | Persists validated scalar state, specialized project data, and project assets | One app sandbox; no access to another tiny app or arbitrary files |
-| `calculation.safe` | Runs bounded decimal arithmetic, comparisons, and ordered state transactions | No Swift, scripts, loops, arbitrary expressions, or executable output |
+| `storage.local` | Persists validated typed state, specialized project data, and project assets | One app sandbox; no access to another tiny app or arbitrary files |
+| `calculation.safe` | Runs bounded decimal, date, flat-list, and flat-object operations in ordered state transactions | No Swift, scripts, loops, nested records, arbitrary expressions, or executable output |
 | `notifications.scheduleLocal` | Schedules reviewed local reminders | User action and notification permission; no remote push or silent background work |
 | `photo.pick` | Imports a user-selected photo through the system picker | Cannot enumerate the photo library; normalized project-local image only |
 | `camera.capture` | Presents foreground still-photo capture | Starts after a tap and camera permission; no hidden or background capture |
@@ -26,6 +26,9 @@ declarations.
 | `location.current` | Requests one current foreground coordinate | No continuous updates, geofencing, visits, or background tracking |
 | `contacts.pick` | Presents Apple's single-contact picker | Returns only the selected contact's displayed name, first phone number, and first email when available; no address-book browsing |
 | `files.import` | Imports one selected UTF-8 text, JSON, or CSV file | Maximum source size 256 KB; at most 2,000 characters are stored |
+| `files.export` | Exports reviewed plain text, JSON, or CSV through Apple's save panel | At most 2,000 characters and 8 KB; cannot choose a destination or overwrite silently |
+| `maps.search` | Displays a bounded MapKit region and searches Apple Maps | No current-location access, location history, arbitrary map provider, or silent route launch |
+| `calendar.createEvent` | Creates one event after an editable review sheet and confirmation | EventKit write-only access; cannot enumerate, edit, or delete existing events |
 | `motion.pedometer` | Reads today's aggregate step count once | Starts after a tap; no raw motion stream or background monitoring |
 | `share.present` | Presents configured text in Apple's share sheet | Nothing leaves MakeYour until the user selects a destination |
 | `clipboard.write` | Writes configured text to the system clipboard | Tap-initiated and write-only; no clipboard reads or background writes |
@@ -50,12 +53,15 @@ guaranteed real-time trading data.
 ## Runtime blocks are not permissions
 
 Presentation and behavior primitives do not each create a new privacy
-capability. A generated app can combine text/number/boolean state, bindings,
-templates, text and number input, pickers, buttons, toggles, sliders, steppers,
-progress, conditions, calculations, page navigation, and in-app messages without
-requesting a new Apple framework permission. Project persistence derives
-`storage.local`; arithmetic derives `calculation.safe`; notification and haptic
-steps derive their corresponding reviewed capabilities.
+capability. A generated app can combine text, number, boolean, date, bounded
+string-list, and bounded string-object state; bindings and templates; text,
+number, picker, date/time, toggle, slider, stepper, and progress controls;
+collection views; conditions; calculations; page navigation; foreground
+`appear`/timer events; and in-app messages without requesting a new Apple
+framework permission. Project persistence derives `storage.local`; arithmetic,
+date, and collection operations derive `calculation.safe`; notification and
+haptic steps derive their corresponding reviewed capabilities. Lists and
+objects are flat string containers, not a general structured-record language.
 
 Custom game worlds, entity templates, controls, rules, HUD, and deterministic
 simulation are also host-owned local blocks. They use `storage.local` only when
@@ -93,17 +99,30 @@ does not replace a real-device permission and accuracy test. Contact, document,
 and share flows use system-controlled UI and must also be smoke-tested on the
 target iOS release before shipping.
 
+## Current native map, calendar, and export blocks
+
+These three capabilities use dedicated generated component kinds rather than
+`deviceInput` actions:
+
+| Component | Capability | Current behavior |
+| --- | --- | --- |
+| `map` | `maps.search` | Shows a configured coordinate or up to eight Apple Maps place-search results; optional search is visible, and directions open Apple Maps only after a tap |
+| `calendarEvent` | `calendar.createEvent` | Resolves bounded text templates, shows title/location/notes/start/end for review, then requests write-only EventKit access and adds one confirmed event |
+| `documentExport` | `files.export` | Shows the resolved content preview, enforces size limits for text/JSON/CSV, validates JSON syntax, and opens Apple's `fileExporter` destination chooser after a tap |
+
+The map block does not request location permission. The calendar block uses
+`NSCalendarsWriteOnlyAccessUsageDescription` and never reads the user's existing
+events. The export block does not receive broad Files access or write before the
+user chooses a destination.
+
 ## Safe next candidates, not yet supported
 
 These are plausible additions because each can be expressed as a narrow,
-tap-initiated host action. They remain roadmap items and are not in the AI
-schema today.
+separately reviewed host adapter. They remain roadmap items and are not in the
+AI schema today.
 
-- create one reviewed calendar event through EventKit;
 - foreground audio recording and playback with duration and file-size limits;
 - tap-initiated speech recognition with a visible transcript review;
-- MapKit display, one-shot place search, and reviewed route handoff;
-- bounded document export through a system save/share surface; and
 - precompiled App Intent or Shortcuts actions with explicit input/output types.
 
 Each candidate still needs a product-specific privacy boundary, availability

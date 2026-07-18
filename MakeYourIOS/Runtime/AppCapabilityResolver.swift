@@ -12,13 +12,21 @@ enum AppCapabilityResolver {
     static func requiredCapabilities(for pages: [AppPage]) -> Set<AppCapability> {
         let nodes = pages.flatMap(\.nodes)
         var capabilities: Set<AppCapability> = [.localStorage]
+        let capabilitiesByKind: [ComponentKind: AppCapability] = [
+            .currencyConverter: .safeCalculation,
+            .taskList: .localNotifications,
+            .aiAssistant: .aiRequests,
+            .map: .mapSearch,
+            .calendarEvent: .calendarWrite,
+            .documentExport: .documentExport,
+            .liveDataList: .network,
+            .newsFeed: .network,
+            .marketWatch: .network
+        ]
+        capabilities.formUnion(nodes.compactMap { capabilitiesByKind[$0.kind] })
 
-        if nodes.contains(where: { $0.kind == .currencyConverter }) {
-            capabilities.insert(.safeCalculation)
-        }
         if nodes.contains(where: {
-            $0.kind == .taskList
-                || $0.action.type == .scheduleNotification
+            $0.action.type == .scheduleNotification
                 || ($0.kind == .recordCollection && $0.collection?.allowsReminders == true)
         }) {
             capabilities.insert(.localNotifications)
@@ -28,18 +36,10 @@ enum AppCapabilityResolver {
         }) {
             capabilities.insert(.photoPicker)
         }
-        if nodes.contains(where: { $0.kind == .aiAssistant }) {
-            capabilities.insert(.aiRequests)
-        }
         if nodes.contains(where: { $0.kind == .game && $0.game?.haptics == true }) {
             capabilities.insert(.haptics)
         }
         capabilities.formUnion(runtimeStepCapabilities(for: nodes))
-        if nodes.contains(where: {
-            $0.kind == .liveDataList || $0.kind == .newsFeed || $0.kind == .marketWatch
-        }) {
-            capabilities.insert(.network)
-        }
         for node in nodes where node.kind == .deviceInput {
             if let kind = node.deviceInput?.kind {
                 capabilities.insert(kind.requiredCapability)
@@ -51,7 +51,10 @@ enum AppCapabilityResolver {
     private static func runtimeStepCapabilities(for nodes: [ComponentNode]) -> Set<AppCapability> {
         let steps = nodes.flatMap { $0.events ?? [] }.flatMap(\.steps)
         let arithmeticOperations: Set<RuntimeExpressionOperation> = [
-            .add, .subtract, .multiply, .divide, .min, .max
+            .add, .subtract, .multiply, .divide, .min, .max,
+            .listAppend, .listRemove, .listCount, .listContains, .listJoin,
+            .objectSet, .objectRemove, .objectGet, .objectCount,
+            .dateAddDays, .dateDaysBetween
         ]
         let numericComparisons: Set<RuntimeComparison> = [
             .less, .lessOrEqual, .greater, .greaterOrEqual

@@ -244,6 +244,50 @@ extension OpenAIAppGenerationClient {
             ],
             "required": ["kind", "buttonLabel", "resultLabel", "allowsRepeat"]
         ]
+        let map: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "mode": ["type": "string", "enum": RuntimeMapMode.allCases.map(\.rawValue)],
+                "query": string,
+                "latitude": number,
+                "longitude": number,
+                "spanMeters": number,
+                "allowsSearch": boolean,
+                "allowsDirections": boolean
+            ],
+            "required": [
+                "mode", "query", "latitude", "longitude", "spanMeters",
+                "allowsSearch", "allowsDirections"
+            ]
+        ]
+        let calendarEvent: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "eventTitle": string,
+                "notes": string,
+                "location": string,
+                "startOffsetMinutes": integer,
+                "durationMinutes": integer,
+                "allowsEditing": boolean
+            ],
+            "required": [
+                "eventTitle", "notes", "location", "startOffsetMinutes",
+                "durationMinutes", "allowsEditing"
+            ]
+        ]
+        let documentExport: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "fileName": string,
+                "format": ["type": "string", "enum": RuntimeDocumentFormat.allCases.map(\.rawValue)],
+                "contentTemplate": string,
+                "buttonLabel": string
+            ],
+            "required": ["fileName", "format", "contentTemplate", "buttonLabel"]
+        ]
         let item: [String: Any] = [
             "type": "object",
             "additionalProperties": false,
@@ -317,9 +361,10 @@ extension OpenAIAppGenerationClient {
             "additionalProperties": false,
             "properties": [
                 "trigger": ["type": "string", "enum": RuntimeEventTrigger.allCases.map(\.rawValue)],
-                "steps": ["type": "array", "items": step]
+                "steps": ["type": "array", "items": step],
+                "intervalSeconds": integer
             ],
-            "required": ["trigger", "steps"]
+            "required": ["trigger", "steps", "intervalSeconds"]
         ]
         let control: [String: Any] = [
             "type": "object",
@@ -359,14 +404,18 @@ extension OpenAIAppGenerationClient {
                 "marketWatch": nullableObject(marketWatch),
                 "ledger": nullableObject(ledger),
                 "game": nullableObject(game),
-                "deviceInput": nullableObject(deviceInput)
+                "deviceInput": nullableObject(deviceInput),
+                "map": nullableObject(map),
+                "calendarEvent": nullableObject(calendarEvent),
+                "documentExport": nullableObject(documentExport)
             ],
             "required": [
                 "id", "kind", "title", "subtitle", "symbol", "value",
                 "placeholder", "binding", "options", "items", "action",
                 "valueBinding", "events", "control", "presentation", "image", "collection",
                 "liveData", "newsFeed",
-                "marketWatch", "ledger", "game", "deviceInput"
+                "marketWatch", "ledger", "game", "deviceInput", "map",
+                "calendarEvent", "documentExport"
             ]
         ]
         let page: [String: Any] = [

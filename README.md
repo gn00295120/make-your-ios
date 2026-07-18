@@ -78,12 +78,13 @@ xcodebuild \
   test
 ```
 
-On July 18, 2026, the current source passed 155 unit tests, six focused runtime
-UI paths, the Design Studio UI paths (including Accessibility Extra Extra Extra
-Large), the gated live GPT-5.6 generation UI test, strict SwiftLint across 128
-Swift files with zero violations, a generic Simulator build, and a signed generic
-iOS build. The live test creates, opens, and operates a validated stateful app;
-do not run that scheme repeatedly unless another billable end-to-end request is
+On July 19, 2026, the current source passed 189 unit tests and all nine
+non-billable UI tests, strict SwiftLint across 141 Swift files with zero
+violations, `git diff --check`, a clean Release Simulator build, and a signed
+Release iOS build with strict code-signature verification. The separately gated
+live test creates, opens, and operates a validated stateful app; it requires an
+API key saved in the selected Simulator and is not counted in that snapshot. Do
+not run the live scheme repeatedly unless another billable end-to-end request is
 intended.
 
 ## Architecture
@@ -122,31 +123,41 @@ project-local asset store, and keeps the bytes outside the generated document
 and AI prompt. Media metadata can safely describe role, focal point, mask,
 overlay, aspect, and content mode without exposing the underlying asset.
 
-Device features use the same bounded capability model. A generated document may
-request host-owned camera, QR/barcode/text scanner, one-time location, Apple
-contact picker, bounded text-file import, today’s pedometer count, share sheet,
-clipboard write, or haptic components. Access starts only after the user taps;
+Device features use the same bounded 18-capability model. A generated document
+may request host-owned camera, QR/barcode/text scanner, one-time location, Apple
+contact picker, bounded text-file import, today's pedometer count, share sheet,
+clipboard write, or haptic components. It can also use a bounded MapKit
+coordinate/place-search view, create one reviewed event with EventKit write-only
+access, and export reviewed text/JSON/CSV through Apple's file exporter. Access
+that needs a user gesture or permission starts only after the user taps;
 captured results stay in that tiny app by default, scanned URLs are shown as text
 rather than opened, and unsupported simulators or devices receive an honest
-fallback. Sharing leaves the app only through the system share sheet after the
-user chooses a destination; clipboard writes also require an explicit tap.
+fallback. Maps do not read the user's location, calendar creation cannot read
+existing events, and no export occurs until the user chooses a destination.
 
 ## Composable runtime blocks
 
 Generated tiny apps are no longer limited to choosing a prebuilt card or one
 hard-coded vertical feature. The declarative runtime now includes typed text,
-number, and boolean state; session or per-project persistence; text/number input,
-pickers, toggles, sliders, steppers, progress, dynamic text/metrics/banners and
-buttons; ordered tap/value-change events; finite arithmetic and conditions;
-navigation, alerts, local reminders, and haptics. State templates let several
-native views share one value without downloading or executing code.
+number, boolean, date, bounded string-list, and bounded string-object state;
+session or per-project persistence; text/number/date/time inputs, pickers,
+toggles, sliders, steppers, progress, dynamic text/metrics/banners/buttons and a
+native collection view; ordered tap/value-change/appear/foreground-timer events;
+finite arithmetic, date, collection, and condition operations; navigation,
+alerts, local reminders, and haptics. State templates let several native views
+share one value without downloading or executing code. Lists and objects are
+flat bounded string containers rather than a general structured-record DSL;
+rich editable data still uses the specialized record collection and ledger
+blocks.
 
-Games use a separate bounded Tiny Game Program v2: deterministic fixed-step
-worlds, visual entity templates, spawns, touch controls, variables, timer/contact/
-boundary rules, ordered effects, HUD, win/loss, pause, and restart. The polished
-Snake and platformer presets remain available, while custom programs cover
-original top-down collectors, dodgers, and simple shooters. Every custom program
-is compiled and budget-checked before the runtime accepts it.
+Games use a separate bounded Tiny Game Program v3: deterministic fixed-step
+worlds, visual entity templates, sensor/solid/one-way collision, touch controls,
+grounded jumping, facing projectiles, variables, timer/contact/boundary rules,
+ordered effects, HUD, win/loss, pause, and restart. The polished Snake and
+platformer presets remain available, while custom programs can cover top-down
+collectors, dodgers, shooters, and compact static-platform games. Every custom
+program is compiled and budget-checked before the runtime accepts it; stored V2
+programs remain compatible.
 
 ## AI inside generated apps
 
@@ -176,8 +187,9 @@ and the release checklist live in [docs/app-store](docs/app-store).
   documents.
 - Generated documents are size-limited and validated against an allowlist.
 - The runtime exposes local UI, calculations, fixed-provider news/market data,
-  project data, selected or captured photos, user-initiated scanning, opt-in
-  local notifications, deterministic games, and reviewed text-only AI requests.
+  project data, selected or captured photos, user-initiated scanning, MapKit
+  search, write-only calendar creation, reviewed document export, opt-in local
+  notifications, deterministic games, and reviewed text-only AI requests.
   It does not execute Swift, JavaScript, WebAssembly, or plugins.
 - Mini apps are private workspaces inside one signed host app; they are not
   independent `.ipa` files.

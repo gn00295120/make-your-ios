@@ -45,6 +45,7 @@ extension SampleDocuments {
     )
 
     static let starGardenProgram = TinyGameProgram(
+        version: 2,
         seed: 2_026,
         world: TinyGameWorldSpec(
             width: 320,

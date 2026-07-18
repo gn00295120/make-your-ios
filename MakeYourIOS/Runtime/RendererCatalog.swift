@@ -38,6 +38,10 @@ enum RendererCatalog {
         .game: [.automatic, .framed, .fullBleed, .immersive],
         .deviceInput: [.automatic, .compact, .cards, .framed],
         .control: [.automatic, .compact, .framed],
+        .collectionView: [.automatic, .compact, .cards, .dense, .framed],
+        .map: [.automatic, .compact, .cards, .framed, .fullBleed],
+        .calendarEvent: [.automatic, .compact, .cards, .framed],
+        .documentExport: [.automatic, .compact, .cards, .framed],
         .divider: [.automatic, .compact]
     ]
 }

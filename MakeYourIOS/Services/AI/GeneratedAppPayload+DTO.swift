@@ -56,6 +56,13 @@ extension GeneratedAppPayload {
     struct Event: Decodable {
         var trigger: String
         var steps: [Step]
+        var intervalSeconds: Int?
+
+        init(trigger: String, steps: [Step], intervalSeconds: Int? = nil) {
+            self.trigger = trigger
+            self.steps = steps
+            self.intervalSeconds = intervalSeconds
+        }
     }
 
     struct Step: Decodable {
@@ -185,6 +192,32 @@ extension GeneratedAppPayload {
         var allowsRepeat: Bool
     }
 
+    struct Map: Decodable {
+        var mode: String
+        var query: String
+        var latitude: Double
+        var longitude: Double
+        var spanMeters: Double
+        var allowsSearch: Bool
+        var allowsDirections: Bool
+    }
+
+    struct CalendarEvent: Decodable {
+        var eventTitle: String
+        var notes: String
+        var location: String
+        var startOffsetMinutes: Int
+        var durationMinutes: Int
+        var allowsEditing: Bool
+    }
+
+    struct DocumentExport: Decodable {
+        var fileName: String
+        var format: String
+        var contentTemplate: String
+        var buttonLabel: String
+    }
+
     struct Node: Decodable {
         var id: String
         var kind: String
@@ -209,6 +242,9 @@ extension GeneratedAppPayload {
         var ledger: Ledger?
         var game: Game?
         var deviceInput: DeviceInput?
+        var map: Map?
+        var calendarEvent: CalendarEvent?
+        var documentExport: DocumentExport?
     }
 
     struct Item: Decodable {

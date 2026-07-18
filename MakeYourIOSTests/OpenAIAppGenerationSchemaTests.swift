@@ -35,6 +35,7 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
         XCTAssertLessThanOrEqual(metrics.enumValueCount, 1_000)
     }
 
+    // swiftlint:disable:next function_body_length
     func testSchemaIncludesVisualMediaAndRuntimeAICapabilities() throws {
         let root = OpenAIAppGenerationClient.responseSchema
         let properties = try XCTUnwrap(root["properties"] as? [String: Any])
@@ -88,6 +89,28 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
         XCTAssertNotNil(programProperties["templates"])
         XCTAssertNotNil(programProperties["rules"])
         XCTAssertNotNil(programProperties["controls"])
+        let version = try XCTUnwrap(programProperties["version"] as? [String: Any])
+        XCTAssertEqual(version["enum"] as? [Int], [TinyGameProgram.currentVersion])
+
+        let templates = try XCTUnwrap(programProperties["templates"] as? [String: Any])
+        let template = try XCTUnwrap(templates["items"] as? [String: Any])
+        let templateProperties = try XCTUnwrap(template["properties"] as? [String: Any])
+        let physics = try XCTUnwrap(templateProperties["physics"] as? [String: Any])
+        XCTAssertEqual(Set(physics["type"] as? [String] ?? []), Set(["object", "null"]))
+        let physicsProperties = try XCTUnwrap(physics["properties"] as? [String: Any])
+        XCTAssertEqual(Set(physicsProperties.keys), Set([
+            "collisionMode", "maximumVelocityX", "maximumVelocityY", "lifetimeTicks"
+        ]))
+
+        let controls = try XCTUnwrap(programProperties["controls"] as? [String: Any])
+        let control = try XCTUnwrap(controls["items"] as? [String: Any])
+        let controlProperties = try XCTUnwrap(control["properties"] as? [String: Any])
+        let action = try XCTUnwrap(controlProperties["action"] as? [String: Any])
+        XCTAssertEqual(Set(action["type"] as? [String] ?? []), Set(["object", "null"]))
+        let actionProperties = try XCTUnwrap(action["properties"] as? [String: Any])
+        XCTAssertEqual(Set(actionProperties.keys), Set([
+            "kind", "impulse", "cooldownTicks", "maximumActive", "offsetX", "offsetY"
+        ]))
     }
 
     private func assertLogicSchema(in root: [String: Any]) throws {

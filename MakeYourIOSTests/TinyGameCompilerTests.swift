@@ -1,6 +1,7 @@
 import XCTest
 @testable import MakeYourIOS
 
+// swiftlint:disable:next type_body_length
 final class TinyGameCompilerTests: XCTestCase {
     private let compiler = TinyGameCompiler()
 
@@ -182,6 +183,108 @@ final class TinyGameCompilerTests: XCTestCase {
             XCTAssertEqual(
                 error as? TinyGameCompilerError,
                 .invalidRule("unreachable-collision")
+            )
+        }
+    }
+
+    func testCompilerAcceptsBoundedV3PlatformerProgram() throws {
+        let compiled = try compiler.compile(TinyGameTestFixtures.platformerProgram())
+
+        XCTAssertEqual(compiled.source.version, 3)
+        XCTAssertEqual(compiled.templatesByID["runner"]?.movement, .platformerAxis)
+        XCTAssertEqual(
+            compiled.templatesByID["cloud-platform"]?.physics?.collisionMode,
+            .oneWayPlatform
+        )
+        XCTAssertEqual(compiled.controlsByID["jump"]?.action?.kind, .jump)
+        XCTAssertEqual(compiled.controlsByID["fire"]?.action?.kind, .projectile)
+    }
+
+    func testCompilerRejectsV3FeaturesDeclaredAsVersionTwo() {
+        var program = TinyGameTestFixtures.platformerProgram()
+        program.version = 2
+
+        XCTAssertThrowsError(try compiler.compile(program)) { error in
+            XCTAssertEqual(
+                error as? TinyGameCompilerError,
+                .invalidValue("version 2 features")
+            )
+        }
+    }
+
+    func testCompilerRejectsV3BodyWithoutExplicitPhysics() {
+        var program = TinyGameTestFixtures.platformerProgram()
+        program.templates[0].physics = nil
+
+        XCTAssertThrowsError(try compiler.compile(program)) { error in
+            XCTAssertEqual(
+                error as? TinyGameCompilerError,
+                .invalidValue("physics in runner")
+            )
+        }
+    }
+
+    func testCompilerRejectsUnsupportedMovableSolidTopology() {
+        var program = TinyGameTestFixtures.platformerProgram()
+        program.spawns.append(TinyGameEntitySpawn(
+            id: "runner-two",
+            templateID: "runner",
+            x: 140,
+            y: 404
+        ))
+
+        XCTAssertThrowsError(try compiler.compile(program)) { error in
+            XCTAssertEqual(
+                error as? TinyGameCompilerError,
+                .invalidValue("movable solid topology")
+            )
+        }
+    }
+
+    func testCompilerRejectsRuntimeSolidSpawns() {
+        var actionProgram = TinyGameTestFixtures.platformerProgram()
+        actionProgram.controls[2].spawnTemplateID = "ground"
+        XCTAssertThrowsError(try compiler.compile(actionProgram)) { error in
+            XCTAssertEqual(
+                error as? TinyGameCompilerError,
+                .invalidValue("projectile action fire")
+            )
+        }
+
+        var ruleProgram = TinyGameTestFixtures.platformerProgram()
+        ruleProgram.rules = [TinyGameRuleSpec(
+            id: "unsafe-platform-spawn",
+            trigger: TinyGameTriggerSpec(kind: .start),
+            effects: [TinyGameEffectSpec(
+                kind: .spawn,
+                target: .player,
+                templateID: "ground"
+            )]
+        )]
+        XCTAssertThrowsError(try compiler.compile(ruleProgram)) { error in
+            XCTAssertEqual(
+                error as? TinyGameCompilerError,
+                .invalidValue("runtime solid spawn ground")
+            )
+        }
+    }
+
+    func testCompilerRejectsUnboundedProjectileAndInvalidJumpActions() {
+        var projectile = TinyGameTestFixtures.platformerProgram()
+        projectile.templates[3].physics?.lifetimeTicks = 0
+        XCTAssertThrowsError(try compiler.compile(projectile)) { error in
+            XCTAssertEqual(
+                error as? TinyGameCompilerError,
+                .invalidValue("projectile action fire")
+            )
+        }
+
+        var jump = TinyGameTestFixtures.platformerProgram()
+        jump.controls[1].action?.impulse = 0
+        XCTAssertThrowsError(try compiler.compile(jump)) { error in
+            XCTAssertEqual(
+                error as? TinyGameCompilerError,
+                .invalidValue("jump action jump")
             )
         }
     }

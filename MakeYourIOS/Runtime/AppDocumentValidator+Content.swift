@@ -31,6 +31,8 @@ extension AppDocumentValidator {
         }
     }
 
+    // Exhaustive interpreter dispatch: every stateful generated component has one validator.
+    // swiftlint:disable:next cyclomatic_complexity
     private func validateStatefulRuntime(_ node: ComponentNode) throws {
         switch node.kind {
         case .recordCollection: try validateCollection(node)
@@ -41,6 +43,9 @@ extension AppDocumentValidator {
         case .game: try validateGame(node)
         case .deviceInput: try validateDeviceInput(node)
         case .control: break
+        case .map: try validateMap(node)
+        case .calendarEvent: try validateCalendarEvent(node)
+        case .documentExport: try validateDocumentExport(node)
         default: break
         }
     }
@@ -161,6 +166,48 @@ extension AppDocumentValidator {
         }
     }
 
+    private func validateMap(_ node: ComponentNode) throws {
+        guard let map = node.map,
+              map.latitude.isFinite,
+              (-90...90).contains(map.latitude),
+              map.longitude.isFinite,
+              (-180...180).contains(map.longitude),
+              map.spanMeters.isFinite,
+              (250...100_000).contains(map.spanMeters),
+              map.query.count <= 120,
+              map.mode != .placeSearch
+                || !map.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(.map)
+        }
+    }
+
+    private func validateCalendarEvent(_ node: ComponentNode) throws {
+        guard let event = node.calendarEvent,
+              !event.eventTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              event.eventTitle.count <= 120,
+              event.notes.count <= 500,
+              event.location.count <= 160,
+              (0...10_080).contains(event.startOffsetMinutes),
+              (5...1_440).contains(event.durationMinutes) else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(.calendarEvent)
+        }
+    }
+
+    private func validateDocumentExport(_ node: ComponentNode) throws {
+        guard let export = node.documentExport,
+              !export.fileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              export.fileName.count <= 80,
+              !export.fileName.contains("/"),
+              !export.fileName.contains("\\"),
+              export.fileName.unicodeScalars.allSatisfy({ $0.value >= 32 && $0.value != 127 }),
+              export.contentTemplate.count <= RuntimeLogicEngine.maximumValueLength,
+              !export.contentTemplate.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !export.buttonLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              export.buttonLabel.count <= 60 else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(.documentExport)
+        }
+    }
+
     private func validateSpecializedConfiguration(_ node: ComponentNode) throws {
         let configurations: [(ComponentKind, Bool)] = [
             (.recordCollection, node.collection != nil),
@@ -170,7 +217,10 @@ extension AppDocumentValidator {
             (.ledger, node.ledger != nil),
             (.game, node.game != nil),
             (.deviceInput, node.deviceInput != nil),
-            (.control, node.control != nil)
+            (.control, node.control != nil),
+            (.map, node.map != nil),
+            (.calendarEvent, node.calendarEvent != nil),
+            (.documentExport, node.documentExport != nil)
         ]
         let configuredKinds = configurations.compactMap { $0.1 ? $0.0 : nil }
         let specializedKinds = Set(configurations.map { $0.0 })

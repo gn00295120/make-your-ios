@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 
 enum ProjectNotificationStore {
     static func removeAll(projectID: UUID, center: UNUserNotificationCenter = .current()) {

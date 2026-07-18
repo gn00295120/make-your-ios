@@ -1,9 +1,12 @@
+// The declarative IR is intentionally kept in one reviewable file.
+// swiftlint:disable file_length
 import Foundation
 
 /// A bounded, declarative game description interpreted by the host runtime.
 /// Numeric world values are integer points per fixed engine tick.
 struct TinyGameProgram: Codable, Hashable, Sendable {
-    static let currentVersion = 2
+    static let currentVersion = 3
+    static let supportedVersions = 2...currentVersion
 
     var version: Int
     var seed: Int
@@ -154,7 +157,35 @@ enum TinyGameBodyKind: String, Codable, CaseIterable, Hashable, Sendable {
 enum TinyGameMovementKind: String, Codable, CaseIterable, Hashable, Sendable {
     case none
     case playerAxis
+    case platformerAxis
     case constant
+}
+
+enum TinyGameCollisionMode: String, Codable, CaseIterable, Hashable, Sendable {
+    case sensor
+    case solid
+    case oneWayPlatform
+}
+
+/// Optional in the Codable model so stored V2 programs decode without migration.
+/// A missing physics block preserves the V2 sensor-only collision behavior.
+struct TinyGamePhysicsSpec: Codable, Hashable, Sendable {
+    var collisionMode: TinyGameCollisionMode
+    var maximumVelocityX: Int
+    var maximumVelocityY: Int
+    var lifetimeTicks: Int
+
+    init(
+        collisionMode: TinyGameCollisionMode,
+        maximumVelocityX: Int = 0,
+        maximumVelocityY: Int = 0,
+        lifetimeTicks: Int = 0
+    ) {
+        self.collisionMode = collisionMode
+        self.maximumVelocityX = maximumVelocityX
+        self.maximumVelocityY = maximumVelocityY
+        self.lifetimeTicks = lifetimeTicks
+    }
 }
 
 struct TinyGameEntityTemplate: Codable, Hashable, Identifiable, Sendable {
@@ -169,6 +200,7 @@ struct TinyGameEntityTemplate: Codable, Hashable, Identifiable, Sendable {
     var velocityY: Int
     var speed: Int
     var tags: [String]
+    var physics: TinyGamePhysicsSpec?
 
     init(
         id: String,
@@ -181,7 +213,8 @@ struct TinyGameEntityTemplate: Codable, Hashable, Identifiable, Sendable {
         velocityX: Int = 0,
         velocityY: Int = 0,
         speed: Int = 0,
-        tags: [String] = []
+        tags: [String] = [],
+        physics: TinyGamePhysicsSpec? = nil
     ) {
         self.id = id
         self.role = role
@@ -194,6 +227,7 @@ struct TinyGameEntityTemplate: Codable, Hashable, Identifiable, Sendable {
         self.velocityY = velocityY
         self.speed = speed
         self.tags = tags
+        self.physics = physics
     }
 }
 
@@ -213,6 +247,38 @@ enum TinyGameControlKind: String, Codable, CaseIterable, Hashable, Sendable {
     case actionButton
 }
 
+enum TinyGameControlActionKind: String, Codable, CaseIterable, Hashable, Sendable {
+    case jump
+    case projectile
+}
+
+/// V3 action metadata. It is nullable at the strict-schema boundary so V2 action buttons
+/// retain their original anchor-and-spawn behavior.
+struct TinyGameControlActionSpec: Codable, Hashable, Sendable {
+    var kind: TinyGameControlActionKind
+    var impulse: Int
+    var cooldownTicks: Int
+    var maximumActive: Int
+    var offsetX: Int
+    var offsetY: Int
+
+    init(
+        kind: TinyGameControlActionKind,
+        impulse: Int = 0,
+        cooldownTicks: Int,
+        maximumActive: Int = 0,
+        offsetX: Int = 0,
+        offsetY: Int = 0
+    ) {
+        self.kind = kind
+        self.impulse = impulse
+        self.cooldownTicks = cooldownTicks
+        self.maximumActive = maximumActive
+        self.offsetX = offsetX
+        self.offsetY = offsetY
+    }
+}
+
 struct TinyGameControlSpec: Codable, Hashable, Identifiable, Sendable {
     var id: String
     var kind: TinyGameControlKind
@@ -221,6 +287,7 @@ struct TinyGameControlSpec: Codable, Hashable, Identifiable, Sendable {
     var targetTag: String
     var speed: Int
     var spawnTemplateID: String
+    var action: TinyGameControlActionSpec?
 
     init(
         id: String,
@@ -229,7 +296,8 @@ struct TinyGameControlSpec: Codable, Hashable, Identifiable, Sendable {
         symbol: String,
         targetTag: String,
         speed: Int = 0,
-        spawnTemplateID: String = ""
+        spawnTemplateID: String = "",
+        action: TinyGameControlActionSpec? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -238,6 +306,7 @@ struct TinyGameControlSpec: Codable, Hashable, Identifiable, Sendable {
         self.targetTag = targetTag
         self.speed = speed
         self.spawnTemplateID = spawnTemplateID
+        self.action = action
     }
 }
 

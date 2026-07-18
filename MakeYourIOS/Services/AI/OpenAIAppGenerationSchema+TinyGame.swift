@@ -19,6 +19,12 @@ extension OpenAIAppGenerationClient {
             ]
         }
 
+        func nullableObject(_ value: [String: Any]) -> [String: Any] {
+            var result = value
+            result["type"] = ["object", "null"]
+            return result
+        }
+
         let world = object([
             "width": integer,
             "height": integer,
@@ -44,6 +50,18 @@ extension OpenAIAppGenerationClient {
             "symbol": ["type": "string", "enum": symbols]
         ], required: ["kind", "colorRole", "symbol"])
 
+        let physics = object([
+            "collisionMode": [
+                "type": "string",
+                "enum": TinyGameCollisionMode.allCases.map(\.rawValue)
+            ],
+            "maximumVelocityX": integer,
+            "maximumVelocityY": integer,
+            "lifetimeTicks": integer
+        ], required: [
+            "collisionMode", "maximumVelocityX", "maximumVelocityY", "lifetimeTicks"
+        ])
+
         let template = object([
             "id": string,
             "role": ["type": "string", "enum": TinyGameEntityRole.allCases.map(\.rawValue)],
@@ -55,10 +73,11 @@ extension OpenAIAppGenerationClient {
             "velocityX": integer,
             "velocityY": integer,
             "speed": integer,
-            "tags": stringArray
+            "tags": stringArray,
+            "physics": nullableObject(physics)
         ], required: [
             "id", "role", "visual", "body", "movement", "width", "height",
-            "velocityX", "velocityY", "speed", "tags"
+            "velocityX", "velocityY", "speed", "tags", "physics"
         ])
 
         let spawn = object([
@@ -67,6 +86,20 @@ extension OpenAIAppGenerationClient {
             "x": integer,
             "y": integer
         ], required: ["id", "templateID", "x", "y"])
+
+        let action = object([
+            "kind": [
+                "type": "string",
+                "enum": TinyGameControlActionKind.allCases.map(\.rawValue)
+            ],
+            "impulse": integer,
+            "cooldownTicks": integer,
+            "maximumActive": integer,
+            "offsetX": integer,
+            "offsetY": integer
+        ], required: [
+            "kind", "impulse", "cooldownTicks", "maximumActive", "offsetX", "offsetY"
+        ])
 
         let control = object([
             "id": string,
@@ -78,9 +111,11 @@ extension OpenAIAppGenerationClient {
             ],
             "targetTag": string,
             "speed": integer,
-            "spawnTemplateID": string
+            "spawnTemplateID": string,
+            "action": nullableObject(action)
         ], required: [
-            "id", "kind", "label", "symbol", "targetTag", "speed", "spawnTemplateID"
+            "id", "kind", "label", "symbol", "targetTag", "speed", "spawnTemplateID",
+            "action"
         ])
 
         let trigger = object([
@@ -130,7 +165,7 @@ extension OpenAIAppGenerationClient {
         ], required: ["id", "kind", "variableID", "label", "symbol"])
 
         return object([
-            "version": integer,
+            "version": ["type": "integer", "enum": [TinyGameProgram.currentVersion]],
             "seed": integer,
             "tickRate": ["type": "integer", "enum": TinyGameTickRate.allCases.map(\.rawValue)],
             "world": world,

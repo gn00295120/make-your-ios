@@ -72,11 +72,15 @@ natural-language intent
 The generated document is deliberately not arbitrary Swift, JavaScript, or
 WebAssembly. It selects from a catalog of precompiled components and declared
 capabilities. The current catalog covers hero content, text, metrics, inputs,
-pickers, actions, checklists, currency, tasks, generic records, news, markets,
-ledgers, deterministic games, private images, device inputs, text-only AI
-assistants, and information banners. Design Genome v2 adds semantic tokens,
-four real page compositions, safe media treatments, and per-renderer variants
-without arbitrary generated layout code. The runtime owns every side effect.
+pickers, actions, checklists, typed date/list/object state, bounded collection and
+date operations, currency, tasks, generic records, news, markets, ledgers,
+deterministic games, private images, device inputs, MapKit place views, reviewed
+write-only calendar creation, reviewed document export, text-only AI assistants,
+and information banners. The general list/object values are bounded flat string
+containers rather than a full structured-record language. Design Genome v2 adds
+semantic tokens, four real page compositions, safe media treatments, and
+per-renderer variants without arbitrary generated layout code. The runtime owns
+every side effect.
 
 Codex was used throughout the build to turn the product thesis into the
 architecture, SwiftUI implementation, validation boundary, tests, lint-clean
@@ -107,7 +111,7 @@ and GPT-5.6 Design-only proposals.
 ## Accomplishments
 
 - A coherent, runnable product rather than a static concept prototype.
-- Ten functional native mini apps available on first launch, including two
+- Twelve functional native mini apps available on first launch, including two
   examples generated through MakeYour's own Builder: Live FX Watch and Use It First.
 - A real GPT-5.6 demo that creates Daily Focus from a prompt, evolves it from
   Version 2 to Version 3 while preserving a completed task, and switches among
@@ -118,9 +122,10 @@ and GPT-5.6 Design-only proposals.
 - Persistent multi-app library with replacement versions.
 - Project-local, metadata-stripped image persistence with duplicate/delete lifecycle.
 - Design Genome v2, Design Studio, and a function-preserving AI Design-only path.
-- 109 passing unit tests, three passing Design Studio UI paths, a passing live
-  GPT-5.6 generation E2E, and a zero-violation strict SwiftLint run across 105
-  Swift files.
+- The expanded source passes 189 unit tests, all nine non-billable UI paths,
+  and strict SwiftLint across 141 Swift files with zero violations. A dedicated,
+  explicitly billable GPT-5.6 generation E2E remains available for a Simulator
+  with a saved review key.
 - Visual verification of editorial, split/card, and immersive treatments on an
   iPhone 17 Pro Simulator.
 
@@ -133,12 +138,12 @@ the execution boundary.
 
 ## What's next
 
-- Safe expression ASTs and richer local relationships between records.
+- Richer schemaful relationships, filtering, and iteration for local records.
 - Versioned JSON Patch feature edits and cross-version rollback.
 - Per-project SQLite namespaces and migrations.
 - Broader automated accessibility and snapshot diagnostics fed back to the model.
-- Additional carefully reviewed capabilities for calendar, location, share, and
-  allowlisted HTTPS data sources.
+- Additional carefully reviewed capabilities for foreground audio, speech
+  recognition, precompiled App Intents, and allowlisted HTTPS data sources.
 - Early App Review guidance before broadening runtime programmability.
 
 ## Final demo storyboard (1:35.30)
@@ -176,6 +181,9 @@ line use a held frame from the real app library rather than concept mockups.
   tests using the README instructions.
 - [x] After submission, expand the current source to Design Genome v2 and pass
   109 unit tests, three Design Studio UI paths, and one live GPT-5.6 E2E.
+- [x] Expand the runtime further to 18 reviewed capabilities, typed collections,
+  native map/calendar/export blocks, Tiny Game v3, 189 unit tests, and nine
+  non-billable UI tests.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
 - [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at

@@ -1,6 +1,8 @@
 import XCTest
 @testable import MakeYourIOS
 
+// Runtime interpreter cases intentionally share compact fixture helpers in one suite.
+// swiftlint:disable:next type_body_length
 final class RuntimeLogicEngineTests: XCTestCase {
     func testOrderedStepsReadPriorWritesInOneTransaction() throws {
         let engine = RuntimeLogicEngine(logic: RuntimeLogic(state: [
@@ -168,6 +170,148 @@ final class RuntimeLogicEngineTests: XCTestCase {
             "enabled": "true"
         ])
         XCTAssertEqual(engine.persistentKeys, ["score", "enabled"])
+    }
+
+    // Keeping the complete multi-step transaction visible makes its atomic behavior auditable.
+    // swiftlint:disable:next function_body_length
+    func testBoundedListAndObjectOperationsRemainTransactional() throws {
+        let engine = RuntimeLogicEngine(logic: RuntimeLogic(state: [
+            state("items", type: .list, initial: #"["Milk"]"#),
+            state("item-count", type: .number, initial: "1"),
+            state("contains-eggs", type: .boolean, initial: "false"),
+            state("profile", type: .object, initial: #"{"name":"Ari"}"#),
+            state("city", type: .text, initial: "")
+        ]))
+        let event = RuntimeEvent(trigger: .tap, steps: [
+            RuntimeStep(
+                kind: .setState,
+                target: "items",
+                expression: expression(.listAppend, stateOperand("items"), literal("Eggs")),
+                condition: nil
+            ),
+            RuntimeStep(
+                kind: .setState,
+                target: "item-count",
+                expression: expression(.listCount, stateOperand("items")),
+                condition: nil
+            ),
+            RuntimeStep(
+                kind: .setState,
+                target: "contains-eggs",
+                expression: expression(.listContains, stateOperand("items"), literal("Eggs")),
+                condition: nil
+            ),
+            RuntimeStep(
+                kind: .setState,
+                target: "profile",
+                expression: expression(
+                    .objectSet,
+                    stateOperand("profile"),
+                    literal("city"),
+                    literal("Taipei")
+                ),
+                condition: nil
+            ),
+            RuntimeStep(
+                kind: .setState,
+                target: "city",
+                expression: expression(.objectGet, stateOperand("profile"), literal("city")),
+                condition: nil
+            )
+        ])
+
+        let execution = try engine.execute(event: event, values: engine.initialValues)
+
+        XCTAssertEqual(try RuntimeValueCodec.decodedList(execution.values["items"] ?? ""), ["Milk", "Eggs"])
+        XCTAssertEqual(execution.values["item-count"], "2")
+        XCTAssertEqual(execution.values["contains-eggs"], "true")
+        XCTAssertEqual(
+            try RuntimeValueCodec.decodedObject(execution.values["profile"] ?? ""),
+            ["city": "Taipei", "name": "Ari"]
+        )
+        XCTAssertEqual(execution.values["city"], "Taipei")
+    }
+
+    func testDateArithmeticUsesCanonicalUTCValues() throws {
+        let engine = RuntimeLogicEngine(logic: RuntimeLogic(state: [
+            state("start", type: .date, initial: "2026-07-19"),
+            state("due", type: .date, initial: "2026-07-19"),
+            state("days", type: .number, initial: "0")
+        ]))
+        let event = RuntimeEvent(trigger: .tap, steps: [
+            RuntimeStep(
+                kind: .setState,
+                target: "due",
+                expression: expression(.dateAddDays, stateOperand("start"), literal("14")),
+                condition: nil
+            ),
+            RuntimeStep(
+                kind: .setState,
+                target: "days",
+                expression: expression(.dateDaysBetween, stateOperand("start"), stateOperand("due")),
+                condition: nil
+            )
+        ])
+
+        let execution = try engine.execute(event: event, values: engine.initialValues)
+
+        XCTAssertEqual(execution.values["due"], "2026-08-02T00:00:00Z")
+        XCTAssertEqual(execution.values["days"], "14")
+    }
+
+    func testCurrentDateUsesInjectedClock() throws {
+        let fixedDate = try XCTUnwrap(RuntimeValueCodec.date(from: "2026-07-19T12:34:56Z"))
+        let engine = RuntimeLogicEngine(
+            logic: RuntimeLogic(state: [
+                state("generated-at", type: .date, initial: "2026-07-19")
+            ]),
+            now: { fixedDate }
+        )
+        let event = RuntimeEvent(trigger: .appear, steps: [
+            RuntimeStep(
+                kind: .setState,
+                target: "generated-at",
+                expression: expression(
+                    .copy,
+                    RuntimeOperand(source: .currentDate, value: "")
+                ),
+                condition: nil
+            )
+        ])
+
+        let execution = try engine.execute(event: event, values: engine.initialValues)
+
+        XCTAssertEqual(execution.values["generated-at"], "2026-07-19T12:34:56Z")
+    }
+
+    func testCollectionOverflowRollsBackTheWholeEvent() throws {
+        let initialList = try RuntimeValueCodec.encodedList(
+            Array(repeating: "value", count: RuntimeValueCodec.maximumListItems)
+        )
+        let engine = RuntimeLogicEngine(logic: RuntimeLogic(state: [
+            state("items", type: .list, initial: initialList),
+            state("status", type: .text, initial: "unchanged")
+        ]))
+        let values = engine.initialValues
+        let event = RuntimeEvent(trigger: .tap, steps: [
+            RuntimeStep(
+                kind: .setState,
+                target: "status",
+                expression: expression(.literal, literal("changed")),
+                condition: nil
+            ),
+            RuntimeStep(
+                kind: .setState,
+                target: "items",
+                expression: expression(.listAppend, stateOperand("items"), literal("overflow")),
+                condition: nil
+            )
+        ])
+
+        XCTAssertThrowsError(try engine.execute(event: event, values: values)) { error in
+            XCTAssertEqual(error as? RuntimeLogicExecutionError, .collectionLimitExceeded)
+        }
+        XCTAssertEqual(values["status"], "unchanged")
     }
 }
 

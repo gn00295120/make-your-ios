@@ -16,6 +16,24 @@ struct TinyGameVariableValue: Equatable, Sendable {
     var value: Int
 }
 
+enum TinyGameControlBlockReason: String, Equatable, Sendable {
+    case ready
+    case gameNotPlaying
+    case cooldown
+    case airborne
+    case maximumActive
+    case entityBudget
+    case missingTarget
+}
+
+struct TinyGameControlAvailability: Equatable, Sendable {
+    var id: String
+    var isEnabled: Bool
+    var reason: TinyGameControlBlockReason
+    var availableAtTick: Int
+    var cooldownTicksRemaining: Int
+}
+
 // Coordinate fields intentionally use the conventional x/y names used by the IR.
 // swiftlint:disable identifier_name
 struct TinyGameEntityState: Equatable, Identifiable, Sendable {
@@ -33,6 +51,13 @@ struct TinyGameEntityState: Equatable, Identifiable, Sendable {
     var velocityY: Int
     var speed: Int
     var tags: Set<String>
+    var collisionMode: TinyGameCollisionMode
+    var maximumVelocityX: Int
+    var maximumVelocityY: Int
+    var lifetimeTicks: Int
+    var ageTicks: Int
+    var facingX: Int
+    var isGrounded: Bool
 }
 // swiftlint:enable identifier_name
 
@@ -41,6 +66,7 @@ struct TinyGameSnapshot: Equatable, Sendable {
     var tick: Int
     var variables: [TinyGameVariableValue]
     var entities: [TinyGameEntityState]
+    var controls: [TinyGameControlAvailability]
 }
 
 // swiftlint:disable:next type_body_length
@@ -54,6 +80,7 @@ struct TinyGameEngine: Sendable {
 
     private var random: TinyGameSeededRandomNumberGenerator
     private var directionalInputs: [String: TinyGameInputVector] = [:]
+    private var controlAvailableAtTick: [String: Int] = [:]
     private var activeContactKeys: Set<TinyGameContactKey> = []
     private var activeOutsideEntityIDs: Set<String> = []
     private var pendingFeedback: [TinyGameFeedback] = []
@@ -78,6 +105,7 @@ struct TinyGameEngine: Sendable {
         random = TinyGameSeededRandomNumberGenerator(
             seed: UInt64(program.source.seed) &+ 0x9E37_79B9_7F4A_7C15
         )
+        refreshRestingGroundedState()
     }
 
     var snapshot: TinyGameSnapshot {
@@ -87,8 +115,61 @@ struct TinyGameEngine: Sendable {
             variables: variables.keys.sorted().map {
                 TinyGameVariableValue(id: $0, value: variables[$0] ?? 0)
             },
-            entities: entities.sorted(by: { $0.id < $1.id })
+            entities: entities.sorted(by: { $0.id < $1.id }),
+            controls: program.source.controls
+                .sorted(by: { $0.id < $1.id })
+                .map { controlAvailability($0.id) }
         )
+    }
+
+    func controlAvailability(_ controlID: String) -> TinyGameControlAvailability {
+        let availableAt = controlAvailableAtTick[controlID, default: 0]
+        let remaining = max(availableAt - tick, 0)
+        func result(
+            _ enabled: Bool,
+            _ reason: TinyGameControlBlockReason
+        ) -> TinyGameControlAvailability {
+            TinyGameControlAvailability(
+                id: controlID,
+                isEnabled: enabled,
+                reason: reason,
+                availableAtTick: availableAt,
+                cooldownTicksRemaining: remaining
+            )
+        }
+
+        guard phase == .playing else { return result(false, .gameNotPlaying) }
+        guard let control = program.controlsByID[controlID] else {
+            return result(false, .missingTarget)
+        }
+        guard control.kind == .actionButton else { return result(true, .ready) }
+        guard remaining == 0 else { return result(false, .cooldown) }
+        guard let anchor = firstEntity(withTag: control.targetTag) else {
+            return result(false, .missingTarget)
+        }
+        guard let action = control.action else {
+            return entities.count < TinyGameAuditLimits.maximumRuntimeEntities
+                && spawnsThisTick < TinyGameAuditLimits.maximumSpawnsPerTick
+                ? result(true, .ready)
+                : result(false, .entityBudget)
+        }
+        switch action.kind {
+        case .jump:
+            return anchor.isGrounded
+                ? result(true, .ready)
+                : result(false, .airborne)
+        case .projectile:
+            guard entities.count < TinyGameAuditLimits.maximumRuntimeEntities,
+                  spawnsThisTick < TinyGameAuditLimits.maximumSpawnsPerTick else {
+                return result(false, .entityBudget)
+            }
+            let activeCount = entities.filter {
+                $0.templateID == control.spawnTemplateID
+            }.count
+            return activeCount < action.maximumActive
+                ? result(true, .ready)
+                : result(false, .maximumActive)
+        }
     }
 
     mutating func start() {
@@ -129,12 +210,43 @@ struct TinyGameEngine: Sendable {
         guard phase == .playing,
               let control = program.controlsByID[controlID],
               control.kind == .actionButton,
-              let anchor = firstEntity(withTag: control.targetTag) else { return }
-        _ = spawnEntity(
-            templateID: control.spawnTemplateID,
-            x: anchor.x,
-            y: anchor.y
-        )
+              controlAvailability(controlID).isEnabled,
+              let anchorIndex = firstEntityIndex(withTag: control.targetTag) else { return }
+        guard let action = control.action else {
+            let anchor = entities[anchorIndex]
+            _ = spawnEntity(
+                templateID: control.spawnTemplateID,
+                x: anchor.x,
+                y: anchor.y
+            )
+            return
+        }
+        switch action.kind {
+        case .jump:
+            guard entities[anchorIndex].isGrounded else { return }
+            entities[anchorIndex].velocityY = -action.impulse
+            entities[anchorIndex].isGrounded = false
+            controlAvailableAtTick[controlID] = tick + action.cooldownTicks
+        case .projectile:
+            let activeCount = entities.filter {
+                $0.templateID == control.spawnTemplateID
+            }.count
+            guard activeCount < action.maximumActive else { return }
+            let anchor = entities[anchorIndex]
+            let facing = anchor.facingX == 0 ? 1 : anchor.facingX
+            guard let identifier = spawnEntity(
+                templateID: control.spawnTemplateID,
+                x: anchor.x + action.offsetX * facing,
+                y: anchor.y + action.offsetY
+            ), let spawnedIndex = entities.firstIndex(where: { $0.id == identifier }) else {
+                return
+            }
+            entities[spawnedIndex].facingX = facing
+            if entities[spawnedIndex].velocityX != 0 {
+                entities[spawnedIndex].velocityX = abs(entities[spawnedIndex].velocityX) * facing
+            }
+            controlAvailableAtTick[controlID] = tick + action.cooldownTicks
+        }
     }
 
     mutating func step() {
@@ -144,7 +256,11 @@ struct TinyGameEngine: Sendable {
         tick += 1
 
         applyDirectionalInputs()
+        let previousPositions = Dictionary(uniqueKeysWithValues: entities.map {
+            ($0.id, TinyGamePoint(x: $0.x, y: $0.y))
+        })
         integrateEntities()
+        resolvePhysicalContacts(previousPositions: previousPositions)
         let outsideIDs = Set(entities.filter(isOutsideWorld).map(\.id))
         let leavingIDs = outsideIDs.subtracting(activeOutsideEntityIDs)
         activeOutsideEntityIDs = outsideIDs
@@ -152,9 +268,11 @@ struct TinyGameEngine: Sendable {
 
         runTickRules()
         guard phase == .playing else { return }
-        runCollisionRules()
+        runCollisionRules(previousPositions: previousPositions)
         guard phase == .playing else { return }
         runLeaveWorldRules(for: leavingIDs)
+
+        ageAndExpireEntities()
 
         if program.source.world.edgeBehavior == .destroy {
             entities.removeAll(where: { outsideIDs.contains($0.id) })
@@ -189,9 +307,13 @@ struct TinyGameEngine: Sendable {
             guard control.kind == .fourWay || control.kind == .horizontal else { continue }
             let input = directionalInputs[control.id] ?? .zero
             for index in entities.indices where entities[index].tags.contains(control.targetTag) {
-                guard entities[index].movement == .playerAxis else { continue }
+                guard entities[index].movement == .playerAxis
+                        || entities[index].movement == .platformerAxis else { continue }
                 entities[index].velocityX = input.x * control.speed
-                entities[index].velocityY = input.y * control.speed
+                if input.x != 0 { entities[index].facingX = input.x }
+                if entities[index].movement == .playerAxis {
+                    entities[index].velocityY = input.y * control.speed
+                }
             }
         }
     }
@@ -200,18 +322,223 @@ struct TinyGameEngine: Sendable {
         let gravityX = program.source.world.gravityX
         let gravityY = program.source.world.gravityY
         for index in entities.indices {
+            if entities[index].collisionMode == .solid,
+               entities[index].body == .kinematic || entities[index].body == .dynamic {
+                entities[index].isGrounded = false
+            }
             switch entities[index].body {
             case .none, .static:
                 continue
             case .kinematic:
+                clampVelocity(at: index)
                 entities[index].x += entities[index].velocityX
                 entities[index].y += entities[index].velocityY
             case .dynamic:
                 entities[index].velocityX += gravityX
                 entities[index].velocityY += gravityY
+                clampVelocity(at: index)
                 entities[index].x += entities[index].velocityX
                 entities[index].y += entities[index].velocityY
             }
+        }
+    }
+
+    private mutating func clampVelocity(at index: Int) {
+        let maximumX = entities[index].maximumVelocityX
+        let maximumY = entities[index].maximumVelocityY
+        if maximumX > 0 {
+            entities[index].velocityX = min(max(entities[index].velocityX, -maximumX), maximumX)
+        }
+        if maximumY > 0 {
+            entities[index].velocityY = min(max(entities[index].velocityY, -maximumY), maximumY)
+        }
+    }
+
+    private mutating func resolvePhysicalContacts(
+        previousPositions: [String: TinyGamePoint]
+    ) {
+        let moverIDs = entities
+            .filter {
+                $0.collisionMode == .solid
+                    && ($0.body == .kinematic || $0.body == .dynamic)
+            }
+            .map(\.id)
+            .sorted()
+        let obstacleIDs = entities
+            .filter {
+                $0.body == .static
+                    && ($0.collisionMode == .solid || $0.collisionMode == .oneWayPlatform)
+            }
+            .map(\.id)
+            .sorted()
+
+        for moverID in moverIDs {
+            for obstacleID in obstacleIDs where obstacleID != moverID {
+                guard let moverIndex = entities.firstIndex(where: { $0.id == moverID }),
+                      let obstacle = entity(withID: obstacleID),
+                      let previous = previousPositions[moverID] else { continue }
+                switch obstacle.collisionMode {
+                case .oneWayPlatform:
+                    resolveOneWayContact(
+                        moverIndex: moverIndex,
+                        obstacle: obstacle,
+                        previous: previous
+                    )
+                case .solid:
+                    resolveSolidContact(
+                        moverIndex: moverIndex,
+                        obstacle: obstacle,
+                        previous: previous
+                    )
+                case .sensor:
+                    break
+                }
+            }
+        }
+    }
+
+    private mutating func resolveOneWayContact(
+        moverIndex: Int,
+        obstacle: TinyGameEntityState,
+        previous: TinyGamePoint
+    ) {
+        let mover = entities[moverIndex]
+        let platformTop = obstacle.y - obstacle.height / 2
+        let previousBottom = previous.y + mover.height / 2
+        let currentBottom = mover.y + mover.height / 2
+        guard mover.velocityY >= 0,
+              previousBottom <= platformTop,
+              currentBottom >= platformTop,
+              horizontalOverlap(mover, obstacle) else { return }
+        entities[moverIndex].y = platformTop - mover.height / 2
+        entities[moverIndex].velocityY = 0
+        entities[moverIndex].isGrounded = true
+    }
+
+    // Axis-separated resolution uses the pre-step position to avoid tunneling through thin platforms.
+    // swiftlint:disable:next function_body_length
+    private mutating func resolveSolidContact(
+        moverIndex: Int,
+        obstacle: TinyGameEntityState,
+        previous: TinyGamePoint
+    ) {
+        let mover = entities[moverIndex]
+        let obstacleLeft = obstacle.x - obstacle.width / 2
+        let obstacleRight = obstacle.x + obstacle.width / 2
+        let obstacleTop = obstacle.y - obstacle.height / 2
+        let obstacleBottom = obstacle.y + obstacle.height / 2
+        let previousLeft = previous.x - mover.width / 2
+        let previousRight = previous.x + mover.width / 2
+        let previousTop = previous.y - mover.height / 2
+        let previousBottom = previous.y + mover.height / 2
+        let currentLeft = mover.x - mover.width / 2
+        let currentRight = mover.x + mover.width / 2
+        let currentTop = mover.y - mover.height / 2
+        let currentBottom = mover.y + mover.height / 2
+
+        if mover.velocityY >= 0,
+           previousBottom <= obstacleTop,
+           currentBottom >= obstacleTop,
+           horizontalOverlap(mover, obstacle) {
+            entities[moverIndex].y = obstacleTop - mover.height / 2
+            entities[moverIndex].velocityY = 0
+            entities[moverIndex].isGrounded = true
+            return
+        }
+        if mover.velocityY <= 0,
+           previousTop >= obstacleBottom,
+           currentTop <= obstacleBottom,
+           horizontalOverlap(mover, obstacle) {
+            entities[moverIndex].y = obstacleBottom + mover.height / 2
+            entities[moverIndex].velocityY = 0
+            return
+        }
+        if mover.velocityX >= 0,
+           previousRight <= obstacleLeft,
+           currentRight >= obstacleLeft,
+           verticalOverlap(mover, obstacle) {
+            entities[moverIndex].x = obstacleLeft - mover.width / 2
+            entities[moverIndex].velocityX = 0
+            return
+        }
+        if mover.velocityX <= 0,
+           previousLeft >= obstacleRight,
+           currentLeft <= obstacleRight,
+           verticalOverlap(mover, obstacle) {
+            entities[moverIndex].x = obstacleRight + mover.width / 2
+            entities[moverIndex].velocityX = 0
+            return
+        }
+        guard intersects(mover, obstacle) else { return }
+
+        let resolutions: [(distance: Int, axis: TinyGameResolutionAxis)] = [
+            (abs(currentBottom - obstacleTop), .above),
+            (abs(obstacleBottom - currentTop), .below),
+            (abs(currentRight - obstacleLeft), .left),
+            (abs(obstacleRight - currentLeft), .right)
+        ]
+        guard let resolution = resolutions.enumerated().min(by: { first, second in
+            first.element.distance == second.element.distance
+                ? first.offset < second.offset
+                : first.element.distance < second.element.distance
+        })?.element.axis else { return }
+        switch resolution {
+        case .above:
+            entities[moverIndex].y = obstacleTop - mover.height / 2
+            entities[moverIndex].velocityY = 0
+            entities[moverIndex].isGrounded = true
+        case .below:
+            entities[moverIndex].y = obstacleBottom + mover.height / 2
+            entities[moverIndex].velocityY = 0
+        case .left:
+            entities[moverIndex].x = obstacleLeft - mover.width / 2
+            entities[moverIndex].velocityX = 0
+        case .right:
+            entities[moverIndex].x = obstacleRight + mover.width / 2
+            entities[moverIndex].velocityX = 0
+        }
+    }
+
+    private func horizontalOverlap(
+        _ first: TinyGameEntityState,
+        _ second: TinyGameEntityState
+    ) -> Bool {
+        abs(first.x - second.x) * 2 < first.width + second.width
+    }
+
+    private func verticalOverlap(
+        _ first: TinyGameEntityState,
+        _ second: TinyGameEntityState
+    ) -> Bool {
+        abs(first.y - second.y) * 2 < first.height + second.height
+    }
+
+    private mutating func refreshRestingGroundedState() {
+        let obstacles = entities.filter {
+            $0.body == .static
+                && ($0.collisionMode == .solid || $0.collisionMode == .oneWayPlatform)
+        }
+        for index in entities.indices where entities[index].collisionMode == .solid {
+            guard entities[index].body == .kinematic || entities[index].body == .dynamic else {
+                continue
+            }
+            let bottom = entities[index].y + entities[index].height / 2
+            let restsOnWorld = program.source.world.edgeBehavior == .solid
+                && bottom == program.source.world.height
+            let restsOnPlatform = obstacles.contains { obstacle in
+                bottom == obstacle.y - obstacle.height / 2
+                    && horizontalOverlap(entities[index], obstacle)
+            }
+            entities[index].isGrounded = restsOnWorld || restsOnPlatform
+        }
+    }
+
+    private mutating func ageAndExpireEntities() {
+        for index in entities.indices where entities[index].lifetimeTicks > 0 {
+            entities[index].ageTicks += 1
+        }
+        entities.removeAll { entity in
+            entity.lifetimeTicks > 0 && entity.ageTicks >= entity.lifetimeTicks
         }
     }
 
@@ -235,6 +562,11 @@ struct TinyGameEngine: Sendable {
                     entities[index].velocityX = 0
                 }
                 if entities[index].y < minimumY || entities[index].y > maximumY {
+                    if entities[index].y > maximumY,
+                       entities[index].velocityY >= 0,
+                       entities[index].collisionMode == .solid {
+                        entities[index].isGrounded = true
+                    }
                     entities[index].velocityY = 0
                 }
                 entities[index].x = min(max(entities[index].x, minimumX), maximumX)
@@ -269,8 +601,8 @@ struct TinyGameEngine: Sendable {
         }
     }
 
-    private mutating func runCollisionRules() {
-        let contacts = collisionContacts()
+    private mutating func runCollisionRules(previousPositions: [String: TinyGamePoint]) {
+        let contacts = collisionContacts(previousPositions: previousPositions)
         let currentContactKeys = Set(contacts.map(\.key))
         let beganContacts = contacts.filter { !activeContactKeys.contains($0.key) }
         activeContactKeys = currentContactKeys
@@ -313,7 +645,9 @@ struct TinyGameEngine: Sendable {
         }
     }
 
-    private func collisionContacts() -> [TinyGameContact] {
+    private func collisionContacts(
+        previousPositions: [String: TinyGamePoint]
+    ) -> [TinyGameContact] {
         let collisionRules = program.rulesByTrigger[.collision] ?? []
         guard !collisionRules.isEmpty else { return [] }
         let collisionTags = Set(collisionRules.flatMap { rule in
@@ -328,8 +662,14 @@ struct TinyGameEngine: Sendable {
             for secondIndex in (firstIndex + 1)..<candidates.count {
                 let first = candidates[firstIndex]
                 let second = candidates[secondIndex]
-                if isRelevantCollisionPair(first, second, for: collisionRules),
-                   intersects(first, second) {
+                let hasContact = intersects(first, second)
+                    || (program.source.version >= 3
+                        && sweptIntersects(
+                            first,
+                            second,
+                            previousPositions: previousPositions
+                        ))
+                if isRelevantCollisionPair(first, second, for: collisionRules), hasContact {
                     contacts.append(TinyGameContact(first: first, second: second))
                     if contacts.count == TinyGameAuditLimits.maximumContactsPerTick {
                         return contacts
@@ -356,6 +696,52 @@ struct TinyGameEngine: Sendable {
     private func intersects(_ first: TinyGameEntityState, _ second: TinyGameEntityState) -> Bool {
         abs(first.x - second.x) * 2 < first.width + second.width
             && abs(first.y - second.y) * 2 < first.height + second.height
+    }
+
+    private func sweptIntersects(
+        _ first: TinyGameEntityState,
+        _ second: TinyGameEntityState,
+        previousPositions: [String: TinyGamePoint]
+    ) -> Bool {
+        guard let firstStart = previousPositions[first.id],
+              let secondStart = previousPositions[second.id] else { return false }
+        let startX = Double(firstStart.x - secondStart.x)
+        let startY = Double(firstStart.y - secondStart.y)
+        let relativeDeltaX = Double(
+            (first.x - firstStart.x) - (second.x - secondStart.x)
+        )
+        let relativeDeltaY = Double(
+            (first.y - firstStart.y) - (second.y - secondStart.y)
+        )
+        let halfWidth = Double(first.width + second.width) / 2
+        let halfHeight = Double(first.height + second.height) / 2
+        guard let horizontal = sweptInterval(
+            start: startX,
+            delta: relativeDeltaX,
+            halfExtent: halfWidth
+        ), let vertical = sweptInterval(
+            start: startY,
+            delta: relativeDeltaY,
+            halfExtent: halfHeight
+        ) else { return false }
+        let entry = max(max(horizontal.lowerBound, vertical.lowerBound), 0)
+        let exit = min(min(horizontal.upperBound, vertical.upperBound), 1)
+        return entry <= exit
+    }
+
+    private func sweptInterval(
+        start: Double,
+        delta: Double,
+        halfExtent: Double
+    ) -> ClosedRange<Double>? {
+        if delta == 0 {
+            return abs(start) <= halfExtent
+                ? -Double.infinity...Double.infinity
+                : nil
+        }
+        let first = (-halfExtent - start) / delta
+        let second = (halfExtent - start) / delta
+        return min(first, second)...max(first, second)
     }
 
     private func conditionsPass(_ conditions: [TinyGameConditionSpec]) -> Bool {
@@ -458,6 +844,11 @@ struct TinyGameEngine: Sendable {
         entities.filter { $0.tags.contains(tag) }.min(by: { $0.id < $1.id })
     }
 
+    private func firstEntityIndex(withTag tag: String) -> Int? {
+        guard let identifier = firstEntity(withTag: tag)?.id else { return nil }
+        return entities.firstIndex(where: { $0.id == identifier })
+    }
+
     private func entity(withID identifier: String) -> TinyGameEntityState? {
         entities.first(where: { $0.id == identifier })
     }
@@ -492,7 +883,14 @@ struct TinyGameEngine: Sendable {
             velocityX: template.velocityX,
             velocityY: template.velocityY,
             speed: template.speed,
-            tags: Set(template.tags + [template.role.rawValue])
+            tags: Set(template.tags + [template.role.rawValue]),
+            collisionMode: template.physics?.collisionMode ?? .sensor,
+            maximumVelocityX: template.physics?.maximumVelocityX ?? 0,
+            maximumVelocityY: template.physics?.maximumVelocityY ?? 0,
+            lifetimeTicks: template.physics?.lifetimeTicks ?? 0,
+            ageTicks: 0,
+            facingX: template.velocityX < 0 ? -1 : 1,
+            isGrounded: false
         )
     }
     // swiftlint:enable identifier_name
@@ -507,6 +905,21 @@ private struct TinyGameInputVector: Sendable {
     static let zero = TinyGameInputVector(x: 0, y: 0)
 }
 // swiftlint:enable identifier_name
+
+// Coordinate fields mirror the declarative game coordinate system.
+// swiftlint:disable identifier_name
+private struct TinyGamePoint: Sendable {
+    var x: Int
+    var y: Int
+}
+// swiftlint:enable identifier_name
+
+private enum TinyGameResolutionAxis: Sendable {
+    case above
+    case below
+    case left
+    case right
+}
 
 private struct TinyGameRuleEvent: Sendable {
     var subjectID: String?

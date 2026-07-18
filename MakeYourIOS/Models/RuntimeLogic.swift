@@ -19,6 +19,9 @@ enum RuntimeValueType: String, Codable, CaseIterable, Hashable, Sendable {
     case text
     case number
     case boolean
+    case date
+    case list
+    case object
 }
 
 enum RuntimePersistence: String, Codable, CaseIterable, Hashable, Sendable {
@@ -29,11 +32,24 @@ enum RuntimePersistence: String, Codable, CaseIterable, Hashable, Sendable {
 struct RuntimeEvent: Codable, Hashable, Sendable {
     var trigger: RuntimeEventTrigger
     var steps: [RuntimeStep]
+    var intervalSeconds: Int?
+
+    init(
+        trigger: RuntimeEventTrigger,
+        steps: [RuntimeStep],
+        intervalSeconds: Int? = nil
+    ) {
+        self.trigger = trigger
+        self.steps = steps
+        self.intervalSeconds = intervalSeconds
+    }
 }
 
 enum RuntimeEventTrigger: String, Codable, CaseIterable, Hashable, Sendable {
     case tap
     case valueChanged
+    case appear
+    case timer
 }
 
 struct RuntimeStep: Codable, Hashable, Sendable {
@@ -71,6 +87,17 @@ enum RuntimeExpressionOperation: String, Codable, CaseIterable, Hashable, Sendab
     case min
     case max
     case concatenate
+    case listAppend
+    case listRemove
+    case listCount
+    case listContains
+    case listJoin
+    case objectSet
+    case objectRemove
+    case objectGet
+    case objectCount
+    case dateAddDays
+    case dateDaysBetween
 }
 
 struct RuntimeOperand: Codable, Hashable, Sendable {
@@ -81,6 +108,7 @@ struct RuntimeOperand: Codable, Hashable, Sendable {
 enum RuntimeOperandSource: String, Codable, CaseIterable, Hashable, Sendable {
     case literal
     case state
+    case currentDate
 }
 
 struct RuntimeCondition: Codable, Hashable, Sendable {
@@ -113,4 +141,7 @@ enum RuntimeControlKind: String, Codable, CaseIterable, Hashable, Sendable {
     case slider
     case stepper
     case progress
+    case datePicker
+    case timePicker
+    case dateTimePicker
 }

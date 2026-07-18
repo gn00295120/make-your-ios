@@ -7,8 +7,9 @@ extension SampleDocuments {
         symbol: "qrcode.viewfinder",
         tint: .amber,
         capabilities: [
-            .cameraCapture, .clipboardWrite, .codeScanner, .contactPicker, .currentLocation,
-            .documentPicker, .haptics, .localStorage, .pedometer, .shareSheet
+            .calendarWrite, .cameraCapture, .clipboardWrite, .codeScanner, .contactPicker,
+            .currentLocation, .documentExport, .documentPicker, .haptics, .localStorage,
+            .mapSearch, .pedometer, .shareSheet
         ],
         theme: .preset(.native),
         pages: [
@@ -16,6 +17,9 @@ extension SampleDocuments {
                 id: "home",
                 title: "Device Lab",
                 nodes: [
+                    mapNode,
+                    calendarEventNode,
+                    documentExportNode,
                     deviceNode(
                         id: "receipt-photo",
                         kind: .cameraPhoto,
@@ -112,6 +116,74 @@ extension SampleDocuments {
                 presentation: PagePresentation(layout: .flow, showsNavigationTitle: true)
             )
         ]
+    )
+
+    private static let mapNode = ComponentNode(
+        id: "map-search",
+        kind: .map,
+        title: "Map and directions",
+        subtitle: "Search Apple Maps or open a reviewed route handoff.",
+        symbol: "map.fill",
+        presentation: ComponentPresentation(
+            surface: .plain,
+            span: .full,
+            alignment: .leading,
+            emphasis: .regular,
+            variant: .automatic
+        ),
+        map: RuntimeMapSpec(
+            mode: .coordinate,
+            query: "Taipei 101",
+            latitude: 25.033,
+            longitude: 121.5654,
+            spanMeters: 3_000,
+            allowsSearch: true,
+            allowsDirections: true
+        )
+    )
+
+    private static let calendarEventNode = ComponentNode(
+        id: "calendar-event",
+        kind: .calendarEvent,
+        title: "Calendar write-only",
+        subtitle: "Review one event before granting add-only access.",
+        symbol: "calendar.badge.plus",
+        presentation: ComponentPresentation(
+            surface: .outlined,
+            span: .full,
+            alignment: .leading,
+            emphasis: .regular,
+            variant: .automatic
+        ),
+        calendarEvent: RuntimeCalendarEventSpec(
+            eventTitle: "Review my tiny app",
+            notes: "Created after an explicit review in MakeYour.",
+            location: "",
+            startOffsetMinutes: 60,
+            durationMinutes: 30,
+            allowsEditing: true
+        )
+    )
+
+    private static let documentExportNode = ComponentNode(
+        id: "document-export",
+        kind: .documentExport,
+        title: "Bounded export",
+        subtitle: "Preview this text, then choose a destination in Apple's save panel.",
+        symbol: "square.and.arrow.up.on.square",
+        presentation: ComponentPresentation(
+            surface: .outlined,
+            span: .full,
+            alignment: .leading,
+            emphasis: .regular,
+            variant: .automatic
+        ),
+        documentExport: RuntimeDocumentExportSpec(
+            fileName: "tiny-app-notes.txt",
+            format: .plainText,
+            contentTemplate: "A private tiny app made in MakeYour.",
+            buttonLabel: "Review and export"
+        )
     )
 
     // Keeping the fixture labels explicit makes every generated device affordance reviewable here.

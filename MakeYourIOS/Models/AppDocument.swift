@@ -112,6 +112,9 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
     var ledger: LedgerSpec?
     var game: GameSpec?
     var deviceInput: DeviceInputSpec?
+    var map: RuntimeMapSpec?
+    var calendarEvent: RuntimeCalendarEventSpec?
+    var documentExport: RuntimeDocumentExportSpec?
 
     init(
         id: String = UUID().uuidString,
@@ -136,7 +139,10 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         marketWatch: MarketWatchSpec? = nil,
         ledger: LedgerSpec? = nil,
         game: GameSpec? = nil,
-        deviceInput: DeviceInputSpec? = nil
+        deviceInput: DeviceInputSpec? = nil,
+        map: RuntimeMapSpec? = nil,
+        calendarEvent: RuntimeCalendarEventSpec? = nil,
+        documentExport: RuntimeDocumentExportSpec? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -161,6 +167,9 @@ struct ComponentNode: Codable, Hashable, Identifiable, Sendable {
         self.ledger = ledger
         self.game = game
         self.deviceInput = deviceInput
+        self.map = map
+        self.calendarEvent = calendarEvent
+        self.documentExport = documentExport
     }
 
     var resolvedPresentation: ComponentPresentation {
@@ -191,6 +200,10 @@ enum ComponentKind: String, Codable, CaseIterable, Hashable, Sendable {
     case game
     case deviceInput
     case control
+    case collectionView
+    case map
+    case calendarEvent
+    case documentExport
     case divider
 }
 

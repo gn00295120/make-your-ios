@@ -73,6 +73,34 @@ struct RuntimeControlNodeView: View {
         )
     }
 
+    private var resolvedDate: Date {
+        let stored = session.binding(for: node.binding, fallback: node.value)
+        return RuntimeValueCodec.date(from: stored) ?? .now
+    }
+
+    private var dateBinding: Binding<Date> {
+        Binding(
+            get: { resolvedDate },
+            set: { value in
+                session.set(RuntimeValueCodec.encodedDate(value), for: node.binding)
+                onValueChanged()
+            }
+        )
+    }
+
+    private var formattedDate: String {
+        switch spec.kind {
+        case .datePicker:
+            resolvedDate.formatted(date: .abbreviated, time: .omitted)
+        case .timePicker:
+            resolvedDate.formatted(date: .omitted, time: .shortened)
+        case .dateTimePicker:
+            resolvedDate.formatted(date: .abbreviated, time: .shortened)
+        default:
+            ""
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             switch spec.kind {
@@ -112,13 +140,34 @@ struct RuntimeControlNodeView: View {
                         .foregroundStyle(design.secondaryForeground)
                 }
                 .frame(minHeight: 44)
+            case .datePicker:
+                DatePicker(
+                    selection: dateBinding,
+                    displayedComponents: .date,
+                    label: { controlLabel }
+                )
+                .frame(minHeight: 44)
+            case .timePicker:
+                DatePicker(
+                    selection: dateBinding,
+                    displayedComponents: .hourAndMinute,
+                    label: { controlLabel }
+                )
+                .frame(minHeight: 44)
+            case .dateTimePicker:
+                DatePicker(
+                    selection: dateBinding,
+                    displayedComponents: [.date, .hourAndMinute],
+                    label: { controlLabel }
+                )
+                .frame(minHeight: 44)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .tint(design.accent)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(resolvedTitle)
-        .accessibilityValue(formattedValue)
+        .accessibilityValue(accessibilityValue)
         .accessibilityIdentifier("runtime.node.\(node.id)")
     }
 
@@ -136,6 +185,13 @@ struct RuntimeControlNodeView: View {
 
     private var normalizedProgress: Double {
         (resolvedValue - minimum) / (maximum - minimum)
+    }
+
+    private var accessibilityValue: String {
+        switch spec.kind {
+        case .datePicker, .timePicker, .dateTimePicker: formattedDate
+        default: formattedValue
+        }
     }
 
     private func storageString(_ value: Double) -> String {

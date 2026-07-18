@@ -185,17 +185,28 @@ struct TinyGameRuntimeView: View {
             }
             .disabled(engine.phase != .playing)
         case .actionButton:
-            Button {
-                engine.activateControl(control.id)
-                playFeedback()
-            } label: {
-                Label(control.label, systemImage: control.symbol)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, minHeight: 48)
+            let availability = engine.controlAvailability(control.id)
+            VStack(spacing: 5) {
+                Button {
+                    engine.activateControl(control.id)
+                    playFeedback()
+                } label: {
+                    Label(control.label, systemImage: control.symbol)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!availability.isEnabled)
+                .accessibilityValue(controlAvailabilityLabel(availability))
+                .accessibilityHint(controlAvailabilityHint(availability))
+                .accessibilityIdentifier("tiny-game.control.\(control.id).action")
+
+                Text(controlAvailabilityLabel(availability))
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(availability.isEnabled ? .secondary : .tertiary)
+                    .accessibilityLabel("\(control.label) status")
+                    .accessibilityIdentifier("tiny-game.control.\(control.id).status")
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(engine.phase != .playing)
-            .accessibilityIdentifier("tiny-game.control.\(control.id).action")
         }
     }
     // swiftlint:enable function_body_length
@@ -302,6 +313,35 @@ struct TinyGameRuntimeView: View {
         case (0, 1): "down"
         default: "stop"
         }
+    }
+
+    private func controlAvailabilityLabel(
+        _ availability: TinyGameControlAvailability
+    ) -> String {
+        switch availability.reason {
+        case .ready:
+            "Ready"
+        case .gameNotPlaying:
+            engine.phase == .paused ? "Paused" : "Start the game"
+        case .cooldown:
+            "Ready in \(availability.cooldownTicksRemaining) ticks"
+        case .airborne:
+            "Land before jumping again"
+        case .maximumActive:
+            "Projectile limit reached"
+        case .entityBudget:
+            "Entity limit reached"
+        case .missingTarget:
+            "Target unavailable"
+        }
+    }
+
+    private func controlAvailabilityHint(
+        _ availability: TinyGameControlAvailability
+    ) -> String {
+        availability.isEnabled
+            ? "Activates immediately"
+            : controlAvailabilityLabel(availability)
     }
 
     private var boardAccessibilityValue: String {

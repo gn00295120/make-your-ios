@@ -23,8 +23,9 @@ final class ExpandedAppDocumentValidatorTests: XCTestCase {
         XCTAssertEqual(
             AppCapabilityResolver.requiredCapabilities(for: SampleDocuments.captureKit.pages),
             [
-                .cameraCapture, .clipboardWrite, .codeScanner, .contactPicker, .currentLocation,
-                .documentPicker, .haptics, .localStorage, .pedometer, .shareSheet
+                .calendarWrite, .cameraCapture, .clipboardWrite, .codeScanner, .contactPicker,
+                .currentLocation, .documentExport, .documentPicker, .haptics, .localStorage,
+                .mapSearch, .pedometer, .shareSheet
             ]
         )
         XCTAssertFalse(
@@ -125,7 +126,14 @@ final class ExpandedAppDocumentValidatorTests: XCTestCase {
 
     func testDuplicateStatefulBindingsAreRejected() {
         var document = SampleDocuments.captureKit
-        document.pages[0].nodes[1].binding = document.pages[0].nodes[0].binding
+        let statefulIndices = document.pages[0].nodes.indices.filter {
+            document.pages[0].nodes[$0].kind == .deviceInput
+        }
+        guard statefulIndices.count >= 2 else {
+            return XCTFail("Device Lab needs two stateful fixtures for duplicate-binding validation.")
+        }
+        document.pages[0].nodes[statefulIndices[1]].binding =
+            document.pages[0].nodes[statefulIndices[0]].binding
 
         XCTAssertThrowsError(try AppDocumentValidator().validate(document)) { error in
             XCTAssertEqual(error as? AppDocumentValidationError, .duplicateBinding)

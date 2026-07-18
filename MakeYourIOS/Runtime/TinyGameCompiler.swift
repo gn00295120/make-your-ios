@@ -31,7 +31,7 @@ struct TinyGameCompiledProgram: Sendable {
 // swiftlint:disable:next type_body_length
 struct TinyGameCompiler: Sendable {
     func compile(_ program: TinyGameProgram) throws -> TinyGameCompiledProgram {
-        guard program.version == TinyGameProgram.currentVersion else {
+        guard TinyGameProgram.supportedVersions.contains(program.version) else {
             throw TinyGameCompilerError.unsupportedVersion(program.version)
         }
         guard (0...999_999).contains(program.seed) else {
@@ -41,6 +41,7 @@ struct TinyGameCompiler: Sendable {
         try validateCounts(program)
         try validateWorld(program.world)
         try validateUniqueIDs(program)
+        try validateVersionFeatures(program)
 
         let variableSpecs = Dictionary(uniqueKeysWithValues: program.variables.map { ($0.id, $0) })
         let templates = Dictionary(uniqueKeysWithValues: program.templates.map { ($0.id, $0) })
@@ -52,11 +53,13 @@ struct TinyGameCompiler: Sendable {
             template.tags + [template.role.rawValue]
         })
         try validateSpawns(program.spawns, templates: templates, world: program.world)
+        try validateSolidTopology(program)
         try validateControls(
             program.controls,
             templates: templates,
             spawns: program.spawns,
-            knownTags: knownTags
+            knownTags: knownTags,
+            world: program.world
         )
         let reachableTags = reachableEntityTags(in: program, templates: templates)
         try validateRules(
@@ -77,6 +80,30 @@ struct TinyGameCompiler: Sendable {
             knownTags: knownTags,
             rulesByTrigger: rulesByTrigger
         )
+    }
+
+    private func validateVersionFeatures(_ program: TinyGameProgram) throws {
+        if program.version == 2 {
+            let usesV3Template = program.templates.contains { template in
+                template.physics != nil || template.movement == .platformerAxis
+            }
+            let usesV3Control = program.controls.contains { $0.action != nil }
+            guard !usesV3Template, !usesV3Control else {
+                throw TinyGameCompilerError.invalidValue("version 2 features")
+            }
+            return
+        }
+        for template in program.templates {
+            if template.body == .none {
+                guard template.physics == nil else {
+                    throw TinyGameCompilerError.invalidValue("physics in \(template.id)")
+                }
+            } else {
+                guard template.physics != nil else {
+                    throw TinyGameCompilerError.invalidValue("physics in \(template.id)")
+                }
+            }
+        }
     }
 
     private func validateCounts(_ program: TinyGameProgram) throws {
@@ -182,7 +209,7 @@ struct TinyGameCompiler: Sendable {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func validateTemplates(
         _ templates: [TinyGameEntityTemplate],
         world: TinyGameWorldSpec
@@ -215,6 +242,14 @@ struct TinyGameCompiler: Sendable {
                       template.speed > 0 else {
                     throw TinyGameCompilerError.invalidValue("player movement in \(template.id)")
                 }
+            case .platformerAxis:
+                guard template.body == .dynamic,
+                      template.speed > 0,
+                      template.physics?.collisionMode == .solid else {
+                    throw TinyGameCompilerError.invalidValue(
+                        "platformer movement in \(template.id)"
+                    )
+                }
             case .constant:
                 guard template.body == .kinematic || template.body == .dynamic,
                       template.velocityX != 0 || template.velocityY != 0 else {
@@ -228,7 +263,66 @@ struct TinyGameCompiler: Sendable {
                     throw TinyGameCompilerError.invalidValue("immovable template \(template.id)")
                 }
             }
+            try validatePhysics(template)
         }
+    }
+
+    // swiftlint:disable:next cyclomatic_complexity
+    private func validatePhysics(_ template: TinyGameEntityTemplate) throws {
+        guard let physics = template.physics else { return }
+        guard (0...128).contains(physics.maximumVelocityX),
+              (0...128).contains(physics.maximumVelocityY),
+              (0...3_600).contains(physics.lifetimeTicks) else {
+            throw TinyGameCompilerError.invalidValue("physics in \(template.id)")
+        }
+        switch template.body {
+        case .kinematic, .dynamic:
+            guard physics.maximumVelocityX > 0,
+                  physics.maximumVelocityY > 0 else {
+                throw TinyGameCompilerError.invalidValue("physics in \(template.id)")
+            }
+        case .none, .static:
+            guard physics.maximumVelocityX == 0,
+                  physics.maximumVelocityY == 0 else {
+                throw TinyGameCompilerError.invalidValue("physics in \(template.id)")
+            }
+        }
+        switch physics.collisionMode {
+        case .sensor:
+            break
+        case .solid:
+            let isStaticObstacle = template.body == .static
+                && template.movement == .none
+            let isPlatformer = template.body == .dynamic
+                && template.movement == .platformerAxis
+                && template.role == .player
+            guard isStaticObstacle || isPlatformer,
+                  physics.lifetimeTicks == 0 else {
+                throw TinyGameCompilerError.invalidValue("solid physics in \(template.id)")
+            }
+        case .oneWayPlatform:
+            guard template.body == .static,
+                  template.movement == .none,
+                  physics.lifetimeTicks == 0 else {
+                throw TinyGameCompilerError.invalidValue("one-way physics in \(template.id)")
+            }
+        }
+    }
+
+    private func validateSolidTopology(_ program: TinyGameProgram) throws {
+        let movableSolidTemplateIDs = Set(program.templates.compactMap { template in
+            template.physics?.collisionMode == .solid && template.body == .dynamic
+                ? template.id
+                : nil
+        })
+        let movableSolidSpawns = program.spawns.filter {
+            movableSolidTemplateIDs.contains($0.templateID)
+        }
+        guard movableSolidTemplateIDs.count <= 1,
+              movableSolidSpawns.count <= 1 else {
+            throw TinyGameCompilerError.invalidValue("movable solid topology")
+        }
+
     }
 
     private func validateSpawns(
@@ -249,11 +343,13 @@ struct TinyGameCompiler: Sendable {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func validateControls(
         _ controls: [TinyGameControlSpec],
         templates: [String: TinyGameEntityTemplate],
         spawns: [TinyGameEntitySpawn],
-        knownTags: Set<String>
+        knownTags: Set<String>,
+        world: TinyGameWorldSpec
     ) throws {
         let initiallySpawnedTemplateIDs = Set(spawns.map(\.templateID))
         for control in controls {
@@ -268,10 +364,13 @@ struct TinyGameCompiler: Sendable {
                 let controllableTemplates = templates.values.filter { template in
                     (template.tags.contains(control.targetTag)
                         || template.role.rawValue == control.targetTag)
-                        && template.movement == .playerAxis
+                        && (template.movement == .playerAxis
+                            || (control.kind == .horizontal
+                                && template.movement == .platformerAxis))
                 }
                 guard (1...128).contains(control.speed),
                       control.spawnTemplateID.isEmpty,
+                      control.action == nil,
                       controllableTemplates.contains(where: {
                           initiallySpawnedTemplateIDs.contains($0.id)
                       }) else {
@@ -283,17 +382,80 @@ struct TinyGameCompiler: Sendable {
                     return template.tags.contains(control.targetTag)
                         || template.role.rawValue == control.targetTag
                 }
-                guard control.speed == 0,
-                      templates[control.spawnTemplateID] != nil else {
-                    throw TinyGameCompilerError.unresolvedReference(
-                        "action template \(control.spawnTemplateID)"
-                    )
-                }
                 guard hasInitialAnchor else {
                     throw TinyGameCompilerError.unresolvedReference(
                         "action target \(control.targetTag)"
                     )
                 }
+                guard control.speed == 0 else {
+                    throw TinyGameCompilerError.invalidValue("control \(control.id)")
+                }
+                if let action = control.action {
+                    try validateAction(
+                        action,
+                        for: control,
+                        templates: templates,
+                        spawns: spawns,
+                        world: world
+                    )
+                } else {
+                    guard let template = templates[control.spawnTemplateID] else {
+                        throw TinyGameCompilerError.unresolvedReference(
+                            "action template \(control.spawnTemplateID)"
+                        )
+                    }
+                    guard template.physics?.collisionMode ?? .sensor == .sensor else {
+                        throw TinyGameCompilerError.invalidValue(
+                            "runtime solid spawn \(template.id)"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private func validateAction(
+        _ action: TinyGameControlActionSpec,
+        for control: TinyGameControlSpec,
+        templates: [String: TinyGameEntityTemplate],
+        spawns: [TinyGameEntitySpawn],
+        world: TinyGameWorldSpec
+    ) throws {
+        guard (1...600).contains(action.cooldownTicks) else {
+            throw TinyGameCompilerError.invalidValue("action \(control.id)")
+        }
+        switch action.kind {
+        case .jump:
+            let validAnchor = spawns.contains { spawn in
+                guard let template = templates[spawn.templateID] else { return false }
+                let matchesTag = template.tags.contains(control.targetTag)
+                    || template.role.rawValue == control.targetTag
+                return matchesTag
+                    && template.movement == .platformerAxis
+                    && template.physics?.collisionMode == .solid
+            }
+            guard validAnchor,
+                  (1...128).contains(action.impulse),
+                  action.maximumActive == 0,
+                  action.offsetX == 0,
+                  action.offsetY == 0,
+                  control.spawnTemplateID.isEmpty else {
+                throw TinyGameCompilerError.invalidValue("jump action \(control.id)")
+            }
+        case .projectile:
+            guard let template = templates[control.spawnTemplateID] else {
+                throw TinyGameCompilerError.unresolvedReference(
+                    "action template \(control.spawnTemplateID)"
+                )
+            }
+            guard template.role == .projectile,
+                  template.physics?.collisionMode == .sensor,
+                  (template.physics?.lifetimeTicks ?? 0) > 0,
+                  action.impulse == 0,
+                  (1...32).contains(action.maximumActive),
+                  (-world.width...world.width).contains(action.offsetX),
+                  (-world.height...world.height).contains(action.offsetY) else {
+                throw TinyGameCompilerError.invalidValue("projectile action \(control.id)")
             }
         }
     }
@@ -388,8 +550,11 @@ struct TinyGameCompiler: Sendable {
             }
         case .spawn:
             try validateEntityTarget(effect, in: rule, reachableTags: reachableTags)
-            guard templates[effect.templateID] != nil else {
+            guard let template = templates[effect.templateID] else {
                 throw TinyGameCompilerError.unresolvedReference("template \(effect.templateID)")
+            }
+            guard template.physics?.collisionMode ?? .sensor == .sensor else {
+                throw TinyGameCompilerError.invalidValue("runtime solid spawn \(template.id)")
             }
             guard (-world.width...world.width).contains(effect.x),
                   (-world.height...world.height).contains(effect.y),

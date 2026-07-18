@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftlint:disable:next type_body_length
 struct OpenAIAppGenerationClient: Sendable {
     private let endpoint = URL(string: "https://api.openai.com/v1/responses")!
     private let session: URLSession
@@ -117,8 +118,9 @@ struct OpenAIAppGenerationClient: Sendable {
     Never emit code, scripts, URLs, secrets, custom APIs, or unsupported SF Symbols.
     Preserve stable page, node, item, and binding IDs when editing existing behavior. Use concise kebab-case
     IDs for new elements. For each specialized node, fill only its matching configuration object and return
-    null for control, image, collection, liveData, newsFeed, marketWatch, ledger, game, and deviceInput when
-    unrelated. Return an empty valueBinding and events array when a node has no dynamic behavior.
+    null for control, image, collection, liveData, newsFeed, marketWatch, ledger, game, deviceInput, map,
+    calendarEvent, and documentExport when unrelated. Return an empty valueBinding and events array when a
+    node has no dynamic behavior.
     List only capabilities actually used; the host independently derives and enforces the exact capability set.
     Keep the experience focused: one to three pages and no more than twelve components per page.
     Use concise, friendly interface copy and semantic iOS patterns.
@@ -131,7 +133,8 @@ struct OpenAIAppGenerationClient: Sendable {
     When the request is design-only, preserve all pages, component behavior, capabilities, state bindings,
     actions, data configuration, and IDs. Change only theme, page presentation, node presentation, and
     image presentation metadata. Never remove working behavior merely to achieve a visual style.
-    Use half-width spans only for text, metric, infoBanner, image, control, and button nodes.
+    Use half-width spans only for text, metric, infoBanner, image, control, collectionView, calendarEvent,
+    documentExport, and button nodes.
     Use image nodes, or an optional hero image, as private media slots. Choose a semantic media role,
     focal point, mask, and overlay. Set a meaningful kebab-case binding and alt text. A theme background
     may reference a local backgroundAssetBinding; use an empty string when no selectable background is
@@ -142,22 +145,32 @@ struct OpenAIAppGenerationClient: Sendable {
     AI components may only transform text that the user explicitly reviews and sends. Give the AI node a
     binding when its result should become shared state for another component or a valueChanged event.
     Use logic for safe cross-component state and calculations. Declare at most 64 state entries with unique
-    kebab-case keys, an explicit text, number, or boolean type, session or project persistence, and a valid
-    initialValue. Number initial values must be finite numeric strings; boolean values are true or false.
+    kebab-case keys, an explicit text, number, boolean, date, list, or object type, session or project
+    persistence, and a valid initialValue. Number initial values must be finite numeric strings; boolean values
+    are true or false; dates are ISO-8601 timestamps; lists are bounded JSON arrays of strings; objects are
+    bounded flat JSON dictionaries with string keys and values. Lists and objects do not contain nested records.
     Bind textInput, numberInput, picker, and control nodes through binding. Use valueBinding when a text,
     metric, infoBanner, or button should display a state value. Several output views and controls may share a key.
-    Use control for generated toggle, slider, stepper, and progress primitives. A toggle binds boolean state;
-    slider, stepper, and progress bind number state. Choose finite minimum and maximum values with minimum less
-    than maximum, a positive step no larger than that range, and an optional short unit. For a toggle, use
-    minimum 0, maximum 1, and step 1.
-    Events are bounded declarative behavior, never code. Use tap for buttons and valueChanged for input or
-    control bindings. A node may have at most four events and an event at most eight ordered steps. Set the
-    legacy action to none when events implement the behavior so it does not run twice.
+    Use control for generated toggle, slider, stepper, progress, datePicker, timePicker, and dateTimePicker
+    primitives. A toggle binds boolean state; slider, stepper, and progress bind number state; date controls
+    bind date state. Choose finite minimum and maximum values with minimum less than maximum, a positive step no
+    larger than that range, and an optional short unit. For a toggle or date control, use minimum 0, maximum 1,
+    and step 1. Use collectionView to render a list or object state; use recordCollection instead when the user
+    needs rich editable records with title, note, amount, date, completion, or reminders.
+    Events are bounded declarative behavior, never code. Use tap for buttons, valueChanged for input or control
+    bindings, appear for a one-time visible-page action, and timer only for foreground automation. Timer uses an
+    intervalSeconds from 1 through 3600; every other trigger uses zero. Use each trigger at most once per node.
+    Timers pause outside the active foreground and never catch up in the background. A node may have at most
+    four events and an event at most eight ordered steps. Set the legacy action to none when events implement
+    the behavior so it does not run twice.
     A setState step targets a declared state key and evaluates its expression. A navigate step targets a page
     ID. A showMessage step uses its expression as the message. A scheduleNotification step puts delay minutes
     in target and the reviewed message in its expression. A playHaptic step requests one host-defined haptic.
-    Expressions are flat and contain at most eight literal or state operands. Use literal or copy for direct
-    values; add, subtract, multiply, divide, min, and max only with number operands; use concatenate for text.
+    Expressions are flat and contain at most eight literal, state, or currentDate operands. currentDate ignores
+    its value field. Use literal or copy for direct values; add, subtract, multiply, divide, min, and max only
+    with number operands; use concatenate for text. Use listAppend/listRemove/listCount/listContains/listJoin
+    only with a list state. Use objectSet/objectRemove/objectGet/objectCount only with a flat object state. Use
+    dateAddDays with a date and integer day count, and dateDaysBetween with two dates.
     Never divide by a literal zero. Optional conditions compare two operands with equals, notEquals, less,
     lessOrEqual, greater, greaterOrEqual, isEmpty, or isNotEmpty. Ordered comparisons require numbers.
     For currencyConverter, provide currency codes in options and item values as numeric rates relative to USD.
@@ -182,18 +195,28 @@ struct OpenAIAppGenerationClient: Sendable {
     useful categories, period, optional monthly budget, and realistic typed seed entries with positive amounts
     and YYYY-MM-DD dates. The host computes income, spending, balance, budget progress, and category totals.
     Use game for a complete playable experience. Snake and platformer are polished presets and require a null
-    program. For an original game, set kind to custom and provide Tiny Game Program version 2. The bounded
+    program. For an original game, set kind to custom and provide Tiny Game Program version 3. The bounded
     program contains a 240...4096 point world, integer variables, visual entity templates, initial spawns,
-    touch controls, contact-begin/timer/leave-world rules, ordered effects, and HUD items. V2 is for top-down
-    collectors, dodgers, and simple shooters; use the platformer preset when solid platforms or jumping are
-    required. Keep to 32 variables,
+    touch controls, contact-begin/timer/leave-world rules, ordered effects, and HUD items. V3 supports top-down
+    games plus original platform games with deterministic solid and one-way platforms, grounded jumps, and
+    facing projectiles. Keep to 32 variables,
     24 templates, 128 initial entities, 6 controls, 64 rules, 4 conditions and 6 effects per rule, and 8 HUD
     items, at most 4 spawn effects and 256 total effects in any one tick. Use only rectangle, circle, or
     allowed SF Symbol visuals; no external assets. Give every object a
-    unique kebab-case ID. Use playerAxis only on kinematic/dynamic entities with positive speed, and constant
-    movement only with a non-zero velocity. Every template fits inside the world and every initial spawn center
-    keeps its full entity in bounds. Movement controls target an initially spawned playerAxis entity; action
-    controls target an initially spawned anchor and spawn a known template. Collision tags and all variable or
+    unique kebab-case ID. Use playerAxis only on kinematic/dynamic entities with positive speed, platformerAxis
+    only on a dynamic solid entity, and constant movement only with a non-zero velocity. Every template fits
+    inside the world and every initial spawn center keeps its full entity in bounds. In V3 every body except
+    none requires an explicit physics block; body none requires null physics. Set collisionMode to sensor,
+    solid, or oneWayPlatform, maximum velocities from 0 to 128, and lifetimeTicks; static physics uses zero
+    velocity limits, movable physics uses positive limits, and solid/one-way entities have zero lifetime.
+    The bounded platform collision slice supports one initially spawned dynamic solid player against static
+    solid and one-way platforms; do not create dynamic-solid enemies or multiple solid players. Movement
+    controls target an initially spawned
+    playerAxis entity, or use horizontal for platformerAxis. A V3 jump action targets a grounded platformer,
+    uses a positive impulse and cooldown, and has empty spawnTemplateID. A projectile action targets an initial
+    anchor, spawns a sensor projectile with a positive lifetime, mirrors horizontal velocity and offsetX to the
+    anchor's facing, and declares cooldownTicks and maximumActive. Runtime spawning of solid or one-way
+    templates is forbidden. Collision tags and all variable or
     template references must exist. Every schema field is required: use empty strings, zero, target subject,
     and feedback none for fields unused by that trigger or effect. Start uses empty tags/everyTicks zero; timer
     uses only everyTicks; collision uses both tags; leaveWorld uses only subjectTag. Spawn x/y are offsets from
@@ -208,6 +231,18 @@ struct OpenAIAppGenerationClient: Sendable {
     payload in node.value. The host owns permission prompts, hardware checks, native pickers, result limits,
     and local persistence. Declare only the matching capability; never imply background access, silent sharing,
     full address-book browsing, arbitrary file access, or continuous location/motion tracking.
+    Use map for a native MapKit location card. coordinate mode uses validated latitude/longitude; placeSearch
+    mode requires a focused Apple Maps query. allowsSearch exposes visible user-entered search and
+    allowsDirections hands the selected result to Apple Maps after a tap. It does not read the user's current
+    location or contact arbitrary map providers. Declare maps.search.
+    Use calendarEvent to prepare one event from eventTitle, notes, location, a start offset in minutes, and a
+    5...1440 minute duration. Templates such as {{task-name}} may reference simple state. The host always shows a
+    review page and requests write-only EventKit access at use time; it never lists, edits, or deletes existing
+    events. Declare calendar.createEvent.
+    Use documentExport for bounded plainText, json, or csv content. contentTemplate may reference state; a
+    direct list or object placeholder emits its bounded canonical JSON into this reviewed export only.
+    The host displays a preview, validates JSON, normalizes the file name and extension, and opens Apple's save
+    panel only after a tap. It cannot silently choose or overwrite a destination. Declare files.export.
     For taskList and checklist, seed realistic example items that the user can replace. Their specialized
     internal records are not exposed as logic state, so do not claim that a metric derives from their contents.
     For a standalone legacy scheduleNotification button without events, action.target is delay minutes and

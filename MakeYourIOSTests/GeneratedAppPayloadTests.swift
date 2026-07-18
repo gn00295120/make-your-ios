@@ -224,6 +224,58 @@ final class GeneratedAppPayloadTests: XCTestCase {
         XCTAssertNoThrow(try AppDocumentValidator().validate(document))
     }
 
+    func testPayloadBuildsNativeMapCalendarAndExportComponents() throws {
+        var payload = GeneratedAppPayloadTestFixtures.personalMoney()
+        var mapNode = payload.pages[0].nodes[0]
+        mapNode.id = "trip-map"
+        mapNode.kind = "map"
+        mapNode.map = GeneratedAppPayload.Map(
+            mode: "placeSearch",
+            query: "Taipei Main Station",
+            latitude: 25.0478,
+            longitude: 121.517,
+            spanMeters: 4_000,
+            allowsSearch: true,
+            allowsDirections: true
+        )
+
+        var calendarNode = payload.pages[0].nodes[0]
+        calendarNode.id = "trip-calendar"
+        calendarNode.kind = "calendarEvent"
+        calendarNode.calendarEvent = GeneratedAppPayload.CalendarEvent(
+            eventTitle: "Leave for {{trip-name}}",
+            notes: "Bring tickets",
+            location: "Taipei Main Station",
+            startOffsetMinutes: 60,
+            durationMinutes: 45,
+            allowsEditing: true
+        )
+
+        var exportNode = payload.pages[0].nodes[0]
+        exportNode.id = "trip-export"
+        exportNode.kind = "documentExport"
+        exportNode.documentExport = GeneratedAppPayload.DocumentExport(
+            fileName: "trip-plan",
+            format: "plainText",
+            contentTemplate: "Trip: {{trip-name}}",
+            buttonLabel: "Export plan"
+        )
+        payload.pages[0].nodes = [mapNode, calendarNode, exportNode]
+
+        let document = payload.makeDocument(existingID: UUID(), version: 6)
+
+        XCTAssertEqual(document.pages[0].nodes.map(\.kind), [
+            .map, .calendarEvent, .documentExport
+        ])
+        XCTAssertEqual(document.pages[0].nodes[0].map?.query, "Taipei Main Station")
+        XCTAssertEqual(document.pages[0].nodes[1].calendarEvent?.durationMinutes, 45)
+        XCTAssertEqual(document.pages[0].nodes[2].documentExport?.format, .plainText)
+        XCTAssertTrue(document.capabilities.contains(.mapSearch))
+        XCTAssertTrue(document.capabilities.contains(.calendarWrite))
+        XCTAssertTrue(document.capabilities.contains(.documentExport))
+        XCTAssertNoThrow(try AppDocumentValidator().validate(document))
+    }
+
     func testPayloadBuildsAValidatedCustomTinyGameProgram() throws {
         var payload = GeneratedAppPayloadTestFixtures.personalMoney()
         var node = payload.pages[0].nodes[0]

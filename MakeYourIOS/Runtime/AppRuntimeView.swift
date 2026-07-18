@@ -29,7 +29,8 @@ struct AppRuntimeView: View {
         _session = State(initialValue: RuntimeSessionState(
             initialValues: initialValues,
             projectID: projectID,
-            persistentKeys: logicEngine.persistentKeys
+            persistentKeys: logicEngine.persistentKeys,
+            stateDefinitions: logicEngine.stateDefinitions
         ))
     }
 
@@ -192,7 +193,8 @@ struct AppRuntimeView: View {
         guard !matchingEvents.isEmpty else { return }
         let event = RuntimeEvent(
             trigger: trigger,
-            steps: matchingEvents.flatMap(\.steps)
+            steps: matchingEvents.flatMap(\.steps),
+            intervalSeconds: matchingEvents.first?.intervalSeconds
         )
 
         do {
@@ -290,109 +292,6 @@ struct AppRuntimeView: View {
             session.alertMessage = "Reminder scheduled for \(delayMinutes) minutes from now."
         } catch {
             session.alertMessage = error.localizedDescription
-        }
-    }
-}
-
-struct ComponentRenderer: View {
-    let projectID: UUID
-    let node: ComponentNode
-    let tint: AppTint
-    let theme: AppVisualTheme
-    let capabilities: [AppCapability]
-    @Bindable var session: RuntimeSessionState
-    let onEvent: (RuntimeEventTrigger, ComponentNode) -> Void
-    let onLegacyAction: (RuntimeAction, ComponentNode) -> Void
-
-    var body: some View {
-        content
-            .runtimeNodeSurface(node: node, theme: theme, tint: tint)
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        switch node.kind {
-        case .hero:
-            HeroNodeView(projectID: projectID, node: node, tint: tint, theme: theme)
-        case .sectionHeader:
-            SectionHeaderNodeView(node: node)
-        case .text:
-            TextNodeView(node: node, session: session)
-        case .metric:
-            MetricNodeView(node: node, tint: tint, session: session)
-        case .textInput, .numberInput:
-            InputNodeView(
-                node: node,
-                tint: tint,
-                session: session,
-                onValueChanged: { onEvent(.valueChanged, node) }
-            )
-        case .picker:
-            PickerNodeView(
-                node: node,
-                tint: tint,
-                session: session,
-                onValueChanged: { onEvent(.valueChanged, node) }
-            )
-        case .button:
-            ActionButtonNodeView(node: node, session: session) {
-                if node.events?.isEmpty == false {
-                    onEvent(.tap, node)
-                } else {
-                    onLegacyAction(node.action, node)
-                }
-            }
-        case .checklist:
-            ChecklistNodeView(node: node, tint: tint, session: session)
-        case .infoBanner:
-            InfoBannerNodeView(node: node, tint: tint, session: session)
-        case .currencyConverter:
-            CurrencyConverterRuntimeView(node: node, tint: tint)
-        case .taskList:
-            TaskListRuntimeView(projectID: projectID, node: node, tint: tint)
-        case .image:
-            ImageNodeView(projectID: projectID, node: node, tint: tint, theme: theme)
-        case .aiAssistant:
-            AITextRuntimeView(
-                node: node,
-                tint: tint,
-                session: session,
-                onValueChanged: { onEvent(.valueChanged, node) }
-            )
-        case .recordCollection:
-            RecordCollectionRuntimeView(
-                projectID: projectID,
-                node: node,
-                tint: tint,
-                capabilities: capabilities
-            )
-        case .liveDataList:
-            LiveDataListRuntimeView(projectID: projectID, node: node, tint: tint)
-        case .newsFeed:
-            NewsFeedRuntimeView(projectID: projectID, node: node, tint: tint)
-        case .marketWatch:
-            MarketWatchRuntimeView(projectID: projectID, node: node, tint: tint)
-        case .ledger:
-            LedgerRuntimeView(projectID: projectID, node: node, tint: tint)
-        case .game:
-            GameRuntimeView(projectID: projectID, node: node, tint: tint)
-        case .deviceInput:
-            DeviceInputRuntimeView(
-                projectID: projectID,
-                node: node,
-                tint: tint,
-                theme: theme,
-                session: session,
-                onValueChanged: { onEvent(.valueChanged, node) }
-            )
-        case .control:
-            RuntimeControlNodeView(
-                node: node,
-                session: session,
-                onValueChanged: { onEvent(.valueChanged, node) }
-            )
-        case .divider:
-            Divider().padding(.vertical, 4)
         }
     }
 }

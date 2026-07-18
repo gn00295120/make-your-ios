@@ -49,17 +49,16 @@ capability changes currently in the source tree.
 
 ## Expanded capability build gates
 
-Current source verification snapshot (2026-07-18):
+Current source verification snapshot (2026-07-19):
 
-- 109/109 unit tests, all 3/3 Design Studio UI paths (including Accessibility
-  Extra Extra Extra Large), and the separately gated 1/1 live GPT-5.6
-  generation UI test passed on an iPhone 17 Pro Simulator.
-- Strict SwiftLint checked 105 Swift files with zero violations; `git diff
-  --check`, generic Simulator build, Apple Development-signed generic iOS
-  build, and strict local code-signature verification passed.
-- The built iPhone app contains camera, contact, When In Use location, and
-  motion usage descriptions plus `PrivacyInfo.xcprivacy`; strict local
-  code-signature verification passed.
+- 189/189 unit tests and all 9/9 non-billable UI paths passed on an iPhone 17 Pro
+  Simulator. The separately gated live GPT-5.6 test requires an API key saved in
+  that Simulator and was not counted after its app data was reset.
+- Strict SwiftLint checked 141 Swift files with zero violations; `git diff
+  --check`, a clean Release Simulator build, an Apple Development-signed Release
+  iOS build, and strict local code-signature verification passed.
+- The built iPhone app contains camera, contact, When In Use location, motion,
+  and write-only calendar usage descriptions plus `PrivacyInfo.xcprivacy`.
 - An earlier expanded-capability build was installed on the connected iPhone,
   but the exact Design Genome v2 candidate has not yet had a fresh physical
   install. Camera/scanner and permission interaction gates below deliberately
@@ -76,7 +75,7 @@ Current source verification snapshot (2026-07-18):
   actual results without copying the historical 43-test count.
 - [ ] Confirm the archive contains camera, contact, When In Use location, and
   motion usage descriptions, plus the current privacy manifest.
-- [ ] Fresh-install the exact candidate on TestFlight and confirm all ten seeded
+- [ ] Fresh-install the exact candidate on TestFlight and confirm all twelve seeded
   tiny apps appear.
 - [ ] Exercise capability review for generated documents and verify missing or
   unused declarations are rejected.
@@ -141,12 +140,13 @@ Current source verification snapshot (2026-07-18):
 
 ## Expanded-build TestFlight pass
 
-- [ ] Fresh-install launch seeds ten reviewable tiny apps
+- [ ] Fresh-install launch seeds twelve reviewable tiny apps
 - [ ] Daily Brief refresh, local search/topics/bookmarks, cache, and original link
 - [ ] Market Pocket AAPL demo, provider-key add/remove, symbols, ranges, and cache
 - [ ] Pocket Ledger entry CRUD, income/expense totals, budget, and category chart
 - [ ] Skybound and Neon Snake controls, pause, restart, win/loss, and saved score
-- [ ] Device Lab's 11 actions, including honest Simulator/hardware fallbacks
+- [ ] Device Lab's map, calendar, export, and device actions, including honest
+  Simulator/hardware fallbacks
 - [ ] Live FX refresh, add/remove currency, base selection, threshold, Test Alert
 - [ ] Use It First record add/edit/delete, completion, photo, and reminder
 - [ ] Builder generation with review key

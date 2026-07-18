@@ -17,6 +17,10 @@ enum RuntimeLogicExecutionError: LocalizedError, Equatable {
     case invalidExpression(RuntimeExpressionOperation)
     case invalidNumber(String)
     case invalidBoolean(String)
+    case invalidDate(String)
+    case invalidList
+    case invalidObject
+    case collectionLimitExceeded
     case divideByZero
     case calculationOverflow
     case valueTooLong
@@ -32,6 +36,14 @@ enum RuntimeLogicExecutionError: LocalizedError, Equatable {
             "A value in this tiny app is not a valid number."
         case .invalidBoolean:
             "A value in this tiny app is not a valid true or false value."
+        case .invalidDate:
+            "A value in this tiny app is not a valid date."
+        case .invalidList:
+            "A value in this tiny app is not a valid list."
+        case .invalidObject:
+            "A value in this tiny app is not a valid object."
+        case .collectionLimitExceeded:
+            "This tiny app collection exceeds the supported limit."
         case .divideByZero:
             "This calculation cannot divide by zero."
         case .calculationOverflow:
@@ -51,13 +63,18 @@ struct RuntimeLogicEngine: Sendable {
     static let maximumMagnitude = Decimal(string: "1000000000000000")!
 
     private let definitions: [String: RuntimeStateDefinition]
+    private let now: @Sendable () -> Date
 
-    init(logic: RuntimeLogic?) {
+    init(
+        logic: RuntimeLogic?,
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
         definitions = (logic?.state ?? []).reduce(into: [:]) { result, definition in
             if result[definition.key] == nil {
                 result[definition.key] = definition
             }
         }
+        self.now = now
     }
 
     var initialValues: [String: String] {
@@ -68,6 +85,19 @@ struct RuntimeLogicEngine: Sendable {
 
     var persistentKeys: Set<String> {
         Set(definitions.values.lazy.filter { $0.persistence == .project }.map(\.key))
+    }
+
+    var stateDefinitions: [RuntimeStateDefinition] {
+        definitions.values.sorted(by: { $0.key < $1.key })
+    }
+
+    var stateFingerprints: [String: String] {
+        definitions.mapValues { "runtime-value-v1:\($0.type.rawValue)" }
+    }
+
+    func normalizedPersistedValue(_ value: String, for key: String) -> String? {
+        guard let definition = definitions[key] else { return nil }
+        return try? normalize(value, as: definition.type)
     }
 
     func execute(event: RuntimeEvent, values: [String: String]) throws -> RuntimeLogicExecution {
@@ -114,6 +144,8 @@ private extension RuntimeLogicEngine {
         var type: RuntimeValueType?
     }
 
+    // Exhaustive runtime interpreter dispatch; each generated expression has an explicit path.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func evaluate(expression: RuntimeExpression, values: [String: String]) throws -> String {
         let operands = try expression.operands.map { try resolve($0, values: values) }
         let result: String
@@ -140,6 +172,84 @@ private extension RuntimeLogicEngine {
                 operation: expression.operation,
                 operands: operands.map(\.value)
             )
+        case .listAppend:
+            guard operands.count == 2 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.listAppend)
+            }
+            var list = try decodedList(operands[0].value)
+            list.append(operands[1].value)
+            result = try encodedList(list)
+        case .listRemove:
+            guard operands.count == 2 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.listRemove)
+            }
+            var list = try decodedList(operands[0].value)
+            if let index = list.firstIndex(of: operands[1].value) {
+                list.remove(at: index)
+            }
+            result = try encodedList(list)
+        case .listCount:
+            guard operands.count == 1 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.listCount)
+            }
+            result = String(try decodedList(operands[0].value).count)
+        case .listContains:
+            guard operands.count == 2 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.listContains)
+            }
+            result = try decodedList(operands[0].value).contains(operands[1].value)
+                ? "true"
+                : "false"
+        case .listJoin:
+            guard operands.count == 2 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.listJoin)
+            }
+            result = try decodedList(operands[0].value).joined(separator: operands[1].value)
+        case .objectSet:
+            guard operands.count == 3 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.objectSet)
+            }
+            var object = try decodedObject(operands[0].value)
+            object[operands[1].value] = operands[2].value
+            result = try encodedObject(object)
+        case .objectRemove:
+            guard operands.count == 2 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.objectRemove)
+            }
+            var object = try decodedObject(operands[0].value)
+            object.removeValue(forKey: operands[1].value)
+            result = try encodedObject(object)
+        case .objectGet:
+            guard operands.count == 2 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.objectGet)
+            }
+            result = try decodedObject(operands[0].value)[operands[1].value] ?? ""
+        case .objectCount:
+            guard operands.count == 1 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.objectCount)
+            }
+            result = String(try decodedObject(operands[0].value).count)
+        case .dateAddDays:
+            guard operands.count == 2 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.dateAddDays)
+            }
+            let days = try integer(operands[1].value)
+            guard (-36_500...36_500).contains(days),
+                  let nextDate = utcCalendar.date(
+                    byAdding: .day,
+                    value: days,
+                    to: try date(operands[0].value)
+                  ) else {
+                throw RuntimeLogicExecutionError.invalidExpression(.dateAddDays)
+            }
+            result = RuntimeValueCodec.encodedDate(nextDate)
+        case .dateDaysBetween:
+            guard operands.count == 2 else {
+                throw RuntimeLogicExecutionError.invalidExpression(.dateDaysBetween)
+            }
+            let start = utcCalendar.startOfDay(for: try date(operands[0].value))
+            let end = utcCalendar.startOfDay(for: try date(operands[1].value))
+            result = String(utcCalendar.dateComponents([.day], from: start, to: end).day ?? 0)
         }
 
         guard result.count <= Self.maximumValueLength else {
@@ -152,9 +262,9 @@ private extension RuntimeLogicEngine {
         let lhs = try resolve(condition.lhs, values: values)
         switch condition.comparison {
         case .isEmpty:
-            return lhs.value.isEmpty
+            return try isEmpty(lhs)
         case .isNotEmpty:
-            return !lhs.value.isEmpty
+            return try !isEmpty(lhs)
         default:
             break
         }
@@ -165,21 +275,20 @@ private extension RuntimeLogicEngine {
             let isEqual = try equal(lhs, rhs)
             return condition.comparison == .equals ? isEqual : !isEqual
         case .less, .lessOrEqual, .greater, .greaterOrEqual:
-            let leftNumber = try decimal(lhs.value)
-            let rightNumber = try decimal(rhs.value)
-            return numericComparison(condition.comparison, lhs: leftNumber, rhs: rightNumber)
+            if lhs.type == .date || rhs.type == .date {
+                return orderedComparison(
+                    condition.comparison,
+                    lhs: try date(lhs.value),
+                    rhs: try date(rhs.value)
+                )
+            }
+            return numericComparison(
+                condition.comparison,
+                lhs: try decimal(lhs.value),
+                rhs: try decimal(rhs.value)
+            )
         case .isEmpty, .isNotEmpty:
             return false
-        }
-    }
-
-    func numericComparison(_ comparison: RuntimeComparison, lhs: Decimal, rhs: Decimal) -> Bool {
-        switch comparison {
-        case .less: lhs < rhs
-        case .lessOrEqual: lhs <= rhs
-        case .greater: lhs > rhs
-        case .greaterOrEqual: lhs >= rhs
-        default: false
         }
     }
 
@@ -193,6 +302,11 @@ private extension RuntimeLogicEngine {
                 throw RuntimeLogicExecutionError.missingState(operand.value)
             }
             return ResolvedOperand(value: value, type: definition.type)
+        case .currentDate:
+            return ResolvedOperand(
+                value: RuntimeValueCodec.encodedDate(now()),
+                type: .date
+            )
         }
     }
 
@@ -205,79 +319,23 @@ private extension RuntimeLogicEngine {
             return try decimal(lhs.value) == decimal(rhs.value)
         case .boolean:
             return try boolean(lhs.value) == boolean(rhs.value)
+        case .date:
+            return try date(lhs.value) == date(rhs.value)
+        case .list:
+            return try decodedList(lhs.value) == decodedList(rhs.value)
+        case .object:
+            return try decodedObject(lhs.value) == decodedObject(rhs.value)
         }
     }
 
-    func numericResult(
-        operation: RuntimeExpressionOperation,
-        operands: [String]
-    ) throws -> String {
-        let numbers = try operands.map(decimal)
-        let requiresExactlyTwo = [.subtract, .divide].contains(operation)
-        guard requiresExactlyTwo ? numbers.count == 2 : numbers.count >= 2 else {
-            throw RuntimeLogicExecutionError.invalidExpression(operation)
-        }
-
-        var result = numbers[0]
-        for number in numbers.dropFirst() {
-            switch operation {
-            case .add:
-                result = try calculate(result, number, using: NSDecimalAdd)
-            case .subtract:
-                result = try calculate(result, number, using: NSDecimalSubtract)
-            case .multiply:
-                result = try calculate(result, number, using: NSDecimalMultiply)
-            case .divide:
-                guard number != 0 else { throw RuntimeLogicExecutionError.divideByZero }
-                result = try calculate(result, number, using: NSDecimalDivide)
-            case .min:
-                result = Swift.min(result, number)
-            case .max:
-                result = Swift.max(result, number)
-            default:
-                throw RuntimeLogicExecutionError.invalidExpression(operation)
-            }
-            try validateMagnitude(result)
-        }
-        return decimalString(result)
-    }
-
-    func calculate(
-        _ lhs: Decimal,
-        _ rhs: Decimal,
-        using operation: (
-            UnsafeMutablePointer<Decimal>,
-            UnsafePointer<Decimal>,
-            UnsafePointer<Decimal>,
-            Decimal.RoundingMode
-        ) -> Decimal.CalculationError
-    ) throws -> Decimal {
-        var left = lhs
-        var right = rhs
-        var result = Decimal()
-        let error = operation(&result, &left, &right, .bankers)
-        guard error == .noError, !result.isNaN else {
-            throw RuntimeLogicExecutionError.calculationOverflow
-        }
-        return result
-    }
-
-    func decimal(_ value: String) throws -> Decimal {
-        guard let result = Decimal(
-            string: value.trimmingCharacters(in: .whitespacesAndNewlines),
-            locale: Locale(identifier: "en_US_POSIX")
-        ), !result.isNaN else {
-            throw RuntimeLogicExecutionError.invalidNumber(value)
-        }
-        try validateMagnitude(result)
-        return result
-    }
-
-    func boolean(_ value: String) throws -> Bool {
-        switch value.lowercased() {
-        case "true": return true
-        case "false": return false
-        default: throw RuntimeLogicExecutionError.invalidBoolean(value)
+    func isEmpty(_ operand: ResolvedOperand) throws -> Bool {
+        switch operand.type {
+        case .list:
+            return try decodedList(operand.value).isEmpty
+        case .object:
+            return try decodedObject(operand.value).isEmpty
+        default:
+            return operand.value.isEmpty
         }
     }
 
@@ -292,6 +350,24 @@ private extension RuntimeLogicEngine {
             return decimalString(try decimal(value))
         case .boolean:
             return try boolean(value) ? "true" : "false"
+        case .date:
+            do {
+                return try RuntimeValueCodec.normalizedDate(value)
+            } catch {
+                throw RuntimeLogicExecutionError.invalidDate(value)
+            }
+        case .list:
+            do {
+                return try RuntimeValueCodec.normalizedList(value)
+            } catch {
+                throw RuntimeLogicExecutionError.invalidList
+            }
+        case .object:
+            do {
+                return try RuntimeValueCodec.normalizedObject(value)
+            } catch {
+                throw RuntimeLogicExecutionError.invalidObject
+            }
         }
     }
 
@@ -299,13 +375,4 @@ private extension RuntimeLogicEngine {
         (try? normalize(definition.initialValue, as: definition.type)) ?? definition.initialValue
     }
 
-    func validateMagnitude(_ value: Decimal) throws {
-        guard value <= Self.maximumMagnitude, value >= -Self.maximumMagnitude else {
-            throw RuntimeLogicExecutionError.calculationOverflow
-        }
-    }
-
-    func decimalString(_ value: Decimal) -> String {
-        value == 0 ? "0" : NSDecimalNumber(decimal: value).stringValue
-    }
 }

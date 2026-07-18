@@ -14,6 +14,7 @@ enum CapabilityCategory: String, CaseIterable, Sendable {
     case motion
     case sharing
     case systemFeedback
+    case calendar
 }
 
 enum CapabilityPrivacyRisk: String, CaseIterable, Comparable, Sendable {
@@ -83,6 +84,9 @@ enum CapabilityRegistry {
         case .currentLocation: currentLocation
         case .contactPicker: contactPicker
         case .documentPicker: documentPicker
+        case .documentExport: documentExport
+        case .mapSearch: mapSearch
+        case .calendarWrite: calendarWrite
         case .pedometer: pedometer
         case .shareSheet: shareSheet
         case .clipboardWrite: clipboardWrite
@@ -197,6 +201,40 @@ enum CapabilityRegistry {
             + "with host-enforced size and stored-text limits.",
         frameworkOrPermissionNote: "SwiftUI fileImporter and UniformTypeIdentifiers; "
             + "access is limited to the selected document."
+    )
+
+    private static let documentExport = CapabilityMetadata(
+        capability: .documentExport,
+        category: .files,
+        privacyRisk: .moderate,
+        availability: .systemMediated,
+        requiresExplicitUserAction: true,
+        hostEnforcedSummary: "Exports only the bounded text the user can review through Apple's save panel; "
+            + "the tiny app cannot choose a destination or overwrite a file silently.",
+        frameworkOrPermissionNote: "SwiftUI fileExporter and UniformTypeIdentifiers; no permission prompt."
+    )
+
+    private static let mapSearch = CapabilityMetadata(
+        capability: .mapSearch,
+        category: .location,
+        privacyRisk: .moderate,
+        availability: .fixedProvider,
+        requiresExplicitUserAction: false,
+        hostEnforcedSummary: "Displays a bounded MapKit region and searches only Apple Maps after visible input; "
+            + "it cannot read location history or call arbitrary map providers.",
+        frameworkOrPermissionNote: "MapKit display and MKLocalSearch; no location permission is requested."
+    )
+
+    private static let calendarWrite = CapabilityMetadata(
+        capability: .calendarWrite,
+        category: .calendar,
+        privacyRisk: .high,
+        availability: .permissionGated,
+        requiresExplicitUserAction: true,
+        hostEnforcedSummary: "Creates one event only after a visible review and confirmation; "
+            + "the tiny app cannot enumerate, edit, or delete existing calendar data.",
+        frameworkOrPermissionNote: "EventKit write-only event access requested at use time with "
+            + "NSCalendarsWriteOnlyAccessUsageDescription."
     )
 
     private static let pedometer = CapabilityMetadata(

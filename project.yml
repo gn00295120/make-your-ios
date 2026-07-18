@@ -32,6 +32,7 @@ targets:
         INFOPLIST_KEY_NSContactsUsageDescription: MakeYour shows Apple’s contact picker only when a tiny app asks you to choose a contact.
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: MakeYour requests one current location only when you tap a tiny app location component.
         INFOPLIST_KEY_NSMotionUsageDescription: MakeYour reads today’s step count only when you tap a tiny app pedometer component.
+        INFOPLIST_KEY_NSCalendarsWriteOnlyAccessUsageDescription: MakeYour adds a calendar event only after you review it and tap Add Event.
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: false
     scheme:

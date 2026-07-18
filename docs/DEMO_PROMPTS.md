@@ -107,6 +107,27 @@ photo slots remain intact.
 Restyle this tiny app as a calm, premium personal tool without changing any feature, page identity, component identity, copy, value, action, binding, data configuration, capability, or local media slot. Use a custom deep-indigo and warm-coral brand palette with accessible light and dark canvas/surface colors, rounded typography, balanced type scale, bold titles, soft controls, subtle elevation, hairline strokes, and subtle motion. Use a dashboard layout where summaries benefit from columns, keep long-form content readable, use cards or split variants only where the renderer supports them, and preserve the existing canvas photo. Make the result feel authored rather than like a universal card stack.
 ```
 
+## Demo 12 — Native Dayboard organizer
+
+This prompt exercises the first native-service expansion and the bounded typed
+runtime together. Calendar creation must be tested on a device or Simulator with
+the exact build's write-only calendar usage description; choosing Cancel is a
+valid file-export outcome and must not be presented as an export failure.
+
+```text
+Create a one-page native personal organizer named “Taipei Dayboard”. It must use the composable runtime plus the dedicated map, calendarEvent, and documentExport components; do not substitute static text or a generic deviceInput.
+
+Declare these state values: project-persisted date plan-date with a valid ISO 8601 initial value; session date generated-at with a valid ISO 8601 initial value; session text new-stop initially empty; project list stops initially ["Taipei 101 observatory", "Xinyi lunch"]; project object details initially {"Meeting point":"Taipei 101 lobby", "Transit":"MRT Taipei 101/World Trade Center"}; and session text export-stops initially empty. Lists and objects must contain strings only and must not be treated as nested records.
+
+Add a full-width hero titled “One day, one clear plan”. Give its appear event one setState step that copies the currentDate operand into generated-at. Add a datePicker control titled “Plan date” bound to plan-date. Add a text input titled “New stop” bound to new-stop and a button titled “Add stop”; its tap event first sets stops to listAppend(stops, new-stop) only when new-stop is not empty, then clears new-stop. Add a second button titled “Prepare export” that sets export-stops to listJoin(stops, "\n- "). Add one collectionView titled “Stops” bound to stops and another titled “Details” bound to details, each with a clear empty placeholder.
+
+Add one full-width map configured for placeSearch with query “Taipei 101”, fallback coordinate latitude 25.033968 and longitude 121.564468, spanMeters 2000, allowsSearch true, and allowsDirections true. Explain that it searches Apple Maps and does not read the user's current location. Add one calendarEvent titled “Next check-in” whose event title is “Meet at Taipei 101”, location is “Taipei 101 lobby”, notes are “Created from Taipei Dayboard”, startOffsetMinutes is 60, durationMinutes is 60, and allowsEditing is true. Explain that it requests write-only calendar access only after review and cannot read existing events.
+
+Add one documentExport titled “Take the plan with you”, fileName “Taipei Day Plan”, format plainText, buttonLabel “Choose export destination”, and contentTemplate exactly “Taipei Dayboard\nPlan date: {{plan-date}}\nPrepared: {{generated-at}}\nStops:\n- {{export-stops}}”. Explain that the preview is visible and no file is written until the user chooses a destination in Apple's save panel.
+
+Use mint tint, native preset, system appearance, rounded typography, plain canvas, soft corners, regular density, plain surfaces, subtle motion, and a form layout. Declare exactly storage.local, calculation.safe, maps.search, calendar.createEvent, and files.export. Do not request location.current, files.import, contacts.pick, notifications.scheduleLocal, http.request, ai.complete, audio, speech recognition, App Intents, background timers, nested objects, or collection iteration.
+```
+
 ## Verification checklist
 
 For each prompt used in a release or competition demo:

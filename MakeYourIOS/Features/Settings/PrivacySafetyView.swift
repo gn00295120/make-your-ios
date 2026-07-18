@@ -151,6 +151,7 @@ private extension CapabilityCategory {
         case .motion: "Motion"
         case .sharing: "Sharing"
         case .systemFeedback: "System feedback"
+        case .calendar: "Calendar"
         }
     }
 }

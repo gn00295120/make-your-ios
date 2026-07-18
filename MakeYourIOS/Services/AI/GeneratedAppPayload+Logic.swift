@@ -21,9 +21,13 @@ extension GeneratedAppPayload {
     func makeEvents(_ events: [Event]?) -> [RuntimeEvent]? {
         guard let events else { return nil }
         return events.prefix(4).map { event in
-            RuntimeEvent(
-                trigger: RuntimeEventTrigger(rawValue: event.trigger) ?? .tap,
-                steps: event.steps.prefix(8).map(makeStep)
+            let trigger = RuntimeEventTrigger(rawValue: event.trigger) ?? .tap
+            return RuntimeEvent(
+                trigger: trigger,
+                steps: event.steps.prefix(8).map(makeStep),
+                intervalSeconds: trigger == .timer
+                    ? min(max(event.intervalSeconds ?? 60, 1), 3_600)
+                    : nil
             )
         }
     }
@@ -84,11 +88,18 @@ private extension GeneratedAppPayload {
 
     func makeOperand(_ operand: Operand) -> RuntimeOperand {
         let source = RuntimeOperandSource(rawValue: operand.source) ?? .literal
+        let value: String
+        switch source {
+        case .state:
+            value = normalizedLogicID(operand.value)
+        case .literal:
+            value = String(operand.value.prefix(800))
+        case .currentDate:
+            value = ""
+        }
         return RuntimeOperand(
             source: source,
-            value: source == .state
-                ? normalizedLogicID(operand.value)
-                : String(operand.value.prefix(800))
+            value: value
         )
     }
 
@@ -104,6 +115,13 @@ private extension GeneratedAppPayload {
             }
         case .boolean:
             value.lowercased() == "true" ? "true" : "false"
+        case .date:
+            (try? RuntimeValueCodec.normalizedDate(value))
+                ?? RuntimeValueCodec.encodedDate(.now)
+        case .list:
+            (try? RuntimeValueCodec.normalizedList(value)) ?? "[]"
+        case .object:
+            (try? RuntimeValueCodec.normalizedObject(value)) ?? "{}"
         }
     }
 
