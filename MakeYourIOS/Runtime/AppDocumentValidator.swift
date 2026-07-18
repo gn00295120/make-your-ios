@@ -7,8 +7,30 @@ struct AppDocumentValidator: Sendable {
 
     func validate(_ document: AppDocument) throws {
         try validateStructure(document)
+        try validateDesign(document)
         try validateContent(document)
         try validateCapabilities(document)
+    }
+
+    private func validateDesign(_ document: AppDocument) throws {
+        if let palette = document.theme?.palette, !palette.isValid {
+            throw AppDocumentValidationError.invalidVisualTheme
+        }
+        if let binding = document.theme?.backgroundAssetBinding {
+            let trimmed = binding.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty,
+                  trimmed == binding,
+                  binding.count <= 120,
+                  binding.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "-" }) else {
+                throw AppDocumentValidationError.invalidVisualTheme
+            }
+        }
+        for node in document.pages.flatMap(\.nodes) {
+            let variant = node.resolvedPresentation.variant
+            guard RendererCatalog.supportedVariants(for: node.kind).contains(variant) else {
+                throw AppDocumentValidationError.unsupportedVariant(node.kind, variant)
+            }
+        }
     }
 
     private func validateStructure(_ document: AppDocument) throws {
@@ -56,7 +78,7 @@ struct AppDocumentValidator: Sendable {
     }
 
     private func validateCapabilities(_ document: AppDocument) throws {
-        let required = AppCapabilityResolver.requiredCapabilities(for: document.pages)
+        let required = AppCapabilityResolver.requiredCapabilities(for: document)
         let declared = Set(document.capabilities)
         guard declared.count == document.capabilities.count else {
             throw AppDocumentValidationError.duplicateIdentifier
@@ -132,6 +154,8 @@ enum AppDocumentValidationError: LocalizedError, Equatable {
     case duplicateBinding
     case missingCapability(AppCapability)
     case unnecessaryCapability(AppCapability)
+    case invalidVisualTheme
+    case unsupportedVariant(ComponentKind, ComponentVariant)
 
     var errorDescription: String? {
         switch self {
@@ -159,6 +183,10 @@ enum AppDocumentValidationError: LocalizedError, Equatable {
             "The app did not declare its \(capability.label) capability."
         case .unnecessaryCapability(let capability):
             "The app declares unused \(capability.label) access."
+        case .invalidVisualTheme:
+            "The app theme contains an invalid color or background binding."
+        case .unsupportedVariant(let kind, let variant):
+            "The \(kind.rawValue) component does not support the \(variant.rawValue) renderer."
         }
     }
 }

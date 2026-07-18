@@ -18,6 +18,8 @@ struct CurrencyConverterRuntimeView: View {
     let node: ComponentNode
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) private var design
+
     @State private var amount = "100"
     @State private var fromCurrency = "USD"
     @State private var toCurrency = "TWD"
@@ -47,53 +49,30 @@ struct CurrencyConverterRuntimeView: View {
         (rates[toCurrency] ?? 1) / (rates[fromCurrency] ?? 1)
     }
 
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .currencyConverter)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: [.compact, .dense].contains(variant) ? 10 : 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(node.title).font(.headline)
+                Text(node.title).font(design.sectionFont).accessibilityAddTraits(.isHeader)
                 if !node.subtitle.isEmpty {
-                    Text(node.subtitle).font(.caption).foregroundStyle(.secondary)
+                    Text(node.subtitle).font(design.captionFont).foregroundStyle(design.secondaryForeground)
                 }
             }
 
-            VStack(spacing: 12) {
-                HStack {
-                    TextField("Amount", text: $amount)
-                        .font(.system(.title2, design: .rounded, weight: .semibold))
-                        .keyboardType(.decimalPad)
-                    CurrencyMenu(selection: $fromCurrency, currencies: currencies)
-                }
-                .padding(14)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-
-                Button {
-                    withAnimation(.snappy) {
-                        swap(&fromCurrency, &toCurrency)
+            if variant == .split {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) {
+                        amountField
+                        swapButton
+                        resultField
                     }
-                } label: {
-                    Image(systemName: "arrow.up.arrow.down")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(tint.color)
-                        .frame(width: 38, height: 38)
-                        .background(tint.color.opacity(0.12), in: Circle())
+                    stackedFields
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Swap currencies")
-                .padding(.vertical, -7)
-                .zIndex(1)
-
-                HStack {
-                    Text(convertedAmount, format: .number.precision(.fractionLength(2)))
-                        .font(.system(.title2, design: .rounded, weight: .semibold))
-                        .contentTransition(.numericText())
-                    Spacer()
-                    CurrencyMenu(selection: $toCurrency, currencies: currencies)
-                }
-                .padding(14)
-                .background(
-                    tint.color.opacity(0.10),
-                    in: RoundedRectangle(cornerRadius: 15, style: .continuous)
-                )
+            } else {
+                stackedFields
             }
 
             Text(
@@ -101,8 +80,8 @@ struct CurrencyConverterRuntimeView: View {
                     + exchangeRate.formatted(.number.precision(.fractionLength(2...4)))
                     + " \(toCurrency)"
             )
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(design.captionFont)
+                .foregroundStyle(design.secondaryForeground)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .onAppear {
@@ -112,11 +91,80 @@ struct CurrencyConverterRuntimeView: View {
             }
         }
     }
+
+    private var stackedFields: some View {
+        VStack(spacing: 12) {
+            amountField
+            swapButton
+                .padding(.vertical, -7)
+                .zIndex(1)
+            resultField
+        }
+    }
+
+    private var amountField: some View {
+        HStack {
+            TextField("Amount", text: $amount)
+                .font(design.titleFont.monospacedDigit())
+                .keyboardType(.decimalPad)
+                .accessibilityLabel("Amount")
+            CurrencyMenu(selection: $fromCurrency, currencies: currencies)
+        }
+        .padding(fieldPadding)
+        .background(design.surface, in: fieldShape)
+        .overlay { fieldBorder }
+    }
+
+    private var resultField: some View {
+        HStack {
+            Text(convertedAmount, format: .number.precision(.fractionLength(2)))
+                .font(design.titleFont.monospacedDigit())
+                .contentTransition(design.reduceMotion ? .identity : .numericText())
+            Spacer()
+            CurrencyMenu(selection: $toCurrency, currencies: currencies)
+        }
+        .padding(fieldPadding)
+        .background(design.accent.opacity(0.10), in: fieldShape)
+        .overlay { fieldBorder }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Converted amount")
+    }
+
+    private var swapButton: some View {
+        Button {
+            design.animate { swap(&fromCurrency, &toCurrency) }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.subheadline.bold())
+                .foregroundStyle(design.accent)
+                .frame(width: 44, height: 44)
+                .background(design.accent.opacity(0.12), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Swap currencies")
+    }
+
+    private var fieldPadding: CGFloat {
+        [.compact, .dense].contains(variant) ? 10 : 14
+    }
+
+    private var fieldShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: design.controlCornerRadius, style: .continuous)
+    }
+
+    private var fieldBorder: some View {
+        fieldShape.stroke(
+            design.borderColor.opacity(design.borderOpacity),
+            lineWidth: design.borderWidth
+        )
+    }
 }
 
 private struct CurrencyMenu: View {
     @Binding var selection: String
     let currencies: [String]
+
+    @Environment(\.runtimeDesign) private var design
 
     var body: some View {
         Menu {
@@ -128,10 +176,10 @@ private struct CurrencyMenu: View {
                 Text(selection).font(.subheadline.bold())
                 Image(systemName: "chevron.up.chevron.down").font(.caption2)
             }
-            .foregroundStyle(.primary)
+            .foregroundStyle(design.primaryForeground)
             .padding(.horizontal, 11)
             .padding(.vertical, 8)
-            .background(.background, in: Capsule())
+            .background(design.surface, in: Capsule())
         }
     }
 }

@@ -38,7 +38,7 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
     func testSchemaIncludesVisualMediaAndRuntimeAICapabilities() throws {
         let root = OpenAIAppGenerationClient.responseSchema
         let properties = try XCTUnwrap(root["properties"] as? [String: Any])
-        XCTAssertNotNil(properties["theme"])
+        try assertThemeSchema(in: properties)
 
         let capabilities = try XCTUnwrap(properties["capabilities"] as? [String: Any])
         let items = try XCTUnwrap(capabilities["items"] as? [String: Any])
@@ -63,6 +63,8 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
         XCTAssertTrue(componentKinds.contains(ComponentKind.game.rawValue))
         XCTAssertTrue(componentKinds.contains(ComponentKind.deviceInput.rawValue))
 
+        try assertRendererSchema(in: root)
+
         for propertyName in [
             "image", "collection", "liveData", "newsFeed", "marketWatch", "ledger", "game",
             "deviceInput"
@@ -71,6 +73,46 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
                 try findProperty(named: propertyName, in: root) as? [String: Any]
             )
             XCTAssertEqual(Set(property["type"] as? [String] ?? []), Set(["object", "null"]))
+        }
+    }
+
+    private func assertThemeSchema(in properties: [String: Any]) throws {
+        let theme = try XCTUnwrap(properties["theme"] as? [String: Any])
+        let themeProperties = try XCTUnwrap(theme["properties"] as? [String: Any])
+        for property in [
+            "palette", "typeScale", "titleWeight", "elevation", "stroke", "controlShape",
+            "motion", "backgroundAssetBinding"
+        ] {
+            XCTAssertNotNil(themeProperties[property], property)
+        }
+        let palette = try XCTUnwrap(themeProperties["palette"] as? [String: Any])
+        let paletteProperties = try XCTUnwrap(palette["properties"] as? [String: Any])
+        XCTAssertEqual(Set(paletteProperties.keys), Set([
+            "primaryHex", "secondaryHex", "accentHex", "canvasLightHex", "canvasDarkHex",
+            "surfaceLightHex", "surfaceDarkHex"
+        ]))
+        for colorSchema in paletteProperties.values {
+            let color = try XCTUnwrap(colorSchema as? [String: Any])
+            XCTAssertEqual(color["pattern"] as? String, "^#[0-9A-F]{6}$")
+        }
+    }
+
+    private func assertRendererSchema(in root: [String: Any]) throws {
+        let variants = try XCTUnwrap(findEnums(named: "variant", in: root).first)
+        XCTAssertTrue(variants.contains(ComponentVariant.editorial.rawValue))
+        XCTAssertTrue(variants.contains(ComponentVariant.immersive.rawValue))
+        XCTAssertTrue(variants.contains(ComponentVariant.softAction.rawValue))
+        let navigationStyles = try XCTUnwrap(
+            findEnums(named: "navigationStyle", in: root).first
+        )
+        XCTAssertEqual(Set(navigationStyles), Set(PageNavigationStyle.allCases.map(\.rawValue)))
+
+        let imageSchema = try XCTUnwrap(
+            try findProperty(named: "image", in: root) as? [String: Any]
+        )
+        let imageProperties = try XCTUnwrap(imageSchema["properties"] as? [String: Any])
+        for property in ["mediaRole", "focalPoint", "mask", "overlay"] {
+            XCTAssertNotNil(imageProperties[property], property)
         }
     }
 

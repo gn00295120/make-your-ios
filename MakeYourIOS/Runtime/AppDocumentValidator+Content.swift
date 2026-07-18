@@ -25,6 +25,7 @@ extension AppDocumentValidator {
     private func validateVisualOrAI(_ node: ComponentNode) throws {
         switch node.kind {
         case .image: try validateImage(node)
+        case .hero where node.image != nil: try validateImage(node)
         case .aiAssistant: try validateAIAssistant(node)
         default: break
         }
@@ -46,9 +47,11 @@ extension AppDocumentValidator {
     private func validateImage(_ node: ComponentNode) throws {
         guard let image = node.image,
               !node.binding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              image.altText.count <= 180,
               image.decorative
-                || !image.altText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw AppDocumentValidationError.invalidComponentConfiguration(.image)
+                || !image.altText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              image.resolvedMediaRole != .decorative || image.decorative else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(node.kind)
         }
     }
 
@@ -148,7 +151,6 @@ extension AppDocumentValidator {
 
     private func validateSpecializedConfiguration(_ node: ComponentNode) throws {
         let configurations: [(ComponentKind, Bool)] = [
-            (.image, node.image != nil),
             (.recordCollection, node.collection != nil),
             (.liveDataList, node.liveData != nil),
             (.newsFeed, node.newsFeed != nil),
@@ -160,11 +162,24 @@ extension AppDocumentValidator {
         let configuredKinds = configurations.compactMap { $0.1 ? $0.0 : nil }
         let specializedKinds = Set(configurations.map { $0.0 })
         if specializedKinds.contains(node.kind) {
-            guard configuredKinds == [node.kind] else {
+            guard configuredKinds == [node.kind], node.image == nil else {
                 throw AppDocumentValidationError.invalidComponentConfiguration(node.kind)
             }
         } else if !configuredKinds.isEmpty {
             throw AppDocumentValidationError.invalidComponentConfiguration(node.kind)
+        }
+
+        switch node.kind {
+        case .image:
+            guard node.image != nil else {
+                throw AppDocumentValidationError.invalidComponentConfiguration(.image)
+            }
+        case .hero:
+            break
+        default:
+            guard node.image == nil else {
+                throw AppDocumentValidationError.invalidComponentConfiguration(node.kind)
+            }
         }
     }
 

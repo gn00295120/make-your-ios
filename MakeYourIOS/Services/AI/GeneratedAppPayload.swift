@@ -13,11 +13,12 @@ struct GeneratedAppPayload: Decodable {
 
     func makeDocument(existingID: UUID, version: Int) -> AppDocument {
         let documentPages = makePages()
+        let documentTheme = makeTheme()
         let safeStartPageID = documentPages.contains(where: { $0.id == startPageID })
             ? startPageID
             : documentPages.first?.id ?? "home"
 
-        return AppDocument(
+        var document = AppDocument(
             id: existingID,
             name: String(name.prefix(48)),
             summary: String(summary.prefix(240)),
@@ -26,63 +27,21 @@ struct GeneratedAppPayload: Decodable {
             version: version,
             updatedAt: .now,
             startPageID: safeStartPageID,
-            capabilities: makeCapabilities(for: documentPages),
+            capabilities: [],
             initialState: makeInitialState(),
-            theme: makeTheme(),
+            theme: documentTheme,
             pages: documentPages.isEmpty ? SampleDocuments.blank.pages : documentPages
         )
-    }
-
-    private func makeTheme() -> AppVisualTheme {
-        AppVisualTheme(
-            preset: VisualThemePreset(rawValue: theme.preset) ?? .native,
-            appearance: ThemeAppearance(rawValue: theme.appearance) ?? .system,
-            typography: ThemeTypography(rawValue: theme.typography) ?? .system,
-            background: ThemeBackground(rawValue: theme.background) ?? .grouped,
-            cornerStyle: ThemeCornerStyle(rawValue: theme.cornerStyle) ?? .soft,
-            density: ThemeDensity(rawValue: theme.density) ?? .regular,
-            defaultSurface: ComponentSurface(rawValue: theme.defaultSurface) ?? .card
-        )
+        document.capabilities = AppCapabilityResolver.requiredCapabilities(for: document)
+            .sorted(by: { $0.rawValue < $1.rawValue })
+        return document
     }
 
     private func makePages() -> [AppPage] {
         pages.prefix(AppDocumentValidator.maximumPages).enumerated().map { pageIndex, page in
             let pageID = normalizedID(page.id, fallback: "page-\(pageIndex + 1)")
             let nodes = page.nodes.prefix(20).enumerated().map { nodeIndex, node in
-                let kind = ComponentKind(rawValue: node.kind) ?? .text
-                let presentation = makePresentation(node.presentation, for: kind)
-                let binding = normalizedID(node.binding, fallback: "value-\(nodeIndex + 1)")
-                return ComponentNode(
-                    id: normalizedID(node.id, fallback: "\(pageID)-node-\(nodeIndex + 1)"),
-                    kind: kind,
-                    title: String(node.title.prefix(120)),
-                    subtitle: String(node.subtitle.prefix(320)),
-                    symbol: Self.allowedSymbols.contains(node.symbol) ? node.symbol : "sparkles",
-                    value: String(node.value.prefix(800)),
-                    placeholder: String(node.placeholder.prefix(160)),
-                    binding: binding,
-                    options: Array(node.options.prefix(20)).map { String($0.prefix(40)) },
-                    items: makeItems(
-                        node.items,
-                        pageID: pageID,
-                        nodeIndex: nodeIndex,
-                        kind: kind
-                    ),
-                    action: RuntimeAction(
-                        type: RuntimeActionType(rawValue: node.action.type) ?? .none,
-                        target: normalizedID(node.action.target, fallback: ""),
-                        value: String(node.action.value.prefix(240))
-                    ),
-                    presentation: presentation,
-                    image: kind == .image ? makeImage(node.image, fallbackTitle: node.title) : nil,
-                    collection: kind == .recordCollection ? makeCollection(node.collection) : nil,
-                    liveData: kind == .liveDataList ? makeLiveData(node.liveData) : nil,
-                    newsFeed: kind == .newsFeed ? makeNewsFeed(node.newsFeed) : nil,
-                    marketWatch: kind == .marketWatch ? makeMarketWatch(node.marketWatch) : nil,
-                    ledger: kind == .ledger ? makeLedger(node.ledger) : nil,
-                    game: kind == .game ? makeGame(node.game) : nil,
-                    deviceInput: kind == .deviceInput ? makeDeviceInput(node.deviceInput) : nil
-                )
+                makeNode(node, pageID: pageID, nodeIndex: nodeIndex)
             }
             return AppPage(
                 id: pageID,
@@ -90,7 +49,10 @@ struct GeneratedAppPayload: Decodable {
                 nodes: nodes,
                 presentation: PagePresentation(
                     layout: PageLayout(rawValue: page.presentation.layout) ?? .flow,
-                    showsNavigationTitle: page.presentation.showsNavigationTitle
+                    showsNavigationTitle: page.presentation.showsNavigationTitle,
+                    navigationStyle: PageNavigationStyle(
+                        rawValue: page.presentation.navigationStyle
+                    ) ?? .automatic
                 )
             )
         }
@@ -98,6 +60,36 @@ struct GeneratedAppPayload: Decodable {
 }
 
 private extension GeneratedAppPayload {
+    private func makeNode(_ node: Node, pageID: String, nodeIndex: Int) -> ComponentNode {
+        let kind = ComponentKind(rawValue: node.kind) ?? .text
+        return ComponentNode(
+            id: normalizedID(node.id, fallback: "\(pageID)-node-\(nodeIndex + 1)"),
+            kind: kind,
+            title: String(node.title.prefix(120)),
+            subtitle: String(node.subtitle.prefix(320)),
+            symbol: Self.allowedSymbols.contains(node.symbol) ? node.symbol : "sparkles",
+            value: String(node.value.prefix(800)),
+            placeholder: String(node.placeholder.prefix(160)),
+            binding: normalizedID(node.binding, fallback: "value-\(nodeIndex + 1)"),
+            options: Array(node.options.prefix(20)).map { String($0.prefix(40)) },
+            items: makeItems(node.items, pageID: pageID, nodeIndex: nodeIndex, kind: kind),
+            action: RuntimeAction(
+                type: RuntimeActionType(rawValue: node.action.type) ?? .none,
+                target: normalizedID(node.action.target, fallback: ""),
+                value: String(node.action.value.prefix(240))
+            ),
+            presentation: makePresentation(node.presentation, for: kind),
+            image: makeImage(node.image, for: kind, fallbackTitle: node.title),
+            collection: kind == .recordCollection ? makeCollection(node.collection) : nil,
+            liveData: kind == .liveDataList ? makeLiveData(node.liveData) : nil,
+            newsFeed: kind == .newsFeed ? makeNewsFeed(node.newsFeed) : nil,
+            marketWatch: kind == .marketWatch ? makeMarketWatch(node.marketWatch) : nil,
+            ledger: kind == .ledger ? makeLedger(node.ledger) : nil,
+            game: kind == .game ? makeGame(node.game) : nil,
+            deviceInput: kind == .deviceInput ? makeDeviceInput(node.deviceInput) : nil
+        )
+    }
+
     private func makeItems(
         _ items: [Item],
         pageID: String,
@@ -131,21 +123,38 @@ private extension GeneratedAppPayload {
             span: supportsCompactSpan ? requestedSpan : .full,
             alignment: ComponentAlignment(rawValue: design.alignment) ?? .leading,
             emphasis: ComponentEmphasis(rawValue: design.emphasis) ?? .regular,
-            variant: ComponentVariant(rawValue: design.variant) ?? .automatic
+            variant: RendererCatalog.normalizedVariant(
+                ComponentVariant(rawValue: design.variant) ?? .automatic,
+                for: kind
+            )
         )
     }
 
-    private func makeImage(_ image: Image?, fallbackTitle: String) -> ImageSpec {
+    private func makeImage(
+        _ image: Image?,
+        for kind: ComponentKind,
+        fallbackTitle: String
+    ) -> ImageSpec? {
+        guard kind == .image || kind == .hero else { return nil }
+        guard let image else {
+            return kind == .image ? .editableLandscape : nil
+        }
         let fallbackAltText = fallbackTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        let altText = (image?.altText ?? "").isEmpty
+        let altText = image.altText.isEmpty
             ? (fallbackAltText.isEmpty ? "User-selected image" : fallbackAltText)
-            : image?.altText ?? fallbackAltText
+            : image.altText
+        let defaultRole: MediaRole = kind == .hero ? .hero : .content
+        let role = MediaRole(rawValue: image.mediaRole) ?? defaultRole
         return ImageSpec(
-            aspect: ImageAspect(rawValue: image?.aspect ?? "") ?? .landscape,
-            contentMode: ImageContentMode(rawValue: image?.contentMode ?? "") ?? .fill,
+            aspect: ImageAspect(rawValue: image.aspect) ?? .landscape,
+            contentMode: ImageContentMode(rawValue: image.contentMode) ?? .fill,
             altText: String(altText.prefix(180)),
-            decorative: image?.decorative ?? false,
-            allowsUserSelection: image?.allowsUserSelection ?? true
+            decorative: image.decorative || role == .decorative,
+            allowsUserSelection: image.allowsUserSelection,
+            mediaRole: role,
+            focalPoint: ImageFocalPoint(rawValue: image.focalPoint) ?? .center,
+            mask: ImageMask(rawValue: image.mask) ?? .rounded,
+            overlay: ImageOverlay(rawValue: image.overlay) ?? ImageOverlay.none
         )
     }
 
@@ -277,11 +286,6 @@ private extension GeneratedAppPayload {
             resultLabel: String(nonEmpty(deviceInput?.resultLabel, fallback: defaultResult).prefix(60)),
             allowsRepeat: deviceInput?.allowsRepeat ?? true
         )
-    }
-
-    private func makeCapabilities(for pages: [AppPage]) -> [AppCapability] {
-        AppCapabilityResolver.requiredCapabilities(for: pages)
-            .sorted(by: { $0.rawValue < $1.rawValue })
     }
 
     private func makeInitialState() -> [String: String] {

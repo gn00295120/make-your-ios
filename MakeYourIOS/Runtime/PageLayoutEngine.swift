@@ -47,7 +47,15 @@ enum PageLayoutEngine {
 
     private static func canShareRow(_ node: ComponentNode, layout: PageLayout) -> Bool {
         let span = node.resolvedPresentation.span
-        let wantsCompactWidth = span == .half || (span == .adaptive && layout == .dashboard)
+        let wantsCompactWidth: Bool
+        switch layout {
+        case .flow:
+            wantsCompactWidth = span == .half
+        case .dashboard:
+            wantsCompactWidth = span == .half || span == .adaptive
+        case .form, .story:
+            wantsCompactWidth = false
+        }
         guard wantsCompactWidth else { return false }
 
         switch node.kind {

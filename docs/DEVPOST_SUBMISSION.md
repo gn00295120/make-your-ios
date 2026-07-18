@@ -41,7 +41,15 @@ immediately inside one trusted host, and change it later with another sentence?
   schema version before activation.
 - Renders the result as native SwiftUI through a fixed component runtime.
 - Gives each mini app its own bounded visual identity: theme, typography,
-  backgrounds, page layouts, component surfaces, spans, emphasis, and variants.
+  semantic light/dark palette, type scale, backgrounds, page layouts and
+  navigation, controls, motion, component surfaces, spans, emphasis, and
+  renderer-compatible variants.
+- Includes a native Design Studio with live iPhone preview, presets, custom
+  colors, typography, layout, icon, motion, undo/redo, and a private canvas
+  photo; the complete edit applies as one app version.
+- Offers GPT-5.6 Design-only generation behind a host-owned merge that preserves
+  every feature, value, action, binding, data configuration, capability, and
+  local media slot.
 - Supports project-local photo slots without putting image bytes or paths in the
   generated document or builder prompt.
 - Lets generated apps include focused AI assistants with an exact-payload review
@@ -64,11 +72,11 @@ natural-language intent
 The generated document is deliberately not arbitrary Swift, JavaScript, or
 WebAssembly. It selects from a catalog of precompiled components and declared
 capabilities. The current catalog covers hero content, text, metrics, inputs,
-pickers, actions, checklists, a currency converter, task lists, generic record
-collections, fixed-provider live-data lists, private images, text-only AI
-assistants, and information banners. A bounded visual grammar makes these apps
-meaningfully distinct without arbitrary generated layout code. The runtime owns
-every side effect.
+pickers, actions, checklists, currency, tasks, generic records, news, markets,
+ledgers, deterministic games, private images, device inputs, text-only AI
+assistants, and information banners. Design Genome v2 adds semantic tokens,
+four real page compositions, safe media treatments, and per-renderer variants
+without arbitrary generated layout code. The runtime owns every side effect.
 
 Codex was used throughout the build to turn the product thesis into the
 architecture, SwiftUI implementation, validation boundary, tests, lint-clean
@@ -90,14 +98,16 @@ logs, and injected only into the direct provider request. The UI also requires a
 clear disclosure before any builder data is sent.
 
 A third challenge was making generated apps feel authored rather than templated.
-We split semantic components from presentation tokens, added six coherent visual
-directions and multiple page compositions, and kept accessibility behavior under
-the native runtime's control.
+We split semantic components from Design Genome v2, added six coherent starting
+directions, custom semantic palettes, multiple real page compositions and
+renderer-specific variants, and kept accessibility behavior under the native
+runtime's control. The same genome now powers both manual Design Studio edits
+and GPT-5.6 Design-only proposals.
 
 ## Accomplishments
 
 - A coherent, runnable product rather than a static concept prototype.
-- Four functional native mini apps available on first launch, including two
+- Ten functional native mini apps available on first launch, including two
   examples generated through MakeYour's own Builder: Live FX Watch and Use It First.
 - A real GPT-5.6 demo that creates Daily Focus from a prompt, evolves it from
   Version 2 to Version 3 while preserving a completed task, and switches among
@@ -107,8 +117,12 @@ the native runtime's control.
 - Real Keychain round-trip and local-notification scheduling.
 - Persistent multi-app library with replacement versions.
 - Project-local, metadata-stripped image persistence with duplicate/delete lifecycle.
-- 43 passing tests and a zero-violation strict SwiftLint run.
-- Visual verification on iPhone 17 Pro Simulator in light mode.
+- Design Genome v2, Design Studio, and a function-preserving AI Design-only path.
+- 109 passing unit tests, three passing Design Studio UI paths, a passing live
+  GPT-5.6 generation E2E, and a zero-violation strict SwiftLint run across 105
+  Swift files.
+- Visual verification of editorial, split/card, and immersive treatments on an
+  iPhone 17 Pro Simulator.
 
 ## What we learned
 
@@ -120,9 +134,9 @@ the execution boundary.
 ## What's next
 
 - Safe expression ASTs and richer local relationships between records.
-- JSON Patch edits, immutable published versions, undo, and rollback.
+- Versioned JSON Patch feature edits and cross-version rollback.
 - Per-project SQLite namespaces and migrations.
-- Automated accessibility and snapshot diagnostics fed back to the model.
+- Broader automated accessibility and snapshot diagnostics fed back to the model.
 - Additional carefully reviewed capabilities for calendar, location, share, and
   allowlisted HTTPS data sources.
 - Early App Review guidance before broadening runtime programmability.
@@ -160,6 +174,8 @@ line use a held frame from the real app library rather than concept mockups.
 - [x] Submit as `Individual` from `Taiwan` to `Apps for Your Life`.
 - [x] Clone the public repository, regenerate the Xcode project, and pass all 43
   tests using the README instructions.
+- [x] After submission, expand the current source to Design Genome v2 and pass
+  109 unit tests, three Design Studio UI paths, and one live GPT-5.6 E2E.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
 - [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at

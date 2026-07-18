@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 extension ThemeAppearance {
     var colorScheme: ColorScheme? {
@@ -77,35 +78,73 @@ struct RuntimeCanvasBackground: View {
     let theme: AppVisualTheme
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) private var design
+
     var body: some View {
         switch theme.background {
         case .grouped:
-            Color(uiColor: .systemGroupedBackground)
+            design.canvas
         case .plain:
-            Color(uiColor: .systemBackground)
+            design.canvas
         case .tinted:
             ZStack {
-                Color(uiColor: .systemGroupedBackground)
-                tint.color.opacity(0.08)
+                design.canvas
+                design.accent.opacity(design.increasedContrast ? 0.12 : 0.07)
             }
         case .paper:
             ZStack {
-                Color(uiColor: .systemBackground)
-                Color.orange.opacity(0.045)
+                design.canvas
+                design.highlight.opacity(0.04)
             }
         case .gradient:
             LinearGradient(
-                colors: [tint.color.opacity(0.20), Color(uiColor: .systemBackground), tint.color.opacity(0.08)],
+                colors: [
+                    design.accent.opacity(0.25),
+                    design.canvas,
+                    design.secondaryAccent.opacity(0.13)
+                ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .midnight:
             LinearGradient(
-                colors: [Color(red: 0.04, green: 0.05, blue: 0.11), tint.color.opacity(0.30)],
+                colors: [design.canvas, design.accent.opacity(0.36)],
                 startPoint: .top,
                 endPoint: .bottomTrailing
             )
         }
+    }
+}
+
+struct RuntimeMediaBackground: View {
+    let projectID: UUID
+    let theme: AppVisualTheme
+    let tint: AppTint
+
+    @Environment(LocalAssetStore.self) private var assetStore
+    @Environment(\.runtimeDesign) private var design
+
+    private var backgroundImage: UIImage? {
+        guard let binding = theme.backgroundAssetBinding?.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        ), !binding.isEmpty else {
+            return nil
+        }
+        return assetStore.image(projectID: projectID, binding: binding)
+    }
+
+    var body: some View {
+        ZStack {
+            RuntimeCanvasBackground(theme: theme, tint: tint)
+            if let backgroundImage {
+                Image(uiImage: backgroundImage)
+                    .resizable()
+                    .scaledToFill()
+                    .accessibilityHidden(true)
+                design.canvas.opacity(design.reduceTransparency ? 0.90 : 0.60)
+            }
+        }
+        .clipped()
     }
 }
 
@@ -115,6 +154,7 @@ struct RuntimeNodeSurfaceModifier: ViewModifier {
     let tint: AppTint
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.runtimeDesign) private var design
 
     private var presentation: ComponentPresentation {
         node.resolvedPresentation
@@ -125,53 +165,119 @@ struct RuntimeNodeSurfaceModifier: ViewModifier {
             return presentation.surface
         }
 
+        let variant = RendererCatalog.normalizedVariant(presentation.variant, for: node.kind)
+        switch variant {
+        case .cards:
+            return .card
+        case .framed, .outlinedAction:
+            return .outlined
+        case .softAction:
+            return .tinted
+        case .editorial, .fullBleed, .immersive:
+            return .plain
+        default:
+            break
+        }
+
         switch node.kind {
         case .button, .divider, .image:
             return .plain
         default:
-            return theme.defaultSurface == .automatic ? .card : theme.defaultSurface
+            return design.theme.defaultSurface == .automatic ? .card : design.theme.defaultSurface
         }
     }
 
-    private var opacity: Double {
-        presentation.emphasis == .subtle ? 0.82 : 1
+    private var nodePadding: CGFloat {
+        let variant = RendererCatalog.normalizedVariant(presentation.variant, for: node.kind)
+        if [.fullBleed, .immersive].contains(variant) { return 0 }
+        if [.compact, .dense].contains(variant) { return max(9, design.componentPadding * 0.68) }
+        return design.componentPadding
     }
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        let shape = RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: design.cornerRadius, style: .continuous)
         let aligned = content
             .frame(maxWidth: .infinity, alignment: presentation.alignment.frameAlignment)
-            .opacity(opacity)
 
+        surfaced(aligned, in: shape)
+        .saturation(presentation.emphasis == .subtle ? 0.72 : 1)
+        .contrast(presentation.emphasis == .strong ? 1.08 : 1)
+        .shadow(
+            color: presentation.emphasis == .strong
+                ? design.accent.opacity(design.increasedContrast ? 0.22 : 0.12)
+                : .clear,
+            radius: presentation.emphasis == .strong ? 8 : 0,
+            y: presentation.emphasis == .strong ? 3 : 0
+        )
+    }
+
+    @ViewBuilder
+    private func surfaced<ContentView: View>(
+        _ content: ContentView,
+        in shape: RoundedRectangle
+    ) -> some View {
         switch surface {
         case .automatic, .plain:
-            aligned
+            content
         case .card:
-            aligned
-                .padding(theme.componentPadding)
-                .background(Color(uiColor: .secondarySystemBackground), in: shape)
-                .overlay { shape.stroke(Color.primary.opacity(0.06), lineWidth: 1) }
+            content
+                .padding(nodePadding)
+                .background(design.surface, in: shape)
+                .overlay {
+                    shape.stroke(
+                        design.borderColor.opacity(design.borderOpacity),
+                        lineWidth: design.borderWidth
+                    )
+                }
+                .shadow(
+                    color: Color.black.opacity(design.shadowOpacity),
+                    radius: design.shadowRadius,
+                    y: design.shadowY
+                )
         case .tinted:
-            aligned
-                .padding(theme.componentPadding)
-                .background(tint.color.opacity(0.11), in: shape)
+            content
+                .padding(nodePadding)
+                .background(design.accent.opacity(0.11), in: shape)
+                .overlay {
+                    if design.differentiateWithoutColor {
+                        shape.stroke(design.accent, lineWidth: max(1, design.borderWidth))
+                    }
+                }
         case .outlined:
-            aligned
-                .padding(theme.componentPadding)
+            content
+                .padding(nodePadding)
                 .background(Color.clear, in: shape)
-                .overlay { shape.stroke(tint.color.opacity(0.42), lineWidth: 1.2) }
+                .overlay {
+                    shape.stroke(
+                        design.accent.opacity(design.increasedContrast ? 0.92 : 0.56),
+                        lineWidth: max(1.2, design.borderWidth)
+                    )
+                }
         case .material:
-            if reduceTransparency {
-                aligned
-                    .padding(theme.componentPadding)
-                    .background(Color(uiColor: .secondarySystemBackground), in: shape)
-            } else {
-                aligned
-                    .padding(theme.componentPadding)
-                    .background(.thinMaterial, in: shape)
-                    .overlay { shape.stroke(Color.white.opacity(0.16), lineWidth: 1) }
-            }
+            materialSurface(content, in: shape)
+        }
+    }
+
+    @ViewBuilder
+    private func materialSurface<ContentView: View>(
+        _ content: ContentView,
+        in shape: RoundedRectangle
+    ) -> some View {
+        if reduceTransparency || design.reduceTransparency {
+            content
+                .padding(nodePadding)
+                .background(design.surface, in: shape)
+        } else {
+            content
+                .padding(nodePadding)
+                .background(.thinMaterial, in: shape)
+                .overlay {
+                    shape.stroke(
+                        design.borderColor.opacity(design.borderOpacity),
+                        lineWidth: design.borderWidth
+                    )
+                }
         }
     }
 }

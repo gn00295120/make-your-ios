@@ -13,6 +13,8 @@ struct TaskListRuntimeView: View {
     let node: ComponentNode
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) private var design
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var tasks: [RuntimeTask] = []
     @State private var showingNewTask = false
     @State private var newTitle = ""
@@ -23,13 +25,25 @@ struct TaskListRuntimeView: View {
         "runtime.tasks.\(projectID.uuidString).\(node.id)"
     }
 
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .taskList)
+    }
+
+    private var contentSpacing: CGFloat {
+        [.compact, .dense].contains(variant) ? 8 : design.componentSpacing
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: contentSpacing) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(node.title).font(.headline)
+                    Text(node.title)
+                        .font(design.sectionFont)
+                        .accessibilityAddTraits(.isHeader)
                     if !node.subtitle.isEmpty {
-                        Text(node.subtitle).font(.caption).foregroundStyle(.secondary)
+                        Text(node.subtitle)
+                            .font(design.captionFont)
+                            .foregroundStyle(design.secondaryForeground)
                     }
                 }
                 Spacer()
@@ -38,9 +52,17 @@ struct TaskListRuntimeView: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.subheadline.bold())
-                        .frame(width: 34, height: 34)
-                        .background(tint.color.opacity(0.12), in: Circle())
+                        .foregroundStyle(design.accent)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            design.accent.opacity(0.12),
+                            in: RoundedRectangle(
+                                cornerRadius: design.controlCornerRadius,
+                                style: .continuous
+                            )
+                        )
                 }
+                .buttonStyle(.plain)
                 .accessibilityLabel("Add task")
             }
 
@@ -52,49 +74,22 @@ struct TaskListRuntimeView: View {
                 )
                 .frame(maxWidth: .infinity)
             } else {
-                ForEach(tasks) { task in
-                    HStack(spacing: 12) {
-                        Button {
-                            toggle(task.id)
-                        } label: {
-                            Image(systemName: task.isComplete ? "checkmark.circle.fill" : "circle")
-                                .font(.title3)
-                                .foregroundStyle(task.isComplete ? tint.color : Color.secondary)
+                VStack(spacing: variant == .cards ? 9 : 0) {
+                    ForEach(Array(tasks.enumerated()), id: \.element.id) { index, task in
+                        taskRow(task)
+                        if variant != .cards, index < tasks.count - 1 {
+                            Divider()
+                                .padding(.leading, variant == .timeline ? 25 : 40)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(task.isComplete ? "Mark incomplete" : "Mark complete")
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(task.title)
-                                .font(.subheadline.weight(.medium))
-                                .strikethrough(task.isComplete)
-                                .foregroundStyle(task.isComplete ? .secondary : .primary)
-                            Text(task.dueDate, style: .time)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button {
-                            scheduleReminder(for: task)
-                        } label: {
-                            Image(systemName: "bell")
-                                .foregroundStyle(tint.color)
-                                .frame(width: 32, height: 32)
-                                .background(tint.color.opacity(0.10), in: Circle())
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(task.isComplete)
-                        .accessibilityLabel("Schedule reminder for \(task.title)")
                     }
-                    .padding(.vertical, 3)
                 }
             }
 
             if let statusMessage {
                 Label(statusMessage, systemImage: "checkmark.circle.fill")
-                    .font(.caption)
-                    .foregroundStyle(tint.color)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .font(design.captionFont)
+                    .foregroundStyle(design.accent)
+                    .transition(design.contentTransition)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -131,6 +126,92 @@ struct TaskListRuntimeView: View {
         }
     }
 
+    private func taskRow(_ task: RuntimeTask) -> some View {
+        HStack(alignment: .center, spacing: variant == .dense ? 8 : 12) {
+            completionButton(task)
+            taskDetails(task)
+            Spacer(minLength: 8)
+            reminderButton(task)
+        }
+        .padding(.vertical, variant == .dense ? 1 : 4)
+        .padding(.horizontal, variant == .cards ? 12 : 0)
+        .background { taskRowBackground }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func completionButton(_ task: RuntimeTask) -> some View {
+        ZStack {
+            if variant == .timeline {
+                Capsule()
+                    .fill(design.accent.opacity(0.18))
+                    .frame(width: 3, height: dynamicTypeSize.isAccessibilitySize ? 60 : 46)
+                    .accessibilityHidden(true)
+            }
+            Button { toggle(task.id) } label: {
+                Image(systemName: task.isComplete ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(task.isComplete ? design.accent : design.secondaryForeground)
+                    .background(design.surface, in: Circle())
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(task.isComplete ? "Mark incomplete" : "Mark complete")
+        }
+    }
+
+    private func taskDetails(_ task: RuntimeTask) -> some View {
+        VStack(alignment: .leading, spacing: variant == .dense ? 0 : 3) {
+            Text(task.title)
+                .font(.system(
+                    .subheadline,
+                    design: design.theme.typography.fontDesign,
+                    weight: .semibold
+                ))
+                .strikethrough(task.isComplete)
+                .foregroundStyle(
+                    task.isComplete ? design.secondaryForeground : design.primaryForeground
+                )
+            Text(task.dueDate, style: .time)
+                .font(design.captionFont)
+                .foregroundStyle(design.secondaryForeground)
+        }
+    }
+
+    private func reminderButton(_ task: RuntimeTask) -> some View {
+        Button { scheduleReminder(for: task) } label: {
+            Image(systemName: task.isComplete ? "bell.slash" : "bell")
+                .foregroundStyle(task.isComplete ? design.secondaryForeground : design.accent)
+                .frame(width: 44, height: 44)
+                .background(
+                    design.accent.opacity(task.isComplete ? 0 : 0.10),
+                    in: RoundedRectangle(
+                        cornerRadius: design.controlCornerRadius,
+                        style: .continuous
+                    )
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(task.isComplete)
+        .accessibilityLabel("Schedule reminder for \(task.title)")
+    }
+
+    @ViewBuilder
+    private var taskRowBackground: some View {
+        if variant == .cards {
+            RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+                .fill(design.surface)
+                .overlay {
+                    RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+                        .stroke(
+                            design.borderColor.opacity(design.borderOpacity),
+                            lineWidth: design.borderWidth
+                        )
+                }
+        }
+    }
+}
+
+private extension TaskListRuntimeView {
     private func load() {
         if let data = UserDefaults.standard.data(forKey: storageKey),
            let saved = try? JSONDecoder().decode([RuntimeTask].self, from: data) {
@@ -162,7 +243,7 @@ struct TaskListRuntimeView: View {
 
     private func toggle(_ id: UUID) {
         guard let index = tasks.firstIndex(where: { $0.id == id }) else { return }
-        tasks[index].isComplete.toggle()
+        design.animate { tasks[index].isComplete.toggle() }
         save()
     }
 
@@ -199,7 +280,7 @@ struct TaskListRuntimeView: View {
                 )
                 try await center.add(request)
                 await MainActor.run {
-                    withAnimation(.easeInOut) { statusMessage = "Reminder scheduled for \(task.title)." }
+                    design.animate { statusMessage = "Reminder scheduled for \(task.title)." }
                 }
             } catch {
                 await MainActor.run { statusMessage = error.localizedDescription }

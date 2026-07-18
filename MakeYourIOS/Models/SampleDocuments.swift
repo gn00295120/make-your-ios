@@ -44,7 +44,7 @@ enum SampleDocuments {
                             span: .full,
                             alignment: .leading,
                             emphasis: .regular,
-                            variant: .automatic
+                            variant: .split
                         )
                     ),
                     ComponentNode(

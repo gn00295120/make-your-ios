@@ -1,69 +1,302 @@
+import PhotosUI
 import SwiftUI
+import UIKit
 
 struct HeroNodeView: View {
+    let projectID: UUID
     let node: ComponentNode
     let tint: AppTint
     let theme: AppVisualTheme
 
+    @Environment(LocalAssetStore.self) private var assetStore
+    @Environment(\.runtimeDesign) private var design
+    @State private var selectedItem: PhotosPickerItem?
+    @State private var assetRevision = 0
+    @State private var imageError: String?
+
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .hero)
+    }
+
+    private var storedImage: UIImage? {
+        _ = assetRevision
+        let binding = node.binding.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !binding.isEmpty else { return nil }
+        return assetStore.image(projectID: projectID, binding: binding)
+    }
+
     @ViewBuilder
     var body: some View {
-        switch node.resolvedPresentation.variant {
-        case .photoOverlay:
-            ZStack(alignment: .bottomLeading) {
-                LinearGradient(
-                    colors: [tint.color.opacity(0.62), tint.color, Color.black.opacity(0.58)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                VStack(alignment: .leading, spacing: 8) {
-                    Image(systemName: node.symbol.isEmpty ? "sparkles" : node.symbol)
-                        .font(.title2.bold())
-                    Text(node.title).font(.largeTitle.bold())
-                    if !node.subtitle.isEmpty {
-                        Text(node.subtitle).font(.subheadline).foregroundStyle(.white.opacity(0.82))
-                    }
-                }
-                .foregroundStyle(.white)
-                .padding(24)
+        VStack(alignment: .leading, spacing: 7) {
+            switch variant {
+            case .photoOverlay, .fullBleed, .immersive:
+                mediaHero
+            case .centered:
+                centeredHero
+            case .split:
+                splitHero
+            case .editorial:
+                editorialHero
+            case .compact:
+                compactHero
+            default:
+                standardHero
             }
-            .frame(maxWidth: .infinity, minHeight: theme.density == .airy ? 240 : 190)
-            .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous))
-        case .centered:
-            VStack(spacing: 12) {
-                Image(systemName: node.symbol.isEmpty ? "sparkles" : node.symbol)
-                    .font(.system(size: 32, weight: .semibold))
-                    .foregroundStyle(tint.color)
-                Text(node.title).font(.largeTitle.bold()).multilineTextAlignment(.center)
-                if !node.subtitle.isEmpty {
-                    Text(node.subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-        default:
-            HStack(spacing: 16) {
-                Image(systemName: node.symbol.isEmpty ? "sparkles" : node.symbol)
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 58, height: 58)
-                    .background(
-                        tint.color.gradient,
-                        in: RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                    )
 
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(node.title).font(.title2.bold()).foregroundStyle(.primary)
-                    if !node.subtitle.isEmpty {
-                        Text(node.subtitle).font(.subheadline).foregroundStyle(.secondary)
-                    }
-                }
-                Spacer(minLength: 0)
+            if let imageError {
+                Label(imageError, systemImage: "exclamationmark.triangle.fill")
+                    .font(design.captionFont)
+                    .foregroundStyle(design.danger)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .onChange(of: selectedItem) { _, item in
+            guard let item else { return }
+            Task { await importPhoto(item) }
+        }
+    }
+
+    private var mediaHero: some View {
+        let hasStoredImage = storedImage != nil
+        return ZStack(alignment: .bottomLeading) {
+            Group {
+                if let storedImage {
+                    Image(uiImage: storedImage)
+                        .resizable()
+                        .scaledToFill()
+                        .accessibilityHidden(imageSpec?.decorative ?? true)
+                        .accessibilityLabel(imageSpec?.altText ?? "Hero image")
+                } else {
+                    LinearGradient(
+                        colors: [design.secondaryAccent, design.accent, Color.black.opacity(0.72)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
+
+            LinearGradient(
+                colors: [.clear, Color.black.opacity(0.78)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: node.symbol.isEmpty ? "sparkles" : node.symbol)
+                    .font(.title2.weight(design.titleWeight))
+                    .accessibilityHidden(true)
+                heroTitle(foreground: .white)
+            }
+            .padding(variant == .immersive ? 28 : 22)
+
+            if imageSpec?.allowsUserSelection == true {
+                PhotosPicker(selection: $selectedItem, matching: .images, photoLibrary: .shared()) {
+                    Label(hasStoredImage ? "Change photo" : "Choose photo", systemImage: "photo.badge.plus")
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 8)
+                        .foregroundStyle(.white)
+                        .background(.black.opacity(0.56), in: Capsule())
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .accessibilityHint("The photo stays on this device")
+            }
+        }
+        .frame(
+            maxWidth: .infinity,
+            minHeight: variant == .immersive || theme.density == .airy ? 270 : 210
+        )
+        .clipShape(RoundedRectangle(cornerRadius: design.cornerRadius, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
+    private var centeredHero: some View {
+        VStack(spacing: 12) {
+            Image(systemName: node.symbol.isEmpty ? "sparkles" : node.symbol)
+                .font(.system(size: 34, weight: design.titleWeight))
+                .foregroundStyle(design.accent)
+                .frame(width: 64, height: 64)
+                .background(design.secondaryAccent.opacity(0.14), in: Circle())
+                .accessibilityHidden(true)
+            heroTitle(foreground: design.primaryForeground)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var splitHero: some View {
+        HStack(alignment: .center, spacing: design.componentSpacing) {
+            heroTitle(foreground: design.primaryForeground)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: node.symbol.isEmpty ? "sparkles" : node.symbol)
+                .font(.system(size: 38, weight: design.titleWeight))
+                .foregroundStyle(design.onAccent)
+                .frame(width: 92, height: 104)
+                .background(design.accent.gradient, in: heroIconShape)
+                .accessibilityHidden(true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var editorialHero: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: node.symbol.isEmpty ? "textformat" : node.symbol)
+                Rectangle().frame(height: max(1, design.borderWidth))
+            }
+            .font(.caption.weight(.bold))
+            .foregroundStyle(design.accent)
+            .accessibilityHidden(true)
+            heroTitle(foreground: design.primaryForeground)
+            Text("CURATED FOR YOU")
+                .font(.caption2.weight(.semibold))
+                .tracking(1.4)
+                .foregroundStyle(design.secondaryForeground)
+                .accessibilityHidden(true)
+        }
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var compactHero: some View {
+        HStack(spacing: 12) {
+            Image(systemName: node.symbol.isEmpty ? "sparkles" : node.symbol)
+                .font(.headline.weight(design.titleWeight))
+                .foregroundStyle(design.onAccent)
+                .frame(width: 44, height: 44)
+                .background(design.accent, in: heroIconShape)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(node.title).font(design.sectionFont)
+                    .accessibilityAddTraits(.isHeader)
+                if !node.subtitle.isEmpty {
+                    Text(node.subtitle).font(design.captionFont).foregroundStyle(design.secondaryForeground)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var standardHero: some View {
+        HStack(spacing: 16) {
+            Image(systemName: node.symbol.isEmpty ? "sparkles" : node.symbol)
+                .font(.system(size: 28, weight: design.titleWeight))
+                .foregroundStyle(design.onAccent)
+                .frame(width: 58, height: 58)
+                .background(design.accent.gradient, in: heroIconShape)
+                .accessibilityHidden(true)
+            heroTitle(foreground: design.primaryForeground)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var heroIconShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+    }
+
+    private var imageSpec: ImageSpec? { node.image }
+
+    private func heroTitle(foreground: Color) -> some View {
+        VStack(alignment: variant == .centered ? .center : .leading, spacing: 6) {
+            Text(node.title)
+                .font(design.displayFont)
+                .foregroundStyle(foreground)
+                .accessibilityAddTraits(.isHeader)
+            if !node.subtitle.isEmpty {
+                Text(node.subtitle)
+                    .font(design.bodyFont)
+                    .foregroundStyle(foreground.opacity(0.78))
+            }
+        }
+    }
+
+    @MainActor
+    private func importPhoto(_ item: PhotosPickerItem) async {
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self) else {
+                throw LocalAssetStoreError.invalidImageData
+            }
+            try assetStore.saveImageData(data, projectID: projectID, binding: node.binding)
+            assetRevision += 1
+            selectedItem = nil
+            imageError = nil
+        } catch {
+            imageError = error.localizedDescription
+        }
+    }
+}
+
+struct SectionHeaderNodeView: View {
+    let node: ComponentNode
+
+    @Environment(\.runtimeDesign) private var design
+
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .sectionHeader)
+    }
+
+    var body: some View {
+        VStack(
+            alignment: variant == .centered ? .center : .leading,
+            spacing: variant == .compact ? 2 : 5
+        ) {
+            Text(node.title)
+                .font(variant == .editorial ? design.titleFont : design.sectionFont)
+                .accessibilityAddTraits(.isHeader)
+            if variant == .editorial {
+                Rectangle()
+                    .fill(design.accent)
+                    .frame(width: 42, height: max(2, design.borderWidth))
+                    .accessibilityHidden(true)
+            }
+            if !node.subtitle.isEmpty {
+                Text(node.subtitle)
+                    .font(design.captionFont)
+                    .foregroundStyle(design.secondaryForeground)
+            }
+        }
+        .multilineTextAlignment(variant == .centered ? .center : .leading)
+        .frame(maxWidth: .infinity, alignment: variant == .centered ? .center : .leading)
+        .padding(.top, variant == .compact ? 2 : 6)
+    }
+}
+
+struct TextNodeView: View {
+    let node: ComponentNode
+
+    @Environment(\.runtimeDesign) private var design
+
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .text)
+    }
+
+    var body: some View {
+        Text(node.title.isEmpty ? node.value : node.title)
+            .font(variant == .editorial ? design.sectionFont : design.bodyFont)
+            .foregroundStyle(design.primaryForeground)
+            .lineSpacing(variant == .editorial ? 7 : (variant == .compact ? 1 : 4))
+            .multilineTextAlignment(textAlignment)
+            .frame(maxWidth: .infinity, alignment: frameAlignment)
+            .padding(variant == .framed ? design.componentPadding : 0)
+            .background(
+                variant == .framed ? design.surface : .clear,
+                in: RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+            )
+    }
+
+    private var textAlignment: TextAlignment {
+        variant == .centered ? .center : node.resolvedPresentation.alignment.textAlignment
+    }
+
+    private var frameAlignment: Alignment {
+        variant == .centered ? .center : node.resolvedPresentation.alignment.frameAlignment
     }
 }
 
@@ -71,113 +304,82 @@ struct MetricNodeView: View {
     let node: ComponentNode
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) private var design
+
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .metric)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if node.resolvedPresentation.variant != .numberFirst {
+        Group {
+            switch variant {
+            case .compact, .dense:
+                compactMetric
+            case .centered:
+                metricContent(alignment: .center)
+                    .multilineTextAlignment(.center)
+            case .progress:
+                progressMetric
+            default:
+                metricContent(alignment: .leading)
+            }
+        }
+        .padding([.cards, .framed].contains(variant) ? design.componentPadding : 0)
+        .background(
+            [.cards, .framed].contains(variant) ? design.surface : .clear,
+            in: RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+        )
+        .overlay {
+            if variant == .framed {
+                RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+                    .stroke(design.accent.opacity(0.5), lineWidth: max(1, design.borderWidth))
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(node.title)
+        .accessibilityValue(node.value)
+    }
+
+    private var compactMetric: some View {
+        HStack(spacing: 10) {
+            Label(node.title, systemImage: node.symbol.isEmpty ? "chart.bar.fill" : node.symbol)
+                .font(design.captionFont.weight(.semibold))
+                .foregroundStyle(design.accent)
+            Spacer(minLength: 8)
+            Text(node.value).font(design.sectionFont.monospacedDigit())
+        }
+    }
+
+    private var progressMetric: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            metricContent(alignment: .leading)
+            ProgressView(value: normalizedProgress)
+                .tint(design.accent)
+                .accessibilityLabel(node.title)
+                .accessibilityValue(Text(normalizedProgress, format: .percent))
+        }
+    }
+
+    private func metricContent(alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 7) {
+            if variant != .numberFirst {
                 Label(node.title, systemImage: node.symbol.isEmpty ? "chart.bar.fill" : node.symbol)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(tint.color)
+                    .font(design.captionFont.weight(.semibold))
+                    .foregroundStyle(design.accent)
             }
-            Text(node.value).font(.system(.largeTitle, design: .rounded, weight: .bold))
-            if node.resolvedPresentation.variant == .numberFirst {
-                Text(node.title).font(.subheadline.weight(.semibold)).foregroundStyle(tint.color)
-            }
-            if node.resolvedPresentation.variant == .progress,
-               let progress = Double(node.value) {
-                ProgressView(value: min(max(progress, 0), 1))
-                    .tint(tint.color)
+            Text(node.value).font(design.displayFont.monospacedDigit())
+            if variant == .numberFirst {
+                Text(node.title).font(design.captionFont.weight(.semibold)).foregroundStyle(design.accent)
             }
             if !node.subtitle.isEmpty {
-                Text(node.subtitle).font(.caption).foregroundStyle(.secondary)
+                Text(node.subtitle).font(design.captionFont).foregroundStyle(design.secondaryForeground)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-struct InputNodeView: View {
-    let node: ComponentNode
-    let tint: AppTint
-    @Bindable var session: RuntimeSessionState
-
-    private var value: Binding<String> {
-        Binding(
-            get: { session.binding(for: node.binding, fallback: node.value) },
-            set: { session.set($0, for: node.binding) }
-        )
+        .frame(maxWidth: .infinity, alignment: alignment == .center ? .center : .leading)
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(node.title).font(.subheadline.weight(.semibold))
-            TextField(node.placeholder, text: value)
-                .keyboardType(node.kind == .numberInput ? .decimalPad : .default)
-                .textFieldStyle(.plain)
-                .padding(14)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .tint(tint.color)
-    }
-}
-
-struct PickerNodeView: View {
-    let node: ComponentNode
-    let tint: AppTint
-    @Bindable var session: RuntimeSessionState
-
-    private var selection: Binding<String> {
-        Binding(
-            get: { session.binding(for: node.binding, fallback: node.options.first ?? "") },
-            set: { session.set($0, for: node.binding) }
-        )
-    }
-
-    var body: some View {
-        HStack {
-            Text(node.title).font(.headline)
-            Spacer()
-            Picker(node.title, selection: selection) {
-                ForEach(node.options, id: \.self) { Text($0).tag($0) }
-            }
-            .pickerStyle(.menu)
-        }
-        .tint(tint.color)
-    }
-}
-
-struct ChecklistNodeView: View {
-    let node: ComponentNode
-    let tint: AppTint
-    @Bindable var session: RuntimeSessionState
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(node.title).font(.headline)
-            ForEach(node.items) { item in
-                Button {
-                    if session.checkedItemIDs.contains(item.id) {
-                        session.checkedItemIDs.remove(item.id)
-                    } else {
-                        session.checkedItemIDs.insert(item.id)
-                    }
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(
-                            systemName: session.checkedItemIDs.contains(item.id)
-                                ? "checkmark.circle.fill"
-                                : "circle"
-                        )
-                        .foregroundStyle(tint.color)
-                        Text(item.title)
-                            .foregroundStyle(.primary)
-                            .strikethrough(session.checkedItemIDs.contains(item.id))
-                        Spacer()
-                    }
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    private var normalizedProgress: Double {
+        let value = Double(node.value) ?? 0
+        return min(max(value > 1 ? value / 100 : value, 0), 1)
     }
 }

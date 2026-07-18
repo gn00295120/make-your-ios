@@ -26,6 +26,11 @@ final class OpenAIAppGenerationClientTests: XCTestCase {
         XCTAssertEqual(format["type"] as? String, "json_schema")
         XCTAssertEqual(format["strict"] as? Bool, true)
         XCTAssertNotNil(format["schema"] as? [String: Any])
+
+        let instructions = try XCTUnwrap(body["instructions"] as? String)
+        XCTAssertTrue(instructions.contains("When the request is design-only"))
+        XCTAssertTrue(instructions.contains("Palette values must be #RRGGBB"))
+        XCTAssertTrue(instructions.contains("Never invent an asset ID, file path, URL"))
     }
 
     func testIncompleteResponseSurfacesSpecificRetryableError() {

@@ -121,10 +121,21 @@ struct OpenAIAppGenerationClient: Sendable {
     List only capabilities actually used; the host independently derives and enforces the exact capability set.
     Keep the experience focused: one to three pages and no more than twelve components per page.
     Use concise, friendly interface copy and semantic iOS patterns.
-    Make an intentional visual system. Choose a theme, page layout, spans, surfaces, alignment,
-    and variants that fit the user's taste. Do not put every component in a card.
+    Make an intentional visual system. Choose a semantic brand palette, type scale, title weight,
+    elevation, stroke, control shape, motion level, page navigation, layout, spans, surfaces,
+    alignment, and renderer variants that fit the user's taste. Do not put every component in a card.
+    Palette values must be #RRGGBB. Treat primary as brand identity, secondary as supporting content,
+    accent as interactive emphasis, canvas as the page base, and surface as component material.
+    The host computes readable foreground colors and may increase contrast; never encode text colors.
+    When the request is design-only, preserve all pages, component behavior, capabilities, state bindings,
+    actions, data configuration, and IDs. Change only theme, page presentation, node presentation, and
+    image presentation metadata. Never remove working behavior merely to achieve a visual style.
     Use half-width spans only for text, metric, infoBanner, and image nodes.
-    Use image nodes as private photo slots. Set a meaningful binding and alt text; never invent an asset ID.
+    Use image nodes, or an optional hero image, as private media slots. Choose a semantic media role,
+    focal point, mask, and overlay. Set a meaningful kebab-case binding and alt text. A theme background
+    may reference a local backgroundAssetBinding; use an empty string when no selectable background is
+    intended. Bindings are logical local slots, not files. Never invent an asset ID, file path, URL,
+    uploaded image, or claim that an image already exists. The user chooses every private image in the host.
     If the user asks for an AI feature, use aiAssistant and declare ai.complete. Put its focused task
     instruction in value, input hint in placeholder, quick prompts in options, and button label in action.value.
     AI components may only transform text that the user explicitly reviews and sends.

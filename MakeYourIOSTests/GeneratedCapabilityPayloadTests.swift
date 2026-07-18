@@ -55,7 +55,23 @@ final class GeneratedCapabilityPayloadTests: XCTestCase {
                 background: "grouped",
                 cornerStyle: "soft",
                 density: "regular",
-                defaultSurface: "card"
+                defaultSurface: "card",
+                palette: GeneratedAppPayload.Palette(
+                    primaryHex: "#5450EF",
+                    secondaryHex: "#667085",
+                    accentHex: "#0A84FF",
+                    canvasLightHex: "#F2F2F7",
+                    canvasDarkHex: "#000000",
+                    surfaceLightHex: "#FFFFFF",
+                    surfaceDarkHex: "#1C1C1E"
+                ),
+                typeScale: "balanced",
+                titleWeight: "bold",
+                elevation: "subtle",
+                stroke: "hairline",
+                controlShape: "native",
+                motion: "subtle",
+                backgroundAssetBinding: ""
             ),
             capabilities: declaredCapabilities,
             startPageID: "home",
@@ -67,7 +83,8 @@ final class GeneratedCapabilityPayloadTests: XCTestCase {
                     nodes: nodes,
                     presentation: GeneratedAppPayload.PageDesign(
                         layout: "flow",
-                        showsNavigationTitle: true
+                        showsNavigationTitle: true,
+                        navigationStyle: "automatic"
                     )
                 )
             ]

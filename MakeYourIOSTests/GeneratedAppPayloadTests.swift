@@ -15,7 +15,23 @@ final class GeneratedAppPayloadTests: XCTestCase {
         "background": "paper",
         "cornerStyle": "square",
         "density": "airy",
-        "defaultSurface": "plain"
+        "defaultSurface": "plain",
+        "palette": {
+          "primaryHex": "#292524",
+          "secondaryHex": "#78716C",
+          "accentHex": "#B45309",
+          "canvasLightHex": "#FAF8F3",
+          "canvasDarkHex": "#1C1917",
+          "surfaceLightHex": "#FFFDF8",
+          "surfaceDarkHex": "#292524"
+        },
+        "typeScale": "editorial",
+        "titleWeight": "bold",
+        "elevation": "flat",
+        "stroke": "hairline",
+        "controlShape": "angular",
+        "motion": "none",
+        "backgroundAssetBinding": ""
       },
       "capabilities": ["storage.local"],
       "startPageID": "home",
@@ -24,7 +40,9 @@ final class GeneratedAppPayloadTests: XCTestCase {
         {
           "id": "home",
           "title": "Field Notes",
-          "presentation": {"layout":"story","showsNavigationTitle":false},
+          "presentation": {
+            "layout":"story","showsNavigationTitle":false,"navigationStyle":"chips"
+          },
           "nodes": [
             {
               "id": "photo",
@@ -44,7 +62,8 @@ final class GeneratedAppPayloadTests: XCTestCase {
               },
               "image": {
                 "aspect":"banner","contentMode":"fill","altText":"Daily photo",
-                "decorative":false,"allowsUserSelection":true
+                "decorative":false,"allowsUserSelection":true,
+                "mediaRole":"hero","focalPoint":"top","mask":"rounded","overlay":"scrim"
               },
               "collection": null,
               "liveData": null,
@@ -92,9 +111,14 @@ final class GeneratedAppPayloadTests: XCTestCase {
         let document = payload.makeDocument(existingID: UUID(), version: 2)
 
         XCTAssertEqual(document.resolvedTheme.preset, .editorial)
+        XCTAssertEqual(document.resolvedTheme.resolvedPalette.accentHex, "#B45309")
+        XCTAssertEqual(document.resolvedTheme.resolvedTypeScale, .editorial)
         XCTAssertEqual(document.pages[0].resolvedPresentation.layout, .story)
+        XCTAssertEqual(document.pages[0].resolvedPresentation.resolvedNavigationStyle, .chips)
         XCTAssertEqual(document.pages[0].nodes.map(\.kind), [.image, .aiAssistant])
         XCTAssertEqual(document.pages[0].nodes[0].image?.aspect, .banner)
+        XCTAssertEqual(document.pages[0].nodes[0].image?.resolvedMediaRole, .hero)
+        XCTAssertEqual(document.pages[0].nodes[0].image?.resolvedOverlay, .scrim)
         XCTAssertTrue(document.capabilities.contains(.photoPicker))
         XCTAssertTrue(document.capabilities.contains(.aiRequests))
         XCTAssertNoThrow(try AppDocumentValidator().validate(document))
@@ -112,6 +136,45 @@ final class GeneratedAppPayloadTests: XCTestCase {
         XCTAssertTrue(document.capabilities.contains(.safeCalculation))
         XCTAssertTrue(document.capabilities.contains(.localNotifications))
         XCTAssertTrue(document.capabilities.contains(.network))
+        XCTAssertNoThrow(try AppDocumentValidator().validate(document))
+    }
+
+    func testPayloadCanonicalizesPaletteRendererAndBackgroundBindingBeforeValidation() throws {
+        var payload = GeneratedAppPayloadTestFixtures.personalMoney()
+        payload.theme.palette.primaryHex = "#abcdef"
+        payload.theme.palette.accentHex = "not-a-color"
+        payload.theme.backgroundAssetBinding = "Personal-Backdrop"
+        payload.pages[0].nodes[0].presentation.variant = "immersive"
+
+        let document = payload.makeDocument(existingID: UUID(), version: 3)
+
+        XCTAssertTrue(document.resolvedTheme.resolvedPalette.isValid)
+        XCTAssertEqual(document.resolvedTheme.resolvedPalette.primaryHex, "#ABCDEF")
+        XCTAssertEqual(document.resolvedTheme.backgroundAssetBinding, "personal-backdrop")
+        XCTAssertEqual(document.pages[0].nodes[0].resolvedPresentation.variant, .automatic)
+        XCTAssertTrue(document.capabilities.contains(.photoPicker))
+        XCTAssertNoThrow(try AppDocumentValidator().validate(document))
+    }
+
+    func testPayloadAllowsEditableImageConfigurationOnHero() throws {
+        var payload = GeneratedAppPayloadTestFixtures.personalMoney()
+        payload.pages[0].nodes[0].kind = "hero"
+        payload.pages[0].nodes[0].binding = "hero-photo"
+        payload.pages[0].nodes[0].presentation.variant = "fullBleed"
+        payload.pages[0].nodes[0].image?.altText = "Personal hero image"
+        payload.pages[0].nodes[0].image?.decorative = false
+        payload.pages[0].nodes[0].image?.allowsUserSelection = true
+        payload.pages[0].nodes[0].image?.mediaRole = "hero"
+        payload.pages[0].nodes[0].image?.mask = "none"
+        payload.pages[0].nodes[0].image?.overlay = "scrim"
+
+        let document = payload.makeDocument(existingID: UUID(), version: 4)
+        let hero = document.pages[0].nodes[0]
+
+        XCTAssertEqual(hero.kind, .hero)
+        XCTAssertEqual(hero.image?.resolvedMediaRole, .hero)
+        XCTAssertEqual(hero.resolvedPresentation.variant, .fullBleed)
+        XCTAssertTrue(document.capabilities.contains(.photoPicker))
         XCTAssertNoThrow(try AppDocumentValidator().validate(document))
     }
 }

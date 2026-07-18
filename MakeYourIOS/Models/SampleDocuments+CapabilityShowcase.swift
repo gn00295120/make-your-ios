@@ -19,7 +19,7 @@ extension SampleDocuments {
                         title: "News without the noise",
                         subtitle: "Follow a few topics, save what matters, and return later.",
                         symbol: "newspaper.fill",
-                        presentation: showcaseHero
+                        presentation: showcaseEditorialHero
                     ),
                     ComponentNode(
                         id: "brief-feed",
@@ -27,7 +27,7 @@ extension SampleDocuments {
                         title: "Your briefing",
                         subtitle: "Live headlines from credited original sources.",
                         symbol: "bookmark.fill",
-                        presentation: showcasePlain,
+                        presentation: showcaseEditorial,
                         newsFeed: NewsFeedSpec(
                             sources: [.bbcWorld, .bbcTechnology, .nprNews],
                             topics: ["technology", "climate", "science"],
@@ -60,7 +60,7 @@ extension SampleDocuments {
                         title: "Keep the market in perspective",
                         subtitle: "Latest or delayed reference data, never trading advice.",
                         symbol: "chart.line.uptrend.xyaxis",
-                        presentation: showcaseHero
+                        presentation: showcaseEditorialHero
                     ),
                     ComponentNode(
                         id: "market-watch",
@@ -68,7 +68,7 @@ extension SampleDocuments {
                         title: "My watchlist",
                         subtitle: "AAPL works in demo mode; connect your own provider key for more symbols.",
                         symbol: "chart.xyaxis.line",
-                        presentation: showcasePlain,
+                        presentation: showcaseSplit,
                         marketWatch: MarketWatchSpec(
                             provider: .twelveData,
                             initialSymbols: ["AAPL"],
@@ -101,7 +101,7 @@ extension SampleDocuments {
                         title: "This month",
                         subtitle: "Every number is calculated from entries stored on this iPhone.",
                         symbol: "dollarsign.circle.fill",
-                        presentation: showcasePlain,
+                        presentation: showcaseCards,
                         ledger: LedgerSpec(
                             currencyCode: "TWD",
                             categories: ["Income", "Food", "Transport", "Home", "Fun", "Other"],
@@ -160,7 +160,7 @@ extension SampleDocuments {
                         title: "Cloud Run",
                         subtitle: "Collect stars and reach the beacon. No copyrighted characters or assets.",
                         symbol: "figure.run",
-                        presentation: showcasePlain,
+                        presentation: showcaseImmersive,
                         game: GameSpec(
                             kind: .platformer,
                             difficulty: .standard,
@@ -173,7 +173,7 @@ extension SampleDocuments {
                         )
                     )
                 ],
-                presentation: PagePresentation(layout: .flow, showsNavigationTitle: true)
+                presentation: PagePresentation(layout: .story, showsNavigationTitle: false)
             )
         ]
     )
@@ -204,7 +204,7 @@ extension SampleDocuments {
                         title: "Glow Garden",
                         subtitle: "Guide the trail, collect sparks, and beat your best score.",
                         symbol: "gamecontroller.fill",
-                        presentation: showcasePlain,
+                        presentation: showcaseFramed,
                         game: GameSpec(
                             kind: .snake,
                             difficulty: .standard,
@@ -222,20 +222,52 @@ extension SampleDocuments {
         ]
     )
 
-    private static let showcaseHero = ComponentPresentation(
+    private static let showcaseEditorialHero = ComponentPresentation(
         surface: .plain,
         span: .full,
-        alignment: .center,
+        alignment: .leading,
         emphasis: .strong,
-        variant: .centered
+        variant: .editorial
     )
 
-    private static let showcasePlain = ComponentPresentation(
+    private static let showcaseEditorial = ComponentPresentation(
         surface: .plain,
         span: .full,
         alignment: .leading,
         emphasis: .regular,
-        variant: .automatic
+        variant: .editorial
+    )
+
+    private static let showcaseSplit = ComponentPresentation(
+        surface: .plain,
+        span: .full,
+        alignment: .leading,
+        emphasis: .regular,
+        variant: .split
+    )
+
+    private static let showcaseCards = ComponentPresentation(
+        surface: .plain,
+        span: .full,
+        alignment: .leading,
+        emphasis: .regular,
+        variant: .cards
+    )
+
+    private static let showcaseImmersive = ComponentPresentation(
+        surface: .plain,
+        span: .full,
+        alignment: .leading,
+        emphasis: .strong,
+        variant: .immersive
+    )
+
+    private static let showcaseFramed = ComponentPresentation(
+        surface: .outlined,
+        span: .full,
+        alignment: .leading,
+        emphasis: .strong,
+        variant: .framed
     )
 
     private static func showcaseDay(dayOffset: Int) -> String {

@@ -30,6 +30,7 @@ struct LiveDataListRuntimeView: View {
     let node: ComponentNode
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) var design
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
     @State var watchState: WatchState
     @State var currencies: [CurrencyDescriptor] = []
@@ -73,8 +74,16 @@ struct LiveDataListRuntimeView: View {
         currencies.isEmpty ? Self.fallbackCurrencies : currencies
     }
 
+    var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .liveDataList)
+    }
+
+    var contentSpacing: CGFloat {
+        [.compact, .dense].contains(variant) ? 8 : design.componentSpacing
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: contentSpacing) {
             header
             statusBar
             ratesList

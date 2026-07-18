@@ -86,14 +86,18 @@ extension SampleDocuments {
                             span: .full,
                             alignment: .leading,
                             emphasis: .strong,
-                            variant: .photoOverlay
+                            variant: .fullBleed
                         ),
                         image: ImageSpec(
                             aspect: .banner,
                             contentMode: .fill,
                             altText: "A fridge photo selected by the user",
                             decorative: false,
-                            allowsUserSelection: true
+                            allowsUserSelection: true,
+                            mediaRole: .hero,
+                            focalPoint: .center,
+                            mask: ImageMask.none,
+                            overlay: .scrim
                         )
                     ),
                     ComponentNode(
@@ -130,7 +134,7 @@ extension SampleDocuments {
                             span: .full,
                             alignment: .leading,
                             emphasis: .regular,
-                            variant: .automatic
+                            variant: .cards
                         ),
                         collection: RecordCollectionSpec(
                             itemName: "Ingredient",
@@ -160,7 +164,13 @@ extension SampleDocuments {
                             "banana, oats, yogurt"
                         ],
                         action: RuntimeAction(type: .showMessage, target: "", value: "Make a recipe"),
-                        presentation: regularPlain
+                        presentation: ComponentPresentation(
+                            surface: .outlined,
+                            span: .full,
+                            alignment: .leading,
+                            emphasis: .regular,
+                            variant: .framed
+                        )
                     )
                 ],
                 presentation: PagePresentation(layout: .story, showsNavigationTitle: false)

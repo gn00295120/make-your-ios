@@ -59,6 +59,32 @@ final class LocalAssetStoreTests: XCTestCase {
         XCTAssertNoThrow(try store.deleteAssets(projectID: projectID))
     }
 
+    func testDeleteImageRemovesOnlyRequestedBinding() throws {
+        let rootURL = makeTemporaryRootURL()
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+        let store = LocalAssetStore(rootURL: rootURL)
+        let projectID = UUID()
+
+        try store.saveImageData(
+            try makeImageData(size: CGSize(width: 40, height: 40)),
+            projectID: projectID,
+            binding: "canvas-background"
+        )
+        try store.saveImageData(
+            try makeImageData(size: CGSize(width: 60, height: 40)),
+            projectID: projectID,
+            binding: "profile-photo"
+        )
+
+        try store.deleteImage(projectID: projectID, binding: "canvas-background")
+
+        XCTAssertFalse(store.hasImage(projectID: projectID, binding: "canvas-background"))
+        XCTAssertTrue(store.hasImage(projectID: projectID, binding: "profile-photo"))
+        XCTAssertNoThrow(
+            try store.deleteImage(projectID: projectID, binding: "canvas-background")
+        )
+    }
+
     func testInvalidImageDataIsRejectedWithoutCreatingAsset() {
         let rootURL = makeTemporaryRootURL()
         defer { try? FileManager.default.removeItem(at: rootURL) }

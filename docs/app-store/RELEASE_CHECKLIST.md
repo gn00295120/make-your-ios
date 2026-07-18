@@ -51,16 +51,19 @@ capability changes currently in the source tree.
 
 Current source verification snapshot (2026-07-18):
 
-- 85/85 unit tests and the separately gated 1/1 live OpenAI generation UI test
-  passed on an iPhone 17 Pro Simulator running iOS 26.5.
-- Strict SwiftLint checked 91 Swift files with zero violations; `git diff
-  --check`, generic Simulator build, and signed physical-iPhone build passed.
+- 109/109 unit tests, all 3/3 Design Studio UI paths (including Accessibility
+  Extra Extra Extra Large), and the separately gated 1/1 live GPT-5.6
+  generation UI test passed on an iPhone 17 Pro Simulator.
+- Strict SwiftLint checked 105 Swift files with zero violations; `git diff
+  --check`, generic Simulator build, Apple Development-signed generic iOS
+  build, and strict local code-signature verification passed.
 - The built iPhone app contains camera, contact, When In Use location, and
   motion usage descriptions plus `PrivacyInfo.xcprivacy`; strict local
   code-signature verification passed.
-- The exact candidate was installed on the connected iPhone. Automated launch
-  was denied because the phone was locked, so the physical camera/scanner and
-  permission interaction gates below deliberately remain unchecked.
+- An earlier expanded-capability build was installed on the connected iPhone,
+  but the exact Design Genome v2 candidate has not yet had a fresh physical
+  install. Camera/scanner and permission interaction gates below deliberately
+  remain unchecked.
 - Live BBC RSS, live Twelve Data AAPL demo data, the generated `E2E Proof`
   document, and its rendered runtime were observed on the Simulator.
 
@@ -77,6 +80,12 @@ Current source verification snapshot (2026-07-18):
   tiny apps appear.
 - [ ] Exercise capability review for generated documents and verify missing or
   unused declarations are rejected.
+- [ ] Exercise Design Studio presets, custom palette, typography, page layout,
+  undo/redo, local canvas photo, Cancel, and one-version Apply on the exact
+  candidate.
+- [ ] Exercise GPT-5.6 Design-only review and verify records, values, actions,
+  bindings, data configuration, capabilities, and local media slots are
+  unchanged after Apply.
 - [ ] Test Frankfurter, BBC World, BBC Technology, NPR News, Twelve Data AAPL
   demo access, a user-supplied Twelve Data key, and OpenAI generation against
   their fixed adapters, including timeout, malformed, rate-limit, and offline
@@ -141,6 +150,8 @@ Current source verification snapshot (2026-07-18):
 - [ ] Live FX refresh, add/remove currency, base selection, threshold, Test Alert
 - [ ] Use It First record add/edit/delete, completion, photo, and reminder
 - [ ] Builder generation with review key
+- [ ] Design Studio preset/customize/undo/redo/Cancel/Apply and canvas photo
+- [ ] Design-only AI restyle preserves every functional and local-media field
 - [ ] Generated mini app opens without host back button or bottom tabs
 - [ ] Upper-right menu routes to My Apps, Builder, and AI Key
 - [ ] AI request confirmation Send button works on first presentation

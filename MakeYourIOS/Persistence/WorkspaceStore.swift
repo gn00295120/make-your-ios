@@ -3,7 +3,10 @@ import Observation
 
 @MainActor
 @Observable
+// swiftlint:disable:next type_body_length
 final class WorkspaceStore {
+    static let designCanvasBackgroundBinding = "design-canvas-background"
+
     private enum LoadResult {
         case missing
         case loaded
@@ -91,10 +94,74 @@ final class WorkspaceStore {
 
     func applyTheme(_ preset: VisualThemePreset, to projectID: UUID) {
         guard let index = projects.firstIndex(where: { $0.id == projectID }) else { return }
-        projects[index].document.theme = .preset(preset)
+        var theme = AppVisualTheme.preset(preset)
+        theme.backgroundAssetBinding = projects[index].document.theme?.backgroundAssetBinding
+        projects[index].document.theme = theme
+        reconcilePhotoPickerCapability(in: &projects[index].document)
         projects[index].document.version += 1
         projects[index].document.updatedAt = .now
         projects[index].updatedAt = .now
+        persist()
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    func applyDesign(
+        _ theme: AppVisualTheme,
+        tint: AppTint,
+        symbol: String,
+        pagePresentation: PagePresentation,
+        canvasBackgroundImageData: Data?,
+        removesCanvasBackground: Bool,
+        to projectID: UUID
+    ) throws {
+        guard let index = projects.firstIndex(where: { $0.id == projectID }) else { return }
+
+        let previousBackgroundBinding = projects[index].document.theme?.backgroundAssetBinding
+        var nextDocument = projects[index].document
+        var nextTheme = theme
+        if canvasBackgroundImageData != nil {
+            nextTheme.backgroundAssetBinding = Self.designCanvasBackgroundBinding
+        } else if removesCanvasBackground {
+            nextTheme.backgroundAssetBinding = nil
+        }
+        nextDocument.theme = nextTheme
+        nextDocument.tint = tint
+        if GeneratedAppPayload.allowedSymbols.contains(symbol) {
+            nextDocument.symbol = symbol
+        }
+        for pageIndex in nextDocument.pages.indices {
+            nextDocument.pages[pageIndex].presentation = pagePresentation
+        }
+        reconcilePhotoPickerCapability(in: &nextDocument)
+        try AppDocumentValidator().validate(nextDocument)
+
+        if let canvasBackgroundImageData {
+            try assetStore.saveImageData(
+                canvasBackgroundImageData,
+                projectID: projectID,
+                binding: Self.designCanvasBackgroundBinding
+            )
+            if let previousBackgroundBinding,
+               previousBackgroundBinding != Self.designCanvasBackgroundBinding {
+                try assetStore.deleteImage(
+                    projectID: projectID,
+                    binding: previousBackgroundBinding
+                )
+            }
+        } else if removesCanvasBackground {
+            if let previousBackgroundBinding {
+                try assetStore.deleteImage(
+                    projectID: projectID,
+                    binding: previousBackgroundBinding
+                )
+            }
+        }
+
+        nextDocument.version += 1
+        nextDocument.updatedAt = .now
+        projects[index].document = nextDocument
+        projects[index].updatedAt = .now
+        selectedProjectID = projectID
         persist()
     }
 
@@ -217,6 +284,21 @@ final class WorkspaceStore {
             lastPersistenceError = nil
         } catch {
             lastPersistenceError = error.localizedDescription
+        }
+    }
+
+    private func reconcilePhotoPickerCapability(in document: inout AppDocument) {
+        let hasSelectableImage = document.pages
+            .flatMap(\.nodes)
+            .contains(where: {
+                [.hero, .image].contains($0.kind) && $0.image?.allowsUserSelection == true
+            })
+        let hasDesignBackground = document.theme?.backgroundAssetBinding != nil
+        let needsPhotoPicker = hasSelectableImage || hasDesignBackground
+
+        document.capabilities.removeAll(where: { $0 == .photoPicker })
+        if needsPhotoPicker {
+            document.capabilities.append(.photoPicker)
         }
     }
 

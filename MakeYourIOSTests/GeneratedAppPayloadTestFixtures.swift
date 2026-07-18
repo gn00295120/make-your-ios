@@ -15,7 +15,15 @@ enum GeneratedAppPayloadTestFixtures {
                 background: "grouped",
                 cornerStyle: "soft",
                 density: "regular",
-                defaultSurface: "card"
+                defaultSurface: "card",
+                palette: generatedPalette,
+                typeScale: "balanced",
+                titleWeight: "bold",
+                elevation: "subtle",
+                stroke: "hairline",
+                controlShape: "native",
+                motion: "subtle",
+                backgroundAssetBinding: ""
             ),
             capabilities: [],
             startPageID: "home",
@@ -27,7 +35,8 @@ enum GeneratedAppPayloadTestFixtures {
                     nodes: [converterNode, collectionNode, liveDataNode],
                     presentation: GeneratedAppPayload.PageDesign(
                         layout: "flow",
-                        showsNavigationTitle: true
+                        showsNavigationTitle: true,
+                        navigationStyle: "automatic"
                     )
                 )
             ]
@@ -165,7 +174,23 @@ enum GeneratedAppPayloadTestFixtures {
             contentMode: "fill",
             altText: "",
             decorative: true,
-            allowsUserSelection: false
+            allowsUserSelection: false,
+            mediaRole: "decorative",
+            focalPoint: "center",
+            mask: "rounded",
+            overlay: "none"
+        )
+    }
+
+    private static var generatedPalette: GeneratedAppPayload.Palette {
+        GeneratedAppPayload.Palette(
+            primaryHex: "#5450EF",
+            secondaryHex: "#667085",
+            accentHex: "#0A84FF",
+            canvasLightHex: "#F2F2F7",
+            canvasDarkHex: "#000000",
+            surfaceLightHex: "#FFFFFF",
+            surfaceDarkHex: "#1C1C1E"
         )
     }
 

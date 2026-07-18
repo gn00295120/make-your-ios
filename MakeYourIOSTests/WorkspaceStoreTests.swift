@@ -3,6 +3,7 @@ import XCTest
 @testable import MakeYourIOS
 
 @MainActor
+// swiftlint:disable:next type_body_length
 final class WorkspaceStoreTests: XCTestCase {
     func testFreshWorkspaceSeedsReviewableCapabilityExamples() {
         let (testDirectory, archiveURL) = makeArchiveURL()
@@ -173,6 +174,170 @@ final class WorkspaceStoreTests: XCTestCase {
         XCTAssertTrue(store.selectedProject?.document.capabilities.contains(.photoPicker) == true)
         XCTAssertEqual(store.selectedProject?.document.pages[0].nodes.first?.kind, .image)
         XCTAssertEqual(store.selectedProject?.document.pages[0].nodes.first?.binding, "primary-photo")
+    }
+
+    func testDesignStudioAppliesAllTokensAsOneVersion() throws {
+        let (testDirectory, archiveURL) = makeArchiveURL()
+        defer { try? FileManager.default.removeItem(at: testDirectory) }
+        let store = WorkspaceStore(fileURL: archiveURL, seedSamples: false)
+        let projectID = store.createProject(document: SampleDocuments.gentleTasks)
+        var theme = AppVisualTheme.preset(.editorial)
+        theme.motion = ThemeMotion.none
+        let presentation = PagePresentation(
+            layout: .story,
+            showsNavigationTitle: false,
+            navigationStyle: .chips
+        )
+
+        try store.applyDesign(
+            theme,
+            tint: .amber,
+            symbol: "book.fill",
+            pagePresentation: presentation,
+            canvasBackgroundImageData: nil,
+            removesCanvasBackground: false,
+            to: projectID
+        )
+
+        let document = try XCTUnwrap(store.selectedProject?.document)
+        XCTAssertEqual(document.version, 2)
+        XCTAssertEqual(document.symbol, "book.fill")
+        XCTAssertEqual(document.tint, .amber)
+        XCTAssertEqual(document.resolvedTheme.preset, .editorial)
+        XCTAssertTrue(document.pages.allSatisfy { $0.presentation == presentation })
+    }
+
+    func testCanvasBackgroundAddsAndRemovesOnlyRequiredPhotoCapability() throws {
+        let (testDirectory, archiveURL) = makeArchiveURL()
+        defer { try? FileManager.default.removeItem(at: testDirectory) }
+        let assetStore = LocalAssetStore(
+            rootURL: testDirectory.appendingPathComponent("assets", isDirectory: true)
+        )
+        let store = WorkspaceStore(
+            fileURL: archiveURL,
+            seedSamples: false,
+            assetStore: assetStore
+        )
+        let projectID = store.createProject(document: SampleDocuments.blank)
+
+        try store.applyDesign(
+            .preset(.soft),
+            tint: .indigo,
+            symbol: "sparkles",
+            pagePresentation: .flow,
+            canvasBackgroundImageData: try makeImageData(),
+            removesCanvasBackground: false,
+            to: projectID
+        )
+
+        XCTAssertEqual(
+            store.selectedProject?.document.theme?.backgroundAssetBinding,
+            WorkspaceStore.designCanvasBackgroundBinding
+        )
+        XCTAssertTrue(store.selectedProject?.document.capabilities.contains(.photoPicker) == true)
+        XCTAssertTrue(assetStore.hasImage(
+            projectID: projectID,
+            binding: WorkspaceStore.designCanvasBackgroundBinding
+        ))
+
+        try store.applyDesign(
+            store.selectedProject?.document.resolvedTheme ?? .legacy,
+            tint: .indigo,
+            symbol: "sparkles",
+            pagePresentation: .flow,
+            canvasBackgroundImageData: nil,
+            removesCanvasBackground: true,
+            to: projectID
+        )
+
+        XCTAssertNil(store.selectedProject?.document.theme?.backgroundAssetBinding)
+        XCTAssertTrue(store.selectedProject?.document.capabilities.contains(.photoPicker) == false)
+        XCTAssertFalse(assetStore.hasImage(
+            projectID: projectID,
+            binding: WorkspaceStore.designCanvasBackgroundBinding
+        ))
+        XCTAssertEqual(store.selectedProject?.document.version, 3)
+    }
+
+    func testClearingCanvasBackgroundKeepsPhotoCapabilityForImageNode() throws {
+        let (testDirectory, archiveURL) = makeArchiveURL()
+        defer { try? FileManager.default.removeItem(at: testDirectory) }
+        let assetStore = LocalAssetStore(
+            rootURL: testDirectory.appendingPathComponent("assets", isDirectory: true)
+        )
+        let store = WorkspaceStore(
+            fileURL: archiveURL,
+            seedSamples: false,
+            assetStore: assetStore
+        )
+        let projectID = store.createProject(document: SampleDocuments.museJournal)
+
+        try store.applyDesign(
+            .preset(.soft),
+            tint: .plum,
+            symbol: "photo.fill",
+            pagePresentation: .flow,
+            canvasBackgroundImageData: try makeImageData(),
+            removesCanvasBackground: false,
+            to: projectID
+        )
+        try store.applyDesign(
+            store.selectedProject?.document.resolvedTheme ?? .legacy,
+            tint: .plum,
+            symbol: "photo.fill",
+            pagePresentation: .flow,
+            canvasBackgroundImageData: nil,
+            removesCanvasBackground: true,
+            to: projectID
+        )
+
+        XCTAssertTrue(store.selectedProject?.document.capabilities.contains(.photoPicker) == true)
+    }
+
+    func testDesignApplyKeepsPhotoCapabilityForSelectableHeroMedia() throws {
+        let (testDirectory, archiveURL) = makeArchiveURL()
+        defer { try? FileManager.default.removeItem(at: testDirectory) }
+        var document = SampleDocuments.blank
+        document.pages[0].nodes[0].image = .editableLandscape
+        document.pages[0].nodes[0].binding = "hero-photo"
+        document.capabilities.append(.photoPicker)
+        let store = WorkspaceStore(fileURL: archiveURL, seedSamples: false)
+        let projectID = store.createProject(document: document)
+
+        try store.applyDesign(
+            .preset(.editorial),
+            tint: .amber,
+            symbol: "photo.fill",
+            pagePresentation: .flow,
+            canvasBackgroundImageData: nil,
+            removesCanvasBackground: true,
+            to: projectID
+        )
+
+        XCTAssertTrue(store.selectedProject?.document.capabilities.contains(.photoPicker) == true)
+        XCTAssertNoThrow(try AppDocumentValidator().validate(
+            XCTUnwrap(store.selectedProject?.document)
+        ))
+    }
+
+    func testInvalidCanvasImageDoesNotCreateDesignVersion() throws {
+        let (testDirectory, archiveURL) = makeArchiveURL()
+        defer { try? FileManager.default.removeItem(at: testDirectory) }
+        let store = WorkspaceStore(fileURL: archiveURL, seedSamples: false)
+        let projectID = store.createProject(document: SampleDocuments.blank)
+
+        XCTAssertThrowsError(try store.applyDesign(
+            .preset(.playful),
+            tint: .coral,
+            symbol: "party.popper.fill",
+            pagePresentation: .flow,
+            canvasBackgroundImageData: Data("invalid image".utf8),
+            removesCanvasBackground: false,
+            to: projectID
+        ))
+
+        XCTAssertEqual(store.selectedProject?.document.version, 1)
+        XCTAssertEqual(store.selectedProject?.document.resolvedTheme.preset, .minimal)
     }
 
     private func makeArchiveURL() -> (directory: URL, archive: URL) {

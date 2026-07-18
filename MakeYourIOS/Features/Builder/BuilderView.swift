@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import SwiftUI
 
 struct BuilderView: View {
@@ -7,6 +8,9 @@ struct BuilderView: View {
         var document: AppDocument
         var prompt: String
         var addedCapabilities: [AppCapability]
+        var mode: GenerationMode
+        var previousDocument: AppDocument
+        var designSummary: DesignChangeSummary?
     }
 
     @Environment(WorkspaceStore.self) private var store
@@ -15,11 +19,13 @@ struct BuilderView: View {
     let openAISettings: () -> Void
 
     @State private var prompt = ""
+    @State private var generationMode = GenerationMode.full
     @State private var isGenerating = false
     @State private var isPresentingRuntime = false
     @State private var errorMessage: String?
     @State private var generationNote: String?
     @State private var pendingGeneration: PendingGeneration?
+    @State private var designStudioProject: WorkspaceProject?
 
     private let client = OpenAIAppGenerationClient()
     private let suggestions = [
@@ -81,12 +87,50 @@ struct BuilderView: View {
             }
         }
         .sheet(item: $pendingGeneration) { pending in
-            CapabilityReviewSheet(
-                capabilities: pending.addedCapabilities,
-                onCancel: { pendingGeneration = nil },
-                onApprove: { apply(pending) }
+            if pending.mode == .designOnly {
+                DesignGenerationReviewSheet(
+                    before: pending.previousDocument,
+                    after: pending.document,
+                    summary: pending.designSummary ?? DesignChangeSummary(
+                        before: pending.previousDocument,
+                        after: pending.document
+                    ),
+                    onCancel: { pendingGeneration = nil },
+                    onApply: { apply(pending) }
+                )
+                .presentationDetents([.large])
+            } else {
+                CapabilityReviewSheet(
+                    capabilities: pending.addedCapabilities,
+                    onCancel: { pendingGeneration = nil },
+                    onApprove: { apply(pending) }
+                )
+                .presentationDetents([.medium, .large])
+            }
+        }
+        .sheet(item: $designStudioProject) { project in
+            DesignStudioSheet(
+                project: project,
+                onApply: { result in
+                    try store.applyDesign(
+                        result.theme,
+                        tint: result.tint,
+                        symbol: result.symbol,
+                        pagePresentation: result.pagePresentation,
+                        canvasBackgroundImageData: result.canvasBackgroundImageData,
+                        removesCanvasBackground: result.removesCanvasBackground,
+                        to: project.id
+                    )
+                    designStudioProject = nil
+                    generationNote = "Design applied as version \(project.document.version + 1)."
+                },
+                onUseAIPrompt: { designPrompt in
+                    prompt = designPrompt
+                    generationMode = .designOnly
+                    designStudioProject = nil
+                    generationNote = "Design-only request is ready. Review it, then generate."
+                }
             )
-            .presentationDetents([.medium, .large])
         }
         .alert("Couldn’t update this app", isPresented: Binding(
             get: { errorMessage != nil },
@@ -107,11 +151,13 @@ struct BuilderView: View {
                 DesignStudioCard(
                     project: project,
                     onTheme: { store.applyTheme($0, to: project.id) },
-                    onAddImage: { store.addImageBlock(to: project.id) }
+                    onAddImage: { store.addImageBlock(to: project.id) },
+                    onOpenStudio: { designStudioProject = project }
                 )
 
                 BuilderPromptCard(
                     prompt: $prompt,
+                    generationMode: $generationMode,
                     suggestions: suggestions,
                     isReady: aiSettings.isReady,
                     isGenerating: isGenerating,
@@ -150,6 +196,7 @@ struct BuilderView: View {
     private func generate(project: WorkspaceProject) {
         let request = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !request.isEmpty else { return }
+        let requestedMode = generationMode
 
         isGenerating = true
         generationNote = nil
@@ -159,21 +206,30 @@ struct BuilderView: View {
             do {
                 let config = try aiSettings.connectionConfig()
                 let document = try await client.generate(
-                    prompt: request,
+                    prompt: requestedMode.promptPrefix + request,
                     currentDocument: project.document,
                     config: config
                 )
+                let mode = requestedMode
+                let finalDocument = mode == .designOnly
+                    ? AppDocumentDesignMerger().mergeDesign(from: document, into: project.document)
+                    : document
                 let existingCapabilities = Set(project.document.capabilities)
-                let addedCapabilities = Set(document.capabilities)
+                let addedCapabilities = Set(finalDocument.capabilities)
                     .subtracting(existingCapabilities)
                     .sorted(by: { $0.rawValue < $1.rawValue })
                 let pending = PendingGeneration(
                     projectID: project.id,
-                    document: document,
+                    document: finalDocument,
                     prompt: request,
-                    addedCapabilities: addedCapabilities
+                    addedCapabilities: addedCapabilities,
+                    mode: mode,
+                    previousDocument: project.document,
+                    designSummary: mode == .designOnly
+                        ? DesignChangeSummary(before: project.document, after: finalDocument)
+                        : nil
                 )
-                if addedCapabilities.isEmpty {
+                if addedCapabilities.isEmpty && mode == .full {
                     try applyImmediately(pending)
                 } else {
                     pendingGeneration = pending
@@ -202,7 +258,12 @@ struct BuilderView: View {
         )
         withAnimation(.snappy) {
             prompt = ""
-            generationNote = "Version \(pending.document.version) passed validation and is ready to use."
+            if let summary = pending.designSummary {
+                generationNote = "Design updated: \(summary.conciseDescription)."
+            } else {
+                generationNote = "Version \(pending.document.version) passed validation and is ready to use."
+            }
+            generationMode = .full
             isPresentingRuntime = true
         }
     }
@@ -210,6 +271,7 @@ struct BuilderView: View {
 
 private struct BuilderPromptCard: View {
     @Binding var prompt: String
+    @Binding var generationMode: GenerationMode
     let suggestions: [String]
     let isReady: Bool
     let isGenerating: Bool
@@ -250,6 +312,25 @@ private struct BuilderPromptCard: View {
                             .allowsHitTesting(false)
                     }
                 }
+
+            Picker("Generation mode", selection: $generationMode) {
+                ForEach(GenerationMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .disabled(isGenerating)
+            .accessibilityHint(
+                generationMode == .designOnly
+                    ? "Features, actions, data, and capabilities will be locked by the host"
+                    : "AI may update both features and design"
+            )
+
+            if generationMode == .designOnly {
+                Label("保留功能，只改設計", systemImage: "lock.shield.fill")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
 
             suggestionRow
             generationButton

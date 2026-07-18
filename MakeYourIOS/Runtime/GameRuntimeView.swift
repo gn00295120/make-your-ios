@@ -40,11 +40,16 @@ private struct SnakeRuntimeGame: View {
     let spec: GameSpec
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) private var design
     @State private var engine: SnakeEngine
     @State private var bestScore = 0
     @State private var lastPhase: GamePhase = .ready
 
     private let stateStore = ProjectRuntimeStateStore()
+
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .game)
+    }
 
     init(projectID: UUID, node: ComponentNode, spec: GameSpec, tint: AppTint) {
         self.projectID = projectID
@@ -59,34 +64,75 @@ private struct SnakeRuntimeGame: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            GameRuntimeHeader(
-                node: node,
-                score: engine.score,
-                target: spec.targetScore,
-                bestScore: bestScore,
-                collectibleName: spec.collectibleName
-            )
-
-            TimelineView(.animation(
-                minimumInterval: engine.tickInterval,
-                paused: engine.phase != .playing
-            )) { timeline in
-                SnakeCanvas(engine: engine, colors: GameColors(spec.palette))
-                    .onChange(of: timeline.date) { _, _ in tick() }
+        VStack(alignment: .leading, spacing: design.componentSpacing) {
+            if variant == .immersive {
+                ZStack(alignment: .top) {
+                    snakeBoard
+                    LinearGradient(
+                        colors: [.black.opacity(0.72), .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 110)
+                    .allowsHitTesting(false)
+                    GameRuntimeHeader(
+                        node: node,
+                        score: engine.score,
+                        target: spec.targetScore,
+                        bestScore: bestScore,
+                        collectibleName: spec.collectibleName,
+                        immersive: true
+                    )
+                    .padding(14)
+                }
+            } else {
+                GameRuntimeHeader(
+                    node: node,
+                    score: engine.score,
+                    target: spec.targetScore,
+                    bestScore: bestScore,
+                    collectibleName: spec.collectibleName,
+                    immersive: false
+                )
+                snakeBoard
             }
-            .overlay { GamePhaseOverlay(phase: engine.phase, tint: tint, start: start) }
 
             snakeControls
             GameTransportControls(
                 phase: engine.phase,
-                tint: tint,
                 onStartOrPause: toggleStartOrPause,
                 onRestart: restart
             )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear(perform: loadBestScore)
+    }
+
+    private var snakeBoard: some View {
+        TimelineView(.animation(
+            minimumInterval: engine.tickInterval,
+            paused: engine.phase != .playing
+        )) { timeline in
+            SnakeCanvas(
+                engine: engine,
+                colors: GameColors(spec.palette),
+                variant: variant
+            )
+            .onChange(of: timeline.date) { _, _ in tick() }
+        }
+        .overlay { GamePhaseOverlay(phase: engine.phase, start: start) }
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: [.fullBleed, .immersive].contains(variant) ? 0 : design.cornerRadius,
+                style: .continuous
+            )
+        )
+        .overlay {
+            if variant == .framed {
+                RoundedRectangle(cornerRadius: design.cornerRadius, style: .continuous)
+                    .stroke(design.accent, lineWidth: max(2, design.borderWidth))
+            }
+        }
     }
 
     private var snakeControls: some View {
@@ -165,6 +211,7 @@ private struct PlatformerRuntimeGame: View {
     let spec: GameSpec
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) private var design
     @State private var engine: PlatformerEngine
     @State private var horizontalInput = 0.0
     @State private var jumpRequested = false
@@ -173,6 +220,10 @@ private struct PlatformerRuntimeGame: View {
     @State private var lastPhase: GamePhase = .ready
 
     private let stateStore = ProjectRuntimeStateStore()
+
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .game)
+    }
 
     init(projectID: UUID, node: ComponentNode, spec: GameSpec, tint: AppTint) {
         self.projectID = projectID
@@ -187,34 +238,69 @@ private struct PlatformerRuntimeGame: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            GameRuntimeHeader(
-                node: node,
-                score: engine.score,
-                target: spec.targetScore,
-                bestScore: bestScore,
-                collectibleName: spec.collectibleName
-            )
-
-            TimelineView(.animation(
-                minimumInterval: 1.0 / 60.0,
-                paused: engine.phase != .playing
-            )) { timeline in
-                PlatformerCanvas(engine: engine, colors: GameColors(spec.palette))
-                    .onChange(of: timeline.date) { _, date in updateFrame(date) }
+        VStack(alignment: .leading, spacing: design.componentSpacing) {
+            if variant == .immersive {
+                ZStack(alignment: .top) {
+                    platformBoard
+                    LinearGradient(
+                        colors: [.black.opacity(0.68), .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 100)
+                    .allowsHitTesting(false)
+                    GameRuntimeHeader(
+                        node: node,
+                        score: engine.score,
+                        target: spec.targetScore,
+                        bestScore: bestScore,
+                        collectibleName: spec.collectibleName,
+                        immersive: true
+                    )
+                    .padding(14)
+                }
+            } else {
+                GameRuntimeHeader(
+                    node: node,
+                    score: engine.score,
+                    target: spec.targetScore,
+                    bestScore: bestScore,
+                    collectibleName: spec.collectibleName,
+                    immersive: false
+                )
+                platformBoard
             }
-            .overlay { GamePhaseOverlay(phase: engine.phase, tint: tint, start: start) }
 
             platformControls
             GameTransportControls(
                 phase: engine.phase,
-                tint: tint,
                 onStartOrPause: toggleStartOrPause,
                 onRestart: restart
             )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear(perform: loadBestScore)
+    }
+
+    private var platformBoard: some View {
+        TimelineView(.animation(
+            minimumInterval: 1.0 / 60.0,
+            paused: engine.phase != .playing
+        )) { timeline in
+            PlatformerCanvas(
+                engine: engine,
+                colors: GameColors(spec.palette),
+                variant: variant
+            )
+            .onChange(of: timeline.date) { _, date in updateFrame(date) }
+        }
+        .overlay { GamePhaseOverlay(phase: engine.phase, start: start) }
+        .overlay {
+            if variant == .framed {
+                RoundedRectangle(cornerRadius: design.cornerRadius, style: .continuous)
+                    .stroke(design.accent, lineWidth: max(2, design.borderWidth))
+            }
+        }
     }
 
     private var platformControls: some View {
@@ -231,7 +317,7 @@ private struct PlatformerRuntimeGame: View {
                     .frame(minWidth: 84, minHeight: 48)
             }
             .buttonStyle(.borderedProminent)
-            .tint(tint.color)
+            .tint(design.accent)
         }
     }
 
@@ -306,6 +392,7 @@ private struct PlatformerRuntimeGame: View {
 private struct SnakeCanvas: View {
     let engine: SnakeEngine
     let colors: GameColors
+    let variant: ComponentVariant
 
     var body: some View {
         Canvas { context, size in
@@ -348,14 +435,20 @@ private struct SnakeCanvas: View {
             context.fill(Path(ellipseIn: foodRect), with: .color(colors.collectible))
         }
         .aspectRatio(Double(engine.columns) / Double(engine.rows), contentMode: .fit)
-        .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 390)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: variant == .immersive ? 430 : 300,
+            maxHeight: variant == .immersive ? 520 : 390
+        )
         .accessibilityLabel("Snake board, score \(engine.score)")
+        .accessibilityValue("Target \(engine.targetScore)")
     }
 }
 
 private struct PlatformerCanvas: View {
     let engine: PlatformerEngine
     let colors: GameColors
+    let variant: ComponentVariant
 
     var body: some View {
         Canvas { context, size in
@@ -412,9 +505,15 @@ private struct PlatformerCanvas: View {
             )
         }
         .aspectRatio(16 / 9, contentMode: .fit)
-        .frame(maxWidth: .infinity, minHeight: 210)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .frame(maxWidth: .infinity, minHeight: variant == .immersive ? 300 : 210)
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: [.fullBleed, .immersive].contains(variant) ? 0 : 16,
+                style: .continuous
+            )
+        )
         .accessibilityLabel("Platform game, score \(engine.score)")
+        .accessibilityValue("Target \(engine.targetScore)")
     }
 
     private func canvasRect(_ rect: PlatformRect, cameraX: Double, scale: Double) -> CGRect {
@@ -433,6 +532,9 @@ private struct GameRuntimeHeader: View {
     let target: Int
     let bestScore: Int
     let collectibleName: String
+    let immersive: Bool
+
+    @Environment(\.runtimeDesign) private var design
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -441,26 +543,33 @@ private struct GameRuntimeHeader: View {
                     node.title.isEmpty ? "Tiny game" : node.title,
                     systemImage: node.symbol.isEmpty ? "gamecontroller.fill" : node.symbol
                 )
-                .font(.headline)
+                .font(design.sectionFont)
+                .accessibilityAddTraits(.isHeader)
                 if !node.subtitle.isEmpty {
-                    Text(node.subtitle).font(.caption).foregroundStyle(.secondary)
+                    Text(node.subtitle)
+                        .font(design.captionFont)
+                        .foregroundStyle(immersive ? Color.white.opacity(0.84) : design.secondaryForeground)
                 }
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(score) / \(target)").font(.headline.monospacedDigit())
+                Text("\(score) / \(target)")
+                    .font(design.titleFont.monospacedDigit())
                 Text("Best \(bestScore) · \(collectibleName)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(design.captionFont)
+                    .foregroundStyle(immersive ? Color.white.opacity(0.84) : design.secondaryForeground)
             }
         }
+        .foregroundStyle(immersive ? Color.white : design.primaryForeground)
+        .accessibilityElement(children: .combine)
     }
 }
 
 private struct GamePhaseOverlay: View {
     let phase: GamePhase
-    let tint: AppTint
     let start: () -> Void
+
+    @Environment(\.runtimeDesign) private var design
 
     @ViewBuilder
     var body: some View {
@@ -473,12 +582,14 @@ private struct GamePhaseOverlay: View {
                     if phase == .ready || phase == .paused {
                         Button(phase == .ready ? "Start" : "Resume", action: start)
                             .buttonStyle(.borderedProminent)
-                            .tint(tint.color)
+                            .tint(design.accent)
                     }
                 }
                 .foregroundStyle(.white)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(
+                RoundedRectangle(cornerRadius: design.cornerRadius, style: .continuous)
+            )
         }
     }
 
@@ -505,9 +616,10 @@ private struct GamePhaseOverlay: View {
 
 private struct GameTransportControls: View {
     let phase: GamePhase
-    let tint: AppTint
     let onStartOrPause: () -> Void
     let onRestart: () -> Void
+
+    @Environment(\.runtimeDesign) private var design
 
     var body: some View {
         HStack(spacing: 10) {
@@ -516,7 +628,7 @@ private struct GameTransportControls: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(tint.color)
+            .tint(design.accent)
             .disabled(phase == .won || phase == .lost)
 
             Button("Restart", systemImage: "arrow.counterclockwise", action: onRestart)
@@ -542,6 +654,8 @@ private struct DirectionButton: View {
     let symbol: String
     let action: () -> Void
 
+    @Environment(\.runtimeDesign) private var design
+
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
@@ -549,6 +663,12 @@ private struct DirectionButton: View {
                 .frame(width: 50, height: 46)
         }
         .buttonStyle(.bordered)
+        .buttonBorderShape(
+            design.controlShape == .pill
+                ? .capsule
+                : .roundedRectangle(radius: design.controlCornerRadius)
+        )
+        .tint(design.accent)
     }
 }
 

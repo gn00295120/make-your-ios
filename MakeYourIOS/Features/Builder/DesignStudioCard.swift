@@ -4,6 +4,7 @@ struct DesignStudioCard: View {
     let project: WorkspaceProject
     let onTheme: (VisualThemePreset) -> Void
     let onAddImage: () -> Void
+    let onOpenStudio: () -> Void
 
     private var selectedPreset: VisualThemePreset {
         project.document.resolvedTheme.preset
@@ -17,8 +18,12 @@ struct DesignStudioCard: View {
         VStack(alignment: .leading, spacing: 14) {
             header
             presetPicker
+            studioButton
             imageButton
-            Text("AI can change these tokens too. Photos remain local and are represented only by a semantic slot.")
+            Text(
+                "Build a complete visual identity here, or ask AI to preserve every feature "
+                    + "and change only the design."
+            )
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -81,5 +86,23 @@ struct DesignStudioCard: View {
         }
         .buttonStyle(.bordered)
         .tint(project.document.tint.color)
+    }
+
+    private var studioButton: some View {
+        Button(action: onOpenStudio) {
+            HStack {
+                Label("Open Design Studio", systemImage: "slider.horizontal.3")
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+            }
+            .font(.subheadline.weight(.semibold))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 11)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(project.document.tint.color)
+        .accessibilityHint("Customize colors, type, layout, shape, depth, and motion")
     }
 }

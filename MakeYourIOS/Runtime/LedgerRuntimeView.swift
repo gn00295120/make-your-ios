@@ -11,6 +11,9 @@ struct LedgerRuntimeView: View {
     let node: ComponentNode
     let tint: AppTint
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.runtimeDesign) private var design
+
     @State private var entries: [LedgerRuntimeEntry] = []
     @State private var editorContext: EditorContext?
     @State private var statusMessage: String?
@@ -37,8 +40,16 @@ struct LedgerRuntimeView: View {
         LedgerCalculator.summary(for: visibleEntries)
     }
 
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .ledger)
+    }
+
+    private var contentSpacing: CGFloat {
+        [.compact, .dense].contains(variant) ? 10 : design.componentSpacing
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: contentSpacing) {
             header
             summaryGrid
             budgetView
@@ -70,9 +81,12 @@ struct LedgerRuntimeView: View {
                     node.title,
                     systemImage: node.symbol.isEmpty ? "dollarsign.circle.fill" : node.symbol
                 )
-                .font(.headline)
+                .font(design.sectionFont)
+                .accessibilityAddTraits(.isHeader)
                 if !node.subtitle.isEmpty {
-                    Text(node.subtitle).font(.caption).foregroundStyle(.secondary)
+                    Text(node.subtitle)
+                        .font(design.captionFont)
+                        .foregroundStyle(design.secondaryForeground)
                 }
             }
             Spacer()
@@ -82,7 +96,8 @@ struct LedgerRuntimeView: View {
                 Image(systemName: "plus")
                     .font(.subheadline.bold())
                     .frame(width: 44, height: 44)
-                    .background(tint.color.opacity(0.12), in: Circle())
+                    .foregroundStyle(design.accent)
+                    .background(design.accent.opacity(0.12), in: Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Add entry")
@@ -90,18 +105,19 @@ struct LedgerRuntimeView: View {
     }
 
     private var summaryGrid: some View {
-        Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-            GridRow {
-                summaryCell("Balance", value: summary.balance, symbol: "equal.circle.fill")
-                summaryCell("Spent", value: summary.expenses, symbol: "arrow.down.right")
-            }
+        LazyVGrid(columns: summaryColumns, spacing: 10) {
+            summaryCell("Balance", value: summary.balance, symbol: "equal.circle.fill")
+            summaryCell("Spent", value: summary.expenses, symbol: "arrow.down.right")
             if spec.allowsIncome {
-                GridRow {
-                    summaryCell("Income", value: summary.income, symbol: "arrow.up.right")
-                    summaryCell("Entries", text: visibleEntries.count.formatted(), symbol: "list.bullet")
-                }
+                summaryCell("Income", value: summary.income, symbol: "arrow.up.right")
+                summaryCell("Entries", text: visibleEntries.count.formatted(), symbol: "list.bullet")
             }
         }
+    }
+
+    private var summaryColumns: [GridItem] {
+        let count = dynamicTypeSize.isAccessibilitySize ? 1 : 2
+        return Array(repeating: GridItem(.flexible(), spacing: 10, alignment: .top), count: count)
     }
 
     @ViewBuilder
@@ -116,7 +132,9 @@ struct LedgerRuntimeView: View {
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
-                ProgressView(value: ratio).tint(ratio >= 1 ? .red : tint.color)
+                ProgressView(value: ratio).tint(ratio >= 1 ? design.danger : design.accent)
+                    .accessibilityLabel("Monthly budget used")
+                    .accessibilityValue(Text(ratio, format: .percent))
             }
         }
     }
@@ -135,12 +153,13 @@ struct LedgerRuntimeView: View {
                         x: .value("Amount", total.amount),
                         y: .value("Category", total.category)
                     )
-                    .foregroundStyle(tint.color.gradient)
+                    .foregroundStyle(design.accent.gradient)
                     .cornerRadius(4)
                 }
                 .chartXAxis(.hidden)
                 .frame(height: CGFloat(totals.count) * 30 + 16)
                 .accessibilityLabel("Spending by category chart")
+                .accessibilityValue(categoryAccessibilitySummary(Array(totals)))
             }
         }
     }
@@ -155,14 +174,14 @@ struct LedgerRuntimeView: View {
             )
             .frame(maxWidth: .infinity)
         } else {
-            VStack(spacing: 0) {
+            VStack(spacing: variant == .cards ? 10 : 0) {
                 ForEach(Array(visibleEntries.enumerated()), id: \.element.id) { index, entry in
                     Button {
                         editorContext = EditorContext(entry: entry)
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: entry.type == .income ? "arrow.up.right" : "arrow.down.right")
-                                .foregroundStyle(entry.type == .income ? .green : tint.color)
+                                .foregroundStyle(entry.type == .income ? design.success : design.accent)
                                 .frame(width: 30)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(entry.title).font(.subheadline.weight(.semibold))
@@ -175,11 +194,21 @@ struct LedgerRuntimeView: View {
                                 .font(.subheadline.weight(.semibold).monospacedDigit())
                                 .foregroundStyle(entry.type == .income ? .green : .primary)
                         }
-                        .padding(.vertical, 9)
+                        .padding(.vertical, [.compact, .dense].contains(variant) ? 6 : 9)
+                        .padding(.horizontal, variant == .cards ? 12 : 0)
+                        .background(
+                            variant == .cards ? design.surface : .clear,
+                            in: RoundedRectangle(
+                                cornerRadius: design.compactCornerRadius,
+                                style: .continuous
+                            )
+                        )
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    if index < visibleEntries.count - 1 { Divider().padding(.leading, 40) }
+                    if variant != .cards, index < visibleEntries.count - 1 {
+                        Divider().padding(.leading, 40)
+                    }
                 }
             }
         }
@@ -200,14 +229,35 @@ struct LedgerRuntimeView: View {
                 .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(tint.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .padding(variant == .dense ? 10 : 12)
+        .background(
+            variant == .cards ? design.surface : design.accent.opacity(0.08),
+            in: RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+        )
+        .overlay {
+            if variant == .cards || design.increasedContrast {
+                RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+                    .stroke(
+                        design.borderColor.opacity(design.borderOpacity),
+                        lineWidth: design.borderWidth
+                    )
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(text)
+    }
+
+    private func categoryAccessibilitySummary(_ totals: [CategoryTotal]) -> String {
+        totals.map { "\($0.category): \(money($0.amount))" }.joined(separator: ", ")
     }
 
     private func money(_ value: Double) -> String {
         value.formatted(.currency(code: spec.currencyCode))
     }
+}
 
+private extension LedgerRuntimeView {
     private func load() {
         do {
             if let saved = try stateStore.load(
@@ -272,110 +322,4 @@ private struct CategoryTotal: Identifiable {
     var category: String
     var amount: Double
     var id: String { category }
-}
-
-private struct LedgerEditorView: View {
-    let spec: LedgerSpec
-    let onSave: (LedgerRuntimeEntry) -> Void
-    let onDelete: (() -> Void)?
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var id: UUID
-    @State private var title: String
-    @State private var note: String
-    @State private var amount: String
-    @State private var type: LedgerEntryType
-    @State private var category: String
-    @State private var date: Date
-    @State private var isConfirmingDelete = false
-
-    init(
-        spec: LedgerSpec,
-        existing: LedgerRuntimeEntry?,
-        onSave: @escaping (LedgerRuntimeEntry) -> Void,
-        onDelete: (() -> Void)?
-    ) {
-        self.spec = spec
-        self.onSave = onSave
-        self.onDelete = onDelete
-        _id = State(initialValue: existing?.id ?? UUID())
-        _title = State(initialValue: existing?.title ?? "")
-        _note = State(initialValue: existing?.note ?? "")
-        _amount = State(initialValue: existing.map { String($0.amount) } ?? "")
-        _type = State(initialValue: existing?.type ?? .expense)
-        _category = State(initialValue: existing?.category ?? spec.categories[0])
-        _date = State(initialValue: existing?.date ?? .now)
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                if spec.allowsIncome {
-                    Picker("Type", selection: $type) {
-                        Text("Expense").tag(LedgerEntryType.expense)
-                        Text("Income").tag(LedgerEntryType.income)
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                Section("Entry") {
-                    TextField("Name", text: $title)
-                    TextField("Amount", text: $amount)
-                        .keyboardType(.decimalPad)
-                    Picker("Category", selection: $category) {
-                        ForEach(spec.categories, id: \.self) { Text($0).tag($0) }
-                    }
-                    DatePicker("Date", selection: $date, displayedComponents: .date)
-                    TextField("Note", text: $note, axis: .vertical).lineLimit(2...4)
-                }
-
-                if onDelete != nil {
-                    Section {
-                        Button("Delete entry", role: .destructive) { isConfirmingDelete = true }
-                    }
-                }
-            }
-            .navigationTitle(onDelete == nil ? "New entry" : "Edit entry")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", action: save)
-                        .disabled(!canSave)
-                }
-            }
-            .confirmationDialog(
-                "Delete this entry?",
-                isPresented: $isConfirmingDelete,
-                titleVisibility: .visible
-            ) {
-                Button("Delete", role: .destructive) { onDelete?() }
-                Button("Cancel", role: .cancel) {}
-            }
-        }
-    }
-
-    private var parsedAmount: Double? {
-        Double(amount.replacingOccurrences(of: ",", with: ""))
-    }
-
-    private var canSave: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && parsedAmount.map { $0.isFinite && $0 > 0 } == true
-    }
-
-    private func save() {
-        guard let parsedAmount, parsedAmount > 0 else { return }
-        onSave(LedgerRuntimeEntry(
-            id: id,
-            title: String(title.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80)),
-            note: String(note.trimmingCharacters(in: .whitespacesAndNewlines).prefix(160)),
-            amount: parsedAmount,
-            type: spec.allowsIncome ? type : .expense,
-            category: category,
-            date: date
-        ))
-    }
 }

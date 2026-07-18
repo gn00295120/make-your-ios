@@ -12,6 +12,8 @@ struct MarketWatchRuntimeView: View {
     let node: ComponentNode
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) private var design
+
     @State private var symbols: [String]
     @State private var selectedSymbol: String
     @State private var quotes: [String: MarketQuote] = [:]
@@ -56,8 +58,16 @@ struct MarketWatchRuntimeView: View {
         histories[selectedSymbol]
     }
 
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .marketWatch)
+    }
+
+    private var contentSpacing: CGFloat {
+        [.compact, .dense].contains(variant) ? 10 : design.componentSpacing
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: contentSpacing) {
             header
             watchlist
             if spec.showsChart {
@@ -67,6 +77,7 @@ struct MarketWatchRuntimeView: View {
                     quote: selectedQuote,
                     history: selectedHistory,
                     tint: tint,
+                    variant: variant,
                     isRefreshing: isRefreshing
                 )
             }
@@ -109,11 +120,12 @@ extension MarketWatchRuntimeView {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(node.title.isEmpty ? "Market watch" : node.title)
-                    .font(.headline)
+                    .font(design.sectionFont)
+                    .accessibilityAddTraits(.isHeader)
                 if !node.subtitle.isEmpty {
                     Text(node.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(design.captionFont)
+                        .foregroundStyle(design.secondaryForeground)
                 }
             }
             Spacer()
@@ -141,6 +153,7 @@ extension MarketWatchRuntimeView {
                 }
             }
             .disabled(isRefreshing)
+            .tint(design.accent)
             .accessibilityLabel("Market options")
         }
     }
@@ -155,19 +168,22 @@ extension MarketWatchRuntimeView {
             }
             .padding(.vertical, 20)
         } else {
-            VStack(spacing: 0) {
+            VStack(spacing: variant == .cards ? 10 : 0) {
                 ForEach(Array(symbols.enumerated()), id: \.element) { index, symbol in
                     MarketQuoteRow(
                         symbol: symbol,
                         quote: quotes[symbol],
                         isSelected: selectedSymbol == symbol,
                         tint: tint,
+                        variant: variant,
                         hasProviderKey: hasProviderKey,
                         canRemove: spec.allowsSymbolEditing && symbols.count > 1,
                         onSelect: { selectSymbol(symbol) },
                         onRemove: { removeSymbol(symbol) }
                     )
-                    if index < symbols.count - 1 { Divider().padding(.leading, 48) }
+                    if variant != .cards, index < symbols.count - 1 {
+                        Divider().padding(.leading, 48)
+                    }
                 }
 
                 if spec.allowsSymbolEditing {
@@ -180,7 +196,7 @@ extension MarketWatchRuntimeView {
                             .padding(.vertical, 11)
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(tint.color)
+                    .foregroundStyle(design.accent)
                 }
             }
         }

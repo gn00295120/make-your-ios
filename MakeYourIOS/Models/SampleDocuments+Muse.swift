@@ -23,14 +23,18 @@ extension SampleDocuments {
                             span: .full,
                             alignment: .center,
                             emphasis: .strong,
-                            variant: .photoOverlay
+                            variant: .fullBleed
                         ),
                         image: ImageSpec(
                             aspect: .banner,
                             contentMode: .fill,
                             altText: "A journal photo selected by the user",
                             decorative: false,
-                            allowsUserSelection: true
+                            allowsUserSelection: true,
+                            mediaRole: .hero,
+                            focalPoint: .center,
+                            mask: ImageMask.none,
+                            overlay: .scrim
                         )
                     ),
                     ComponentNode(

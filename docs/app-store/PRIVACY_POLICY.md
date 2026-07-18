@@ -12,8 +12,9 @@ MakeYour stores mini-app documents and runtime state in the app's local
 container. Depending on the tiny apps a user creates, this can include records,
 tasks, ledgers, game scores, news bookmarks, market and currency watchlists,
 cached provider results, AI consent settings, selected or captured project
-images, scanned text or codes, a one-time coordinate, a selected contact
-summary, imported text, or today's aggregate step count.
+images (including an optional Design Studio canvas background), scanned text or
+codes, a one-time coordinate, a selected contact summary, imported text, or
+today's aggregate step count.
 
 The user's OpenAI API key and any optional Twelve Data API key are stored
 separately in iOS Keychain using When Unlocked, This Device Only protection.
@@ -32,9 +33,11 @@ using an AI helper inside a mini app, MakeYour first displays the exact task and
 user-entered text on a confirmation screen. Only that reviewed task and text are
 sent after the user taps Send.
 
-MakeYour does not attach selected photos, local records, notification contents,
-other projects, or general device data to an AI request. The API key is used only
-as the authorization header for the direct OpenAI request.
+MakeYour does not attach selected photos or canvas backgrounds, local records,
+notification contents, other projects, or general device data to an AI request.
+Generated documents contain only semantic image bindings and visual metadata,
+never image bytes or local paths. The API key is used only as the authorization
+header for the direct OpenAI request.
 
 OpenAI processes these requests under the agreement and data controls associated
 with the user's OpenAI API account. Users should review OpenAI's

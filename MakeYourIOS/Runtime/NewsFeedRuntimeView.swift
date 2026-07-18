@@ -20,6 +20,8 @@ struct NewsFeedRuntimeView: View {
     let node: ComponentNode
     let tint: AppTint
 
+    @Environment(\.runtimeDesign) private var design
+
     @State private var articles: [NewsArticle] = []
     @State private var bookmarks: [String: NewsArticle] = [:]
     @State private var topics: [String]
@@ -67,8 +69,16 @@ struct NewsFeedRuntimeView: View {
         }
     }
 
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .newsFeed)
+    }
+
+    private var contentSpacing: CGFloat {
+        [.compact, .dense].contains(variant) ? 9 : design.componentSpacing
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: contentSpacing) {
             header
             controls
             topicFilters
@@ -98,11 +108,12 @@ extension NewsFeedRuntimeView {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(node.title.isEmpty ? "News" : node.title)
-                    .font(.headline)
+                    .font(variant == .editorial ? design.titleFont : design.sectionFont)
+                    .accessibilityAddTraits(.isHeader)
                 if !node.subtitle.isEmpty {
                     Text(node.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(design.captionFont)
+                        .foregroundStyle(design.secondaryForeground)
                 }
             }
             Spacer()
@@ -118,6 +129,7 @@ extension NewsFeedRuntimeView {
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.circle)
+            .tint(design.accent)
             .disabled(isRefreshing)
             .accessibilityLabel("Refresh news")
         }
@@ -143,8 +155,17 @@ extension NewsFeedRuntimeView {
                 }
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+            .padding(.vertical, [.compact, .dense].contains(variant) ? 8 : 11)
+            .background(
+                variant == .cards ? design.surface : design.accent.opacity(0.08),
+                in: RoundedRectangle(cornerRadius: design.controlCornerRadius, style: .continuous)
+            )
+            .overlay {
+                if design.increasedContrast {
+                    RoundedRectangle(cornerRadius: design.controlCornerRadius, style: .continuous)
+                        .stroke(design.borderColor, lineWidth: design.borderWidth)
+                }
+            }
 
             if spec.allowsBookmarks {
                 Picker("Articles", selection: $displayMode) {
@@ -176,12 +197,12 @@ extension NewsFeedRuntimeView {
                                 .padding(.horizontal, 11)
                                 .padding(.vertical, 8)
                                 .foregroundStyle(
-                                    selectedTopics.contains(topic) ? Color.white : tint.color
+                                    selectedTopics.contains(topic) ? design.onAccent : design.accent
                                 )
                                 .background(
                                     selectedTopics.contains(topic)
-                                        ? tint.color
-                                        : tint.color.opacity(0.12),
+                                        ? design.accent
+                                        : design.accent.opacity(0.12),
                                     in: Capsule()
                                 )
                         }
@@ -199,6 +220,7 @@ extension NewsFeedRuntimeView {
                         }
                         .buttonStyle(.bordered)
                         .buttonBorderShape(.capsule)
+                        .tint(design.accent)
                     }
                 }
             }
@@ -243,16 +265,37 @@ extension NewsFeedRuntimeView {
             )
             .frame(maxWidth: .infinity)
         } else {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: variant == .cards ? 10 : 0) {
                 ForEach(Array(displayedArticles.enumerated()), id: \.element.id) { index, article in
                     NewsArticleRow(
                         article: article,
                         tint: tint,
+                        variant: variant,
                         allowsBookmarks: spec.allowsBookmarks,
                         isBookmarked: bookmarks[article.id] != nil,
                         onToggleBookmark: { toggleBookmark(article) }
                     )
-                    if index < displayedArticles.count - 1 {
+                    .padding(variant == .cards ? 12 : 0)
+                    .background(
+                        variant == .cards ? design.surface : .clear,
+                        in: RoundedRectangle(
+                            cornerRadius: design.compactCornerRadius,
+                            style: .continuous
+                        )
+                    )
+                    .overlay {
+                        if variant == .cards {
+                            RoundedRectangle(
+                                cornerRadius: design.compactCornerRadius,
+                                style: .continuous
+                            )
+                            .stroke(
+                                design.borderColor.opacity(design.borderOpacity),
+                                lineWidth: design.borderWidth
+                            )
+                        }
+                    }
+                    if variant != .cards, index < displayedArticles.count - 1 {
                         Divider().padding(.leading, 12)
                     }
                 }

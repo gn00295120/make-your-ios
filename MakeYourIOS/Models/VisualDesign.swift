@@ -8,6 +8,14 @@ struct AppVisualTheme: Codable, Hashable, Sendable {
     var cornerStyle: ThemeCornerStyle
     var density: ThemeDensity
     var defaultSurface: ComponentSurface
+    var palette: BrandPalette?
+    var typeScale: ThemeTypeScale?
+    var titleWeight: ThemeTitleWeight?
+    var elevation: ThemeElevation?
+    var stroke: ThemeStroke?
+    var controlShape: ThemeControlShape?
+    var motion: ThemeMotion?
+    var backgroundAssetBinding: String?
 
     static let legacy = AppVisualTheme.preset(.native)
 
@@ -35,7 +43,14 @@ struct AppVisualTheme: Codable, Hashable, Sendable {
         background: .grouped,
         cornerStyle: .soft,
         density: .regular,
-        defaultSurface: .card
+        defaultSurface: .card,
+        palette: .nativeDesign,
+        typeScale: .balanced,
+        titleWeight: .bold,
+        elevation: .subtle,
+        stroke: .hairline,
+        controlShape: .native,
+        motion: .subtle
     )
 
     private static let minimalPreset = AppVisualTheme(
@@ -45,7 +60,14 @@ struct AppVisualTheme: Codable, Hashable, Sendable {
         background: .plain,
         cornerStyle: .square,
         density: .compact,
-        defaultSurface: .plain
+        defaultSurface: .plain,
+        palette: .minimalDesign,
+        typeScale: .compact,
+        titleWeight: .semibold,
+        elevation: .flat,
+        stroke: .hairline,
+        controlShape: .angular,
+        motion: ThemeMotion.none
     )
 
     private static let softPreset = AppVisualTheme(
@@ -55,7 +77,14 @@ struct AppVisualTheme: Codable, Hashable, Sendable {
         background: .tinted,
         cornerStyle: .round,
         density: .regular,
-        defaultSurface: .tinted
+        defaultSurface: .tinted,
+        palette: .softDesign,
+        typeScale: .balanced,
+        titleWeight: .semibold,
+        elevation: .subtle,
+        stroke: ThemeStroke.none,
+        controlShape: .soft,
+        motion: .subtle
     )
 
     private static let editorialPreset = AppVisualTheme(
@@ -65,7 +94,14 @@ struct AppVisualTheme: Codable, Hashable, Sendable {
         background: .paper,
         cornerStyle: .square,
         density: .airy,
-        defaultSurface: .plain
+        defaultSurface: .plain,
+        palette: .editorialDesign,
+        typeScale: .editorial,
+        titleWeight: .bold,
+        elevation: .flat,
+        stroke: .hairline,
+        controlShape: .angular,
+        motion: ThemeMotion.none
     )
 
     private static let playfulPreset = AppVisualTheme(
@@ -75,7 +111,14 @@ struct AppVisualTheme: Codable, Hashable, Sendable {
         background: .gradient,
         cornerStyle: .round,
         density: .airy,
-        defaultSurface: .material
+        defaultSurface: .material,
+        palette: .playfulDesign,
+        typeScale: .expressive,
+        titleWeight: .black,
+        elevation: .floating,
+        stroke: ThemeStroke.none,
+        controlShape: .pill,
+        motion: .expressive
     )
 
     private static let boldPreset = AppVisualTheme(
@@ -85,8 +128,16 @@ struct AppVisualTheme: Codable, Hashable, Sendable {
         background: .midnight,
         cornerStyle: .soft,
         density: .compact,
-        defaultSurface: .outlined
+        defaultSurface: .outlined,
+        palette: .boldDesign,
+        typeScale: .expressive,
+        titleWeight: .black,
+        elevation: .floating,
+        stroke: .accent,
+        controlShape: .angular,
+        motion: .expressive
     )
+
 }
 
 enum VisualThemePreset: String, Codable, CaseIterable, Hashable, Sendable, Identifiable {
@@ -159,6 +210,21 @@ enum ThemeDensity: String, Codable, CaseIterable, Hashable, Sendable {
 struct PagePresentation: Codable, Hashable, Sendable {
     var layout: PageLayout
     var showsNavigationTitle: Bool
+    var navigationStyle: PageNavigationStyle?
+
+    init(
+        layout: PageLayout,
+        showsNavigationTitle: Bool,
+        navigationStyle: PageNavigationStyle? = nil
+    ) {
+        self.layout = layout
+        self.showsNavigationTitle = showsNavigationTitle
+        self.navigationStyle = navigationStyle
+    }
+
+    var resolvedNavigationStyle: PageNavigationStyle {
+        navigationStyle ?? .automatic
+    }
 
     static let flow = PagePresentation(layout: .flow, showsNavigationTitle: true)
 }
@@ -221,6 +287,15 @@ enum ComponentVariant: String, Codable, CaseIterable, Hashable, Sendable {
     case numberFirst
     case progress
     case timeline
+    case editorial
+    case split
+    case fullBleed
+    case framed
+    case cards
+    case dense
+    case immersive
+    case outlinedAction
+    case softAction
 }
 
 struct ImageSpec: Codable, Hashable, Sendable {
@@ -229,6 +304,40 @@ struct ImageSpec: Codable, Hashable, Sendable {
     var altText: String
     var decorative: Bool
     var allowsUserSelection: Bool
+    var mediaRole: MediaRole?
+    var focalPoint: ImageFocalPoint?
+    var mask: ImageMask?
+    var overlay: ImageOverlay?
+
+    init(
+        aspect: ImageAspect,
+        contentMode: ImageContentMode,
+        altText: String,
+        decorative: Bool,
+        allowsUserSelection: Bool,
+        mediaRole: MediaRole? = nil,
+        focalPoint: ImageFocalPoint? = nil,
+        mask: ImageMask? = nil,
+        overlay: ImageOverlay? = nil
+    ) {
+        self.aspect = aspect
+        self.contentMode = contentMode
+        self.altText = altText
+        self.decorative = decorative
+        self.allowsUserSelection = allowsUserSelection
+        self.mediaRole = mediaRole
+        self.focalPoint = focalPoint
+        self.mask = mask
+        self.overlay = overlay
+    }
+
+    var resolvedMediaRole: MediaRole { mediaRole ?? .content }
+
+    var resolvedFocalPoint: ImageFocalPoint { focalPoint ?? .center }
+
+    var resolvedMask: ImageMask { mask ?? .rounded }
+
+    var resolvedOverlay: ImageOverlay { overlay ?? .none }
 
     static let editableLandscape = ImageSpec(
         aspect: .landscape,

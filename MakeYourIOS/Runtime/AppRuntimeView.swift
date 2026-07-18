@@ -6,6 +6,11 @@ struct AppRuntimeView: View {
     let document: AppDocument
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     @State private var selectedPageID: String
     @State private var session: RuntimeSessionState
 
@@ -24,6 +29,18 @@ struct AppRuntimeView: View {
         document.resolvedTheme
     }
 
+    private var design: RuntimeDesignContext {
+        RuntimeDesignContext(
+            theme: theme,
+            tint: document.tint,
+            colorScheme: colorScheme,
+            reduceMotion: reduceMotion,
+            reduceTransparency: reduceTransparency,
+            increasedContrast: colorSchemeContrast == .increased,
+            differentiateWithoutColor: differentiateWithoutColor
+        )
+    }
+
     private var rows: [RuntimeNodeRow] {
         PageLayoutEngine.rows(
             for: selectedPage.nodes,
@@ -34,35 +51,21 @@ struct AppRuntimeView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: theme.componentSpacing) {
+            VStack(spacing: design.componentSpacing) {
                 if document.pages.count > 1 {
-                    Picker("Page", selection: $selectedPageID) {
-                        ForEach(document.pages) { page in
-                            Text(page.title).tag(page.id)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.bottom, 2)
+                    pageNavigation
                 }
 
-                ForEach(rows) { row in
-                    HStack(alignment: .top, spacing: theme.componentSpacing) {
-                        ForEach(row.nodes) { node in
-                            ComponentRenderer(
-                                projectID: projectID,
-                                node: node,
-                                tint: document.tint,
-                                theme: theme,
-                                capabilities: document.capabilities,
-                                session: session,
-                                onNavigate: { target in
-                                    guard document.pages.contains(where: { $0.id == target }) else { return }
-                                    withAnimation(.snappy) { selectedPageID = target }
-                                }
-                            )
-                            .frame(maxWidth: .infinity, alignment: .top)
-                        }
-                    }
+                RuntimePageRenderer(page: selectedPage, rows: rows, design: design) { node in
+                    ComponentRenderer(
+                        projectID: projectID,
+                        node: node,
+                        tint: document.tint,
+                        theme: theme,
+                        capabilities: document.capabilities,
+                        session: session,
+                        onNavigate: selectPage
+                    )
                 }
 
                 HStack(spacing: 6) {
@@ -76,12 +79,14 @@ struct AppRuntimeView: View {
             .padding(16)
         }
         .background {
-            RuntimeCanvasBackground(theme: theme, tint: document.tint)
+            RuntimeMediaBackground(projectID: projectID, theme: theme, tint: document.tint)
+                .environment(\.runtimeDesign, design)
                 .ignoresSafeArea()
         }
+        .environment(\.runtimeDesign, design)
         .navigationTitle(selectedPage.resolvedPresentation.showsNavigationTitle ? selectedPage.title : "")
         .navigationBarTitleDisplayMode(.inline)
-        .tint(document.tint.color)
+        .tint(design.accent)
         .fontDesign(theme.typography.fontDesign)
         .preferredColorScheme(theme.appearance.colorScheme)
         .alert(
@@ -96,9 +101,81 @@ struct AppRuntimeView: View {
             Text(session.alertMessage ?? "")
         }
     }
+
+    @ViewBuilder
+    private var pageNavigation: some View {
+        switch resolvedNavigationStyle {
+        case .automatic, .segmented:
+            Picker("Page", selection: $selectedPageID) {
+                ForEach(document.pages) { page in
+                    Text(page.title).tag(page.id)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel("Tiny app page")
+        case .chips:
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(document.pages) { page in
+                        let isSelected = page.id == selectedPageID
+                        Button(page.title) { selectPage(page.id) }
+                            .font(design.captionFont.weight(.semibold))
+                            .foregroundStyle(isSelected ? design.onAccent : design.accent)
+                            .padding(.horizontal, 13)
+                            .padding(.vertical, 9)
+                            .background(
+                                isSelected ? design.accent : design.accent.opacity(0.10),
+                                in: Capsule()
+                            )
+                            .buttonStyle(.plain)
+                            .accessibilityAddTraits(isSelected ? .isSelected : [])
+                    }
+                }
+            }
+            .accessibilityLabel("Tiny app pages")
+        case .menu:
+            Menu {
+                ForEach(document.pages) { page in
+                    Button {
+                        selectPage(page.id)
+                    } label: {
+                        if page.id == selectedPageID {
+                            Label(page.title, systemImage: "checkmark")
+                        } else {
+                            Text(page.title)
+                        }
+                    }
+                }
+            } label: {
+                Label(selectedPage.title, systemImage: "rectangle.stack.fill")
+                    .font(design.captionFont.weight(.semibold))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 10)
+                    .background(design.surface, in: RoundedRectangle(
+                        cornerRadius: design.controlCornerRadius,
+                        style: .continuous
+                    ))
+            }
+            .accessibilityLabel("Current page, \(selectedPage.title)")
+        }
+    }
+
+    private var resolvedNavigationStyle: PageNavigationStyle {
+        let requested = selectedPage.resolvedPresentation.resolvedNavigationStyle
+        guard requested == .automatic else { return requested }
+        return document.pages.count <= 3 ? .segmented : .menu
+    }
+
+    private func selectPage(_ target: String) {
+        guard document.pages.contains(where: { $0.id == target }) else { return }
+        design.animate {
+            selectedPageID = target
+        }
+    }
 }
 
-private struct ComponentRenderer: View {
+struct ComponentRenderer: View {
     let projectID: UUID
     let node: ComponentNode
     let tint: AppTint
@@ -116,25 +193,11 @@ private struct ComponentRenderer: View {
     private var content: some View {
         switch node.kind {
         case .hero:
-            HeroNodeView(node: node, tint: tint, theme: theme)
+            HeroNodeView(projectID: projectID, node: node, tint: tint, theme: theme)
         case .sectionHeader:
-            VStack(alignment: .leading, spacing: 4) {
-                Text(node.title).font(.title3.bold())
-                if !node.subtitle.isEmpty {
-                    Text(node.subtitle).font(.subheadline).foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 6)
+            SectionHeaderNodeView(node: node)
         case .text:
-            Text(node.title.isEmpty ? node.value : node.title)
-                .font(.body)
-                .foregroundStyle(.primary)
-                .multilineTextAlignment(node.resolvedPresentation.alignment.textAlignment)
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: node.resolvedPresentation.alignment.frameAlignment
-                )
+            TextNodeView(node: node)
         case .metric:
             MetricNodeView(node: node, tint: tint)
         case .textInput, .numberInput:
@@ -142,17 +205,7 @@ private struct ComponentRenderer: View {
         case .picker:
             PickerNodeView(node: node, tint: tint, session: session)
         case .button:
-            Button {
-                perform(node.action)
-            } label: {
-                Label(node.title, systemImage: node.symbol.isEmpty ? "arrow.right" : node.symbol)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(tint.color)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            ActionButtonNodeView(node: node) { perform(node.action) }
         case .checklist:
             ChecklistNodeView(node: node, tint: tint, session: session)
         case .infoBanner:

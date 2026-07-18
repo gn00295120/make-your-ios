@@ -9,11 +9,30 @@ extension GeneratedAppPayload {
         var cornerStyle: String
         var density: String
         var defaultSurface: String
+        var palette: Palette
+        var typeScale: String
+        var titleWeight: String
+        var elevation: String
+        var stroke: String
+        var controlShape: String
+        var motion: String
+        var backgroundAssetBinding: String
+    }
+
+    struct Palette: Decodable {
+        var primaryHex: String
+        var secondaryHex: String
+        var accentHex: String
+        var canvasLightHex: String
+        var canvasDarkHex: String
+        var surfaceLightHex: String
+        var surfaceDarkHex: String
     }
 
     struct PageDesign: Decodable {
         var layout: String
         var showsNavigationTitle: Bool
+        var navigationStyle: String
     }
 
     struct Page: Decodable {
@@ -37,6 +56,10 @@ extension GeneratedAppPayload {
         var altText: String
         var decorative: Bool
         var allowsUserSelection: Bool
+        var mediaRole: String
+        var focalPoint: String
+        var mask: String
+        var overlay: String
     }
 
     struct Collection: Decodable {

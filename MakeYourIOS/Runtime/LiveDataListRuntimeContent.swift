@@ -4,9 +4,13 @@ extension LiveDataListRuntimeView {
     var header: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(node.title).font(.headline)
+                Text(node.title)
+                    .font(design.sectionFont)
+                    .accessibilityAddTraits(.isHeader)
                 if !node.subtitle.isEmpty {
-                    Text(node.subtitle).font(.caption).foregroundStyle(.secondary)
+                    Text(node.subtitle)
+                        .font(design.captionFont)
+                        .foregroundStyle(design.secondaryForeground)
                 }
             }
             Spacer()
@@ -14,8 +18,15 @@ extension LiveDataListRuntimeView {
                 Button { showingCurrencyPicker = true } label: {
                     Image(systemName: "plus")
                         .font(.subheadline.bold())
+                        .foregroundStyle(design.accent)
                         .frame(width: 44, height: 44)
-                        .background(tint.color.opacity(0.12), in: Circle())
+                        .background(
+                            design.accent.opacity(0.12),
+                            in: RoundedRectangle(
+                                cornerRadius: design.controlCornerRadius,
+                                style: .continuous
+                            )
+                        )
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Add currency")
@@ -40,14 +51,27 @@ extension LiveDataListRuntimeView {
                     }
                 } label: {
                     Label(watchState.base, systemImage: "globe")
-                        .font(.subheadline.bold())
+                        .font(.system(
+                            .subheadline,
+                            design: design.theme.typography.fontDesign,
+                            weight: .bold
+                        ))
+                        .foregroundStyle(design.accent)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 9)
-                        .background(tint.color.opacity(0.12), in: Capsule())
+                        .background(
+                            design.accent.opacity(0.12),
+                            in: RoundedRectangle(
+                                cornerRadius: design.controlCornerRadius,
+                                style: .continuous
+                            )
+                        )
                 }
                 .accessibilityLabel("Primary currency, \(watchState.base)")
             } else {
-                Label(watchState.base, systemImage: "globe").font(.subheadline.bold())
+                Label(watchState.base, systemImage: "globe")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(design.accent)
             }
 
             Spacer()
@@ -64,6 +88,7 @@ extension LiveDataListRuntimeView {
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.circle)
+            .tint(design.accent)
             .disabled(isRefreshing || watchState.symbols.isEmpty)
             .accessibilityLabel("Refresh exchange rates")
         }
@@ -79,10 +104,12 @@ extension LiveDataListRuntimeView {
             )
             .frame(maxWidth: .infinity)
         } else {
-            VStack(spacing: 0) {
+            VStack(spacing: variant == .cards ? 9 : 0) {
                 ForEach(Array(watchState.symbols.enumerated()), id: \.element) { index, symbol in
                     rateRow(symbol)
-                    if index < watchState.symbols.count - 1 { Divider().padding(.leading, 50) }
+                    if variant != .cards, index < watchState.symbols.count - 1 {
+                        Divider().padding(.leading, 50)
+                    }
                 }
             }
         }
@@ -93,7 +120,7 @@ extension LiveDataListRuntimeView {
             if let errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(design.warning)
             }
             HStack(spacing: 5) {
                 Image(systemName: "clock")
@@ -103,8 +130,8 @@ extension LiveDataListRuntimeView {
                     Text("Latest daily reference rates · Frankfurter")
                 }
             }
-            .font(.caption2)
-            .foregroundStyle(.secondary)
+            .font(design.captionFont)
+            .foregroundStyle(design.secondaryForeground)
         }
     }
 
@@ -112,64 +139,114 @@ extension LiveDataListRuntimeView {
         let rate = watchState.snapshot?.rates[symbol]
         let rule = watchState.rules[symbol]
         return HStack(alignment: .center, spacing: 11) {
-            Text(symbol)
-                .font(.caption.bold().monospaced())
-                .foregroundStyle(tint.color)
-                .frame(width: 42, height: 42)
-                .background(tint.color.opacity(0.11), in: Circle())
+            currencyBadge(symbol)
+            adaptiveRateContent(symbol: symbol, rate: rate, rule: rule)
+            alertButton(symbol: symbol, rule: rule)
+            removeButton(symbol)
+        }
+        .padding(.vertical, variant == .dense ? 1 : 6)
+        .padding(.horizontal, variant == .cards ? 12 : 0)
+        .background { rateRowBackground }
+        .accessibilityElement(children: dynamicTypeSize.isAccessibilitySize ? .contain : .contain)
+    }
 
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .center, spacing: 10) {
-                    rateDetails(symbol: symbol, rate: rate, rule: rule)
-                    Spacer(minLength: 8)
-                    rateValue(symbol: symbol, rate: rate)
-                }
-                VStack(alignment: .leading, spacing: 5) {
-                    rateDetails(symbol: symbol, rate: rate, rule: rule)
-                    rateValue(symbol: symbol, rate: rate)
-                }
+    private func currencyBadge(_ symbol: String) -> some View {
+        Text(symbol)
+            .font(.caption.bold().monospaced())
+            .foregroundStyle(design.accent)
+            .frame(width: 42, height: 42)
+            .background(
+                design.accent.opacity(0.11),
+                in: RoundedRectangle(
+                    cornerRadius: design.controlCornerRadius,
+                    style: .continuous
+                )
+            )
+    }
+
+    private func adaptiveRateContent(
+        symbol: String,
+        rate: Double?,
+        rule: RateRule?
+    ) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 10) {
+                rateDetails(symbol: symbol, rate: rate, rule: rule)
+                Spacer(minLength: 8)
+                rateValue(symbol: symbol, rate: rate)
             }
-
-            if spec.allowsThresholds {
-                Button {
-                    selectedAlertSymbol = SelectedSymbol(code: symbol)
-                } label: {
-                    Image(systemName: alertSymbol(rule))
-                        .foregroundStyle(rule?.isEnabled == true ? tint.color : Color.secondary)
-                        .frame(width: 44, height: 44)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Set rate alert for \(symbol)")
-            }
-
-            if spec.allowsItemEditing {
-                Button { removeSymbol(symbol) } label: {
-                    Image(systemName: "minus.circle")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 32, height: 44)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Remove \(symbol)")
+            VStack(alignment: .leading, spacing: 5) {
+                rateDetails(symbol: symbol, rate: rate, rule: rule)
+                rateValue(symbol: symbol, rate: rate)
             }
         }
-        .padding(.vertical, 6)
-        .accessibilityElement(children: dynamicTypeSize.isAccessibilitySize ? .contain : .contain)
+    }
+
+    @ViewBuilder
+    private func alertButton(symbol: String, rule: RateRule?) -> some View {
+        if spec.allowsThresholds {
+            Button {
+                selectedAlertSymbol = SelectedSymbol(code: symbol)
+            } label: {
+                Image(systemName: alertSymbol(rule))
+                    .foregroundStyle(
+                        rule?.isEnabled == true ? design.accent : design.secondaryForeground
+                    )
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Set rate alert for \(symbol)")
+        }
+    }
+
+    @ViewBuilder
+    private func removeButton(_ symbol: String) -> some View {
+        if spec.allowsItemEditing {
+            Button { removeSymbol(symbol) } label: {
+                Image(systemName: "minus.circle")
+                    .foregroundStyle(design.secondaryForeground)
+                    .frame(width: 32, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove \(symbol)")
+        }
+    }
+
+    @ViewBuilder
+    private var rateRowBackground: some View {
+        if variant == .cards {
+            RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+                .fill(design.surface)
+                .overlay {
+                    RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+                        .stroke(
+                            design.borderColor.opacity(design.borderOpacity),
+                            lineWidth: design.borderWidth
+                        )
+                }
+        }
     }
 
     private func rateDetails(symbol: String, rate: Double?, rule: RateRule?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(currencyName(symbol))
-                .font(.subheadline.weight(.semibold))
+                .font(.system(
+                    .subheadline,
+                    design: design.theme.typography.fontDesign,
+                    weight: .semibold
+                ))
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
             if let rule {
                 Text(ruleSummary(rule, symbol: symbol))
                     .font(.caption2)
-                    .foregroundStyle(rule.hasTriggered ? tint.color : Color.secondary)
+                    .foregroundStyle(
+                        rule.hasTriggered ? design.accent : design.secondaryForeground
+                    )
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
             } else {
                 Text("1 \(watchState.base) in \(symbol)")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(design.secondaryForeground)
             }
         }
     }
@@ -178,12 +255,17 @@ extension LiveDataListRuntimeView {
         Group {
             if let rate {
                 Text(rate, format: .number.precision(.fractionLength(2...6)))
-                    .contentTransition(.numericText())
+                    .foregroundStyle(design.accent)
             } else {
-                Text("—").foregroundStyle(.secondary)
+                Text("—").foregroundStyle(design.secondaryForeground)
             }
         }
-        .font(.headline.monospacedDigit())
+        .font(.system(
+            .headline,
+            design: design.theme.typography.fontDesign,
+            weight: .bold
+        ).monospacedDigit())
+        .contentTransition(design.reduceMotion ? .identity : .numericText())
         .accessibilityLabel(rate.map { "Current rate \($0) \(symbol)" } ?? "Rate unavailable")
     }
 }

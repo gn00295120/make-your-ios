@@ -20,6 +20,7 @@ struct RateAlertEditor: View {
     let onTest: (RateAlertDraft) -> String
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.runtimeDesign) private var design
     @State private var draft: RateAlertDraft
     @State private var confirmingDelete = false
     @State private var testMessage: String?
@@ -96,7 +97,7 @@ struct RateAlertEditor: View {
                     }
                 }
             }
-            .tint(tint.color)
+            .tint(design.accent)
             .navigationTitle("Rate Alert")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -143,6 +144,7 @@ struct CurrencyPickerSheet: View {
     let onAdd: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.runtimeDesign) private var design
     @State private var search = ""
 
     private var filtered: [CurrencyDescriptor] {
@@ -163,15 +165,16 @@ struct CurrencyPickerSheet: View {
                 } label: {
                     HStack {
                         Text(currency.code).font(.subheadline.bold().monospaced())
-                            .foregroundStyle(tint.color)
+                            .foregroundStyle(design.accent)
                             .frame(width: 48, alignment: .leading)
                         Text(currency.name).foregroundStyle(.primary)
                         Spacer()
-                        Image(systemName: "plus.circle.fill").foregroundStyle(tint.color)
+                        Image(systemName: "plus.circle.fill").foregroundStyle(design.accent)
                     }
                 }
             }
             .searchable(text: $search, prompt: "Currency code or name")
+            .tint(design.accent)
             .navigationTitle("Add Currency")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

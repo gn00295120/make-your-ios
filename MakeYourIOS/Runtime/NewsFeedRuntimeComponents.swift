@@ -3,9 +3,12 @@ import SwiftUI
 struct NewsArticleRow: View {
     let article: NewsArticle
     let tint: AppTint
+    let variant: ComponentVariant
     let allowsBookmarks: Bool
     let isBookmarked: Bool
     let onToggleBookmark: () -> Void
+
+    @Environment(\.runtimeDesign) private var design
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -14,21 +17,21 @@ struct NewsArticleRow: View {
                 bookmarkButton
             }
         }
-        .padding(.vertical, 11)
+        .padding(.vertical, [.compact, .dense].contains(variant) ? 7 : 11)
     }
 
     private var originalArticleLink: some View {
         Link(destination: article.url) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(article.title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(variant == .editorial ? design.sectionFont : .subheadline.weight(.semibold))
+                    .foregroundStyle(design.primaryForeground)
                     .multilineTextAlignment(.leading)
                 if !article.summary.isEmpty {
                     Text(article.summary)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
+                        .font(design.captionFont)
+                        .foregroundStyle(design.secondaryForeground)
+                        .lineLimit([.compact, .dense].contains(variant) ? 2 : 3)
                         .multilineTextAlignment(.leading)
                 }
                 sourceMetadata
@@ -50,13 +53,13 @@ struct NewsArticleRow: View {
             Image(systemName: "arrow.up.right.square")
         }
         .font(.caption2.weight(.medium))
-        .foregroundStyle(tint.color)
+        .foregroundStyle(design.accent)
     }
 
     private var bookmarkButton: some View {
         Button(action: onToggleBookmark) {
             Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
-                .foregroundStyle(tint.color)
+                .foregroundStyle(design.accent)
                 .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
@@ -67,6 +70,8 @@ struct NewsArticleRow: View {
 struct NewsSourceCredit: View {
     let sources: [NewsSourceKind]
 
+    @Environment(\.runtimeDesign) private var design
+
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("Headlines are fetched from the publishers below. Open a story to read it at the source.")
@@ -76,6 +81,7 @@ struct NewsSourceCredit: View {
                 ForEach(sources, id: \.self) { source in
                     Link(source.displayName, destination: source.creditURL)
                         .font(.caption2.weight(.semibold))
+                        .foregroundStyle(design.accent)
                 }
             }
         }
@@ -87,6 +93,7 @@ struct NewsTopicEditorView: View {
     let tint: AppTint
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.runtimeDesign) private var design
     @State private var draft = ""
 
     var body: some View {
@@ -116,7 +123,7 @@ struct NewsTopicEditorView: View {
             }
             .navigationTitle("News topics")
             .navigationBarTitleDisplayMode(.inline)
-            .tint(tint.color)
+            .tint(design.accent)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

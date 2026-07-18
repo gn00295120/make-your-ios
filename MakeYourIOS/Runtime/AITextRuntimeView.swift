@@ -10,6 +10,7 @@ struct AITextRuntimeView: View {
     let tint: AppTint
 
     @Environment(AISettingsStore.self) private var aiSettings
+    @Environment(\.runtimeDesign) private var design
     @State private var input = ""
     @State private var output = ""
     @State private var pendingRequest: PendingRequest?
@@ -22,30 +23,56 @@ struct AITextRuntimeView: View {
         input.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .aiAssistant)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: variant == .compact ? 9 : 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(node.title.isEmpty ? "Ask AI" : node.title).font(.headline)
+                    Text(node.title.isEmpty ? "Ask AI" : node.title)
+                        .font(design.sectionFont)
+                        .accessibilityAddTraits(.isHeader)
                     if !node.subtitle.isEmpty {
-                        Text(node.subtitle).font(.caption).foregroundStyle(.secondary)
+                        Text(node.subtitle)
+                            .font(design.captionFont)
+                            .foregroundStyle(design.secondaryForeground)
                     }
                 }
                 Spacer()
                 Label("AI", systemImage: "sparkles")
                     .font(.caption2.bold())
-                    .foregroundStyle(tint.color)
+                    .foregroundStyle(design.accent)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 6)
-                    .background(tint.color.opacity(0.12), in: Capsule())
+                    .background(design.accent.opacity(0.12), in: Capsule())
                     .accessibilityLabel("Uses OpenAI")
             }
 
             TextEditor(text: $input)
-                .frame(minHeight: 96)
+                .frame(minHeight: variant == .compact ? 72 : 96)
                 .scrollContentBackground(.hidden)
                 .padding(12)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(
+                    variant == .cards ? design.surface : design.accent.opacity(0.07),
+                    in: RoundedRectangle(
+                        cornerRadius: design.controlCornerRadius,
+                        style: .continuous
+                    )
+                )
+                .overlay {
+                    if variant == .framed || design.increasedContrast {
+                        RoundedRectangle(
+                            cornerRadius: design.controlCornerRadius,
+                            style: .continuous
+                        )
+                        .stroke(
+                            design.accent.opacity(design.increasedContrast ? 0.9 : 0.5),
+                            lineWidth: max(1, design.borderWidth)
+                        )
+                    }
+                }
                 .overlay(alignment: .topLeading) {
                     if input.isEmpty {
                         Text(node.placeholder.isEmpty ? "Enter text for AI…" : node.placeholder)
@@ -64,6 +91,7 @@ struct AITextRuntimeView: View {
                                 .font(.caption.weight(.medium))
                                 .buttonStyle(.bordered)
                                 .buttonBorderShape(.capsule)
+                                .tint(design.accent)
                         }
                     }
                 }
@@ -84,7 +112,7 @@ struct AITextRuntimeView: View {
                     .padding(.vertical, 13)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(tint.color)
+                .tint(design.accent)
                 .disabled(trimmedInput.isEmpty || isRunning)
             } else {
                 Label("Add an API key in the AI Key tab to use this feature.", systemImage: "key.fill")
@@ -103,14 +131,17 @@ struct AITextRuntimeView: View {
                 VStack(alignment: .leading, spacing: 7) {
                     Label("AI result", systemImage: "sparkles")
                         .font(.caption.bold())
-                        .foregroundStyle(tint.color)
+                        .foregroundStyle(design.accent)
                     Text(output)
-                        .font(.body)
+                        .font(design.bodyFont)
                         .textSelection(.enabled)
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(tint.color.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
+                .background(
+                    variant == .cards ? design.surface : design.accent.opacity(0.09),
+                    in: RoundedRectangle(cornerRadius: design.compactCornerRadius)
+                )
             }
 
             if let errorMessage {

@@ -83,6 +83,28 @@ final class LocalAssetStore {
         ).path)
     }
 
+    func deleteImage(projectID: UUID, binding: String) throws {
+        let binding = try validatedBinding(binding)
+        let directory = projectDirectory(for: projectID)
+        var manifest = try loadManifest(projectID: projectID)
+        guard let assetID = manifest.assetsByBinding.removeValue(forKey: binding) else { return }
+
+        guard Self.isValidAssetID(assetID) else {
+            throw LocalAssetStoreError.invalidManifest
+        }
+
+        if manifest.assetsByBinding.isEmpty {
+            try deleteAssets(projectID: projectID)
+            return
+        }
+
+        try saveManifest(manifest, in: directory)
+        let url = assetURL(assetID: assetID, in: directory)
+        if fileManager.fileExists(atPath: url.path) {
+            try fileManager.removeItem(at: url)
+        }
+    }
+
     func duplicateAssets(from sourceProjectID: UUID, to destinationProjectID: UUID) throws {
         guard sourceProjectID != destinationProjectID else { return }
 

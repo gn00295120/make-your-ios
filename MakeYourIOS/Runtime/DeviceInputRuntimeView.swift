@@ -17,6 +17,7 @@ struct DeviceInputRuntimeView: View {
 
     @Environment(LocalAssetStore.self) private var assetStore
     @Environment(\.openURL) private var openURL
+    @Environment(\.runtimeDesign) private var design
     @State private var result = ""
     @State private var assetRevision = 0
     @State private var isPresentingCamera = false
@@ -46,24 +47,29 @@ struct DeviceInputRuntimeView: View {
         return assetStore.image(projectID: projectID, binding: node.binding)
     }
 
+    private var variant: ComponentVariant {
+        RendererCatalog.normalizedVariant(node.resolvedPresentation.variant, for: .deviceInput)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: variant == .compact ? 8 : 12) {
             header
             capturedContent
 
             Button(action: beginCapture) {
                 Label(spec.buttonLabel, systemImage: buttonSymbol)
-                    .font(.headline)
+                    .font(variant == .compact ? design.captionFont.weight(.semibold) : .headline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, variant == .compact ? 9 : 12)
             }
             .buttonStyle(.borderedProminent)
-            .tint(tint.color)
+            .buttonBorderShape(.roundedRectangle(radius: design.controlCornerRadius))
+            .tint(design.accent)
             .disabled(!spec.allowsRepeat && hasResult)
 
             Label(privacyNote, systemImage: "lock.shield.fill")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(design.captionFont)
+                .foregroundStyle(design.secondaryForeground)
 
             if let statusMessage {
                 VStack(alignment: .leading, spacing: 6) {
@@ -122,9 +128,10 @@ private extension DeviceInputRuntimeView {
     private var header: some View {
         VStack(alignment: .leading, spacing: 3) {
             Label(node.title, systemImage: node.symbol.isEmpty ? buttonSymbol : node.symbol)
-                .font(.headline)
+                .font(design.sectionFont)
+                .accessibilityAddTraits(.isHeader)
             if !node.subtitle.isEmpty {
-                Text(node.subtitle).font(.caption).foregroundStyle(.secondary)
+                Text(node.subtitle).font(design.captionFont).foregroundStyle(design.secondaryForeground)
             }
         }
     }
@@ -138,18 +145,30 @@ private extension DeviceInputRuntimeView {
                 .frame(maxWidth: .infinity)
                 .aspectRatio(4 / 3, contentMode: .fit)
                 .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: design.cornerRadius, style: .continuous))
                 .accessibilityLabel(spec.resultLabel)
         } else if !result.isEmpty {
             VStack(alignment: .leading, spacing: 5) {
                 Text(spec.resultLabel).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 Text(result)
-                    .font(.body.monospaced())
+                    .font(design.bodyFont.monospaced())
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(12)
-            .background(tint.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+            .padding(variant == .compact ? 9 : 12)
+            .background(
+                variant == .cards ? design.surface : design.accent.opacity(0.08),
+                in: RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+            )
+            .overlay {
+                if variant == .framed || design.increasedContrast {
+                    RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+                        .stroke(
+                            design.accent.opacity(design.increasedContrast ? 0.9 : 0.5),
+                            lineWidth: max(1, design.borderWidth)
+                        )
+                }
+            }
         }
     }
 

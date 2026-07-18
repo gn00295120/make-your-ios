@@ -20,6 +20,7 @@ A fresh install seeds ten working examples. The following cover the expanded run
 4. Open “Skybound” and “Neon Snake.” Both are complete, deterministic host-rendered games with touch controls, pause, restart, scoring, and saved best scores. Skybound uses original characters, level generation, and artwork; it contains no third-party game assets or code.
 5. Open “Device Lab.” Contact selection, document import, share sheet, and clipboard write use native system surfaces after a tap. Camera capture, VisionKit QR/barcode/text scanning, today's pedometer count, and meaningful haptic verification require supported physical iPhone hardware. One-time location can use a real or simulated coordinate. Unsupported Simulator/hardware states display an explanatory fallback rather than simulated success.
 6. “Live FX Watch” and “Use It First” remain available for base-currency selection, editable FX rows, in-app threshold testing, records, local reminders, private photo selection, and reviewed text-only AI UI.
+7. Open Builder, then Design Studio. This native, no-key-required editor has a live preview for presets, semantic light/dark colors, typography, page layout/navigation, controls, motion, icon, and an optional private canvas photo. Cancel leaves the active app unchanged; Apply validates the complete document and creates one new version.
 
 AI generation review:
 
@@ -27,8 +28,9 @@ AI generation is an optional bring-your-own-key feature. No MakeYour account, de
 
 1. Open the small four-dot menu in the upper-right corner of a tiny app and choose AI Key, or use AI Key outside a tiny app. This screen explains local Keychain storage, network access, model selection, and consent before any OpenAI request can be sent.
 2. Open Builder, create a project or describe a change, and generate. If the generated version adds a capability, MakeYour presents a host-controlled review sheet before activation.
-3. Generated results open as native tiny apps. There is no downloaded executable, host back button, or bottom host tab bar; the upper-right four-dot menu returns to My Apps, Builder, or AI Key.
-4. In an aiAssistant component, enter text. Before Send, the app shows the exact task, exact text, destination, and local-data disclosure. Photos, records, captured device results, other projects, and general device data are never attached automatically.
+3. Builder also offers Design only. GPT-5.6 proposes visual changes, then a host-owned merger preserves the current app name, pages, component identities, copy, values, actions, bindings, data configuration, capabilities, user-selectable image slots, and local canvas binding. The reviewer sees a native preview and change summary before applying one new version.
+4. Generated results open as native tiny apps. There is no downloaded executable, host back button, or bottom host tab bar; the upper-right four-dot menu returns to My Apps, Builder, or AI Key.
+5. In an aiAssistant component, enter text. Before Send, the app shows the exact task, exact text, destination, and local-data disclosure. Photos, records, captured device results, other projects, and general device data are never attached automatically.
 
 Device and data boundaries:
 
@@ -45,6 +47,7 @@ Privacy and storage:
 - OpenAI and optional Twelve Data API keys use iOS Keychain with When Unlocked, This Device Only protection.
 - Requests go directly from the device to the named provider; the developer operates no account, analytics, or proxy server.
 - Projects, records, bookmarks, cached responses, and captured results stay on device unless the user deliberately shares text or opens an external article.
+- User-selected component images and Design Studio canvas photos stay in the tiny app's project-local asset store. Generated documents contain only semantic bindings and visual metadata; image bytes and local paths are not sent to GPT-5.6.
 - Privacy & Safety is accessible from the AI Key screen and contains a catalog of all 15 host capabilities.
 
 Fixed network services:

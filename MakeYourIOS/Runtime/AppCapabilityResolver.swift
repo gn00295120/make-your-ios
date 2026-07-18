@@ -1,6 +1,14 @@
 import Foundation
 
 enum AppCapabilityResolver {
+    static func requiredCapabilities(for document: AppDocument) -> Set<AppCapability> {
+        var capabilities = requiredCapabilities(for: document.pages)
+        if document.resolvedTheme.backgroundAssetBinding?.isEmpty == false {
+            capabilities.insert(.photoPicker)
+        }
+        return capabilities
+    }
+
     static func requiredCapabilities(for pages: [AppPage]) -> Set<AppCapability> {
         let nodes = pages.flatMap(\.nodes)
         var capabilities: Set<AppCapability> = [.localStorage]
@@ -15,7 +23,9 @@ enum AppCapabilityResolver {
         }) {
             capabilities.insert(.localNotifications)
         }
-        if nodes.contains(where: { $0.kind == .image && $0.image?.allowsUserSelection == true }) {
+        if nodes.contains(where: {
+            [.hero, .image].contains($0.kind) && $0.image?.allowsUserSelection == true
+        }) {
             capabilities.insert(.photoPicker)
         }
         if nodes.contains(where: { $0.kind == .aiAssistant }) {

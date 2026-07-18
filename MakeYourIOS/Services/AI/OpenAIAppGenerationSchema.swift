@@ -7,11 +7,32 @@ extension OpenAIAppGenerationClient {
         let number: [String: Any] = ["type": "number"]
         let integer: [String: Any] = ["type": "integer"]
         let stringArray: [String: Any] = ["type": "array", "items": string]
+        let hexColor: [String: Any] = [
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+        ]
         func nullableObject(_ object: [String: Any]) -> [String: Any] {
             var result = object
             result["type"] = ["object", "null"]
             return result
         }
+        let palette: [String: Any] = [
+            "type": "object",
+            "additionalProperties": false,
+            "properties": [
+                "primaryHex": hexColor,
+                "secondaryHex": hexColor,
+                "accentHex": hexColor,
+                "canvasLightHex": hexColor,
+                "canvasDarkHex": hexColor,
+                "surfaceLightHex": hexColor,
+                "surfaceDarkHex": hexColor
+            ],
+            "required": [
+                "primaryHex", "secondaryHex", "accentHex", "canvasLightHex",
+                "canvasDarkHex", "surfaceLightHex", "surfaceDarkHex"
+            ]
+        ]
         let theme: [String: Any] = [
             "type": "object",
             "additionalProperties": false,
@@ -22,11 +43,27 @@ extension OpenAIAppGenerationClient {
                 "background": ["type": "string", "enum": ThemeBackground.allCases.map(\.rawValue)],
                 "cornerStyle": ["type": "string", "enum": ThemeCornerStyle.allCases.map(\.rawValue)],
                 "density": ["type": "string", "enum": ThemeDensity.allCases.map(\.rawValue)],
-                "defaultSurface": ["type": "string", "enum": ComponentSurface.allCases.map(\.rawValue)]
+                "defaultSurface": ["type": "string", "enum": ComponentSurface.allCases.map(\.rawValue)],
+                "palette": palette,
+                "typeScale": ["type": "string", "enum": ThemeTypeScale.allCases.map(\.rawValue)],
+                "titleWeight": [
+                    "type": "string",
+                    "enum": ThemeTitleWeight.allCases.map(\.rawValue)
+                ],
+                "elevation": ["type": "string", "enum": ThemeElevation.allCases.map(\.rawValue)],
+                "stroke": ["type": "string", "enum": ThemeStroke.allCases.map(\.rawValue)],
+                "controlShape": [
+                    "type": "string",
+                    "enum": ThemeControlShape.allCases.map(\.rawValue)
+                ],
+                "motion": ["type": "string", "enum": ThemeMotion.allCases.map(\.rawValue)],
+                "backgroundAssetBinding": string
             ],
             "required": [
                 "preset", "appearance", "typography", "background",
-                "cornerStyle", "density", "defaultSurface"
+                "cornerStyle", "density", "defaultSurface", "palette", "typeScale",
+                "titleWeight", "elevation", "stroke", "controlShape", "motion",
+                "backgroundAssetBinding"
             ]
         ]
         let pageDesign: [String: Any] = [
@@ -34,9 +71,13 @@ extension OpenAIAppGenerationClient {
             "additionalProperties": false,
             "properties": [
                 "layout": ["type": "string", "enum": PageLayout.allCases.map(\.rawValue)],
-                "showsNavigationTitle": boolean
+                "showsNavigationTitle": boolean,
+                "navigationStyle": [
+                    "type": "string",
+                    "enum": PageNavigationStyle.allCases.map(\.rawValue)
+                ]
             ],
-            "required": ["layout", "showsNavigationTitle"]
+            "required": ["layout", "showsNavigationTitle", "navigationStyle"]
         ]
         let nodeDesign: [String: Any] = [
             "type": "object",
@@ -58,9 +99,19 @@ extension OpenAIAppGenerationClient {
                 "contentMode": ["type": "string", "enum": ImageContentMode.allCases.map(\.rawValue)],
                 "altText": string,
                 "decorative": boolean,
-                "allowsUserSelection": boolean
+                "allowsUserSelection": boolean,
+                "mediaRole": ["type": "string", "enum": MediaRole.allCases.map(\.rawValue)],
+                "focalPoint": [
+                    "type": "string",
+                    "enum": ImageFocalPoint.allCases.map(\.rawValue)
+                ],
+                "mask": ["type": "string", "enum": ImageMask.allCases.map(\.rawValue)],
+                "overlay": ["type": "string", "enum": ImageOverlay.allCases.map(\.rawValue)]
             ],
-            "required": ["aspect", "contentMode", "altText", "decorative", "allowsUserSelection"]
+            "required": [
+                "aspect", "contentMode", "altText", "decorative", "allowsUserSelection",
+                "mediaRole", "focalPoint", "mask", "overlay"
+            ]
         ]
         let collection: [String: Any] = [
             "type": "object",

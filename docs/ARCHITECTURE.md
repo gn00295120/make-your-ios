@@ -76,16 +76,19 @@ schema exposes only abilities that actually ship in the signed host.
 The complete shipping/roadmap split, including all 11 current device actions,
 is maintained in [CAPABILITY_CATALOG.md](CAPABILITY_CATALOG.md).
 
-## Visual grammar
+## Design Genome v2
 
 The DSL separates meaning from presentation. A component remains a metric,
 task list, image, or AI assistant, while safe presentation tokens control its
 native SwiftUI rendering:
 
 ```text
-theme: appearance + typography + background + corner + density + default surface
+theme: semantic light/dark palette + type scale + title weight
+       + canvas + surface + elevation + stroke + control shape + motion
 page:  flow | dashboard | form | story
-node:  surface + span + alignment + emphasis + semantic variant
+       + automatic | segmented | chips | menu navigation
+node:  surface + span + alignment + emphasis + renderer-compatible variant
+media: semantic binding + role + aspect + focal point + mask + overlay
 ```
 
 Six presets (`native`, `minimal`, `soft`, `editorial`, `playful`, and `bold`)
@@ -94,17 +97,45 @@ falling back to a universal card stack. There are no arbitrary frames, custom
 CSS, downloaded fonts, shaders, or executable layout expressions. Dynamic Type
 can collapse multi-column rows back to one column.
 
+`RuntimeDesignContext` resolves the semantic palette and tokens once for the
+active color scheme and accessibility environment. `PageLayoutEngine` makes the
+four page layouts materially different, while `RendererCatalog` maintains a
+per-component allowlist for variants such as `editorial`, `split`, `fullBleed`,
+`framed`, `cards`, `dense`, and `immersive`. Unsupported combinations are
+normalized or rejected instead of silently producing broken UI. Reduce Motion,
+Reduce Transparency, Increased Contrast, Differentiate Without Color, and large
+Dynamic Type remain host-enforced constraints.
+
+The no-key Design Studio edits this same genome with a live iPhone preview,
+presets, custom light/dark colors, typography, page composition, controls,
+motion, icon, and a project-local canvas photo. Cancel is non-destructive; Apply
+validates the result and records all design edits as exactly one new version.
+
+Builder also has a GPT-5.6 Design-only mode. The model may propose visual tokens,
+but `AppDocumentDesignMerger` performs the final host-side merge. It preserves
+the app name and summary, page and component identities, copy, values, actions,
+bindings, data configuration, capabilities, user-selectable image slots, and
+the existing local canvas binding. This is a hard product boundary rather than
+a prompt-only promise. The proposed design receives a native preview and change
+summary before the user applies it.
+
+The complete token and renderer contract lives in
+[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+
 ## Private media boundary
 
-Generated image nodes contain a semantic binding and display instructions only.
-They never contain user image bytes, local paths, or Photos identifiers. The
+Generated image nodes and canvas backgrounds contain a semantic binding and
+display instructions only. They never contain user image bytes, local paths, or
+Photos identifiers. The
 host's `LocalAssetStore` maps `(project ID, binding)` to an opaque local asset,
 normalizes selected images to bounded JPEGs, strips source metadata through
 re-encoding, applies data protection, and excludes the asset directory from
 backup. Duplicate and delete operations include the project's private assets.
 
-The builder sends only the semantic slot to the model. Runtime AI does not read
-the asset store.
+The builder sends only the semantic slot and visual metadata to the model.
+Runtime AI does not read the asset store. A user-selected Design Studio canvas
+photo stays at the host-owned `design-canvas-background` binding and cannot be
+replaced by model output.
 
 ## AI inside a mini app
 
@@ -118,7 +149,7 @@ host UI and cannot be removed by the generated theme.
 
 ## Generation loop
 
-Production generation should become a repair loop rather than a single prompt:
+Full-app generation follows a reviewable replacement loop:
 
 ```text
 goal → acceptance tasks → draft document → validate → preview/smoke test
@@ -128,6 +159,13 @@ goal → acceptance tasks → draft document → validate → preview/smoke test
 The last known-good version stays runnable if generation or migration fails.
 Permission, external data sharing, destructive migrations, and AI cost changes
 must appear as a user-visible diff before activation.
+
+Design-only generation is intentionally narrower:
+
+```text
+style request → GPT-5.6 structured proposal → host design-only merge
+              → validate → native preview + change summary → one new version
+```
 
 ## Product boundary
 

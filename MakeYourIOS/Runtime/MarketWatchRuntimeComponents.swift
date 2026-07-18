@@ -6,10 +6,13 @@ struct MarketQuoteRow: View {
     let quote: MarketQuote?
     let isSelected: Bool
     let tint: AppTint
+    let variant: ComponentVariant
     let hasProviderKey: Bool
     let canRemove: Bool
     let onSelect: () -> Void
     let onRemove: () -> Void
+
+    @Environment(\.runtimeDesign) private var design
 
     var body: some View {
         HStack(spacing: 10) {
@@ -28,15 +31,29 @@ struct MarketQuoteRow: View {
                 removeButton
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, [.compact, .dense].contains(variant) ? 4 : 7)
+        .padding(.horizontal, variant == .cards ? 10 : 0)
+        .background(
+            variant == .cards ? design.surface : .clear,
+            in: RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+        )
+        .overlay {
+            if variant == .cards {
+                RoundedRectangle(cornerRadius: design.compactCornerRadius, style: .continuous)
+                    .stroke(
+                        design.borderColor.opacity(design.borderOpacity),
+                        lineWidth: design.borderWidth
+                    )
+            }
+        }
     }
 
     private var symbolBadge: some View {
         Text(symbol)
             .font(.caption.bold().monospaced())
-            .foregroundStyle(isSelected ? Color.white : tint.color)
+            .foregroundStyle(isSelected ? design.onAccent : design.accent)
             .frame(width: 44, height: 44)
-            .background(isSelected ? tint.color : tint.color.opacity(0.12), in: Circle())
+            .background(isSelected ? design.accent : design.accent.opacity(0.12), in: Circle())
     }
 
     private var quoteIdentity: some View {
@@ -103,7 +120,10 @@ struct MarketHistoryChart: View {
     let quote: MarketQuote?
     let history: MarketHistory?
     let tint: AppTint
+    let variant: ComponentVariant
     let isRefreshing: Bool
+
+    @Environment(\.runtimeDesign) private var design
 
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
@@ -125,7 +145,7 @@ struct MarketHistoryChart: View {
             if let quote {
                 Text(quote.currency)
                     .font(.caption.bold())
-                    .foregroundStyle(tint.color)
+                    .foregroundStyle(design.accent)
             }
         }
     }
@@ -155,7 +175,7 @@ struct MarketHistoryChart: View {
             )
             .foregroundStyle(
                 LinearGradient(
-                    colors: [tint.color.opacity(0.25), tint.color.opacity(0.02)],
+                    colors: [design.accent.opacity(0.25), design.accent.opacity(0.02)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -164,7 +184,7 @@ struct MarketHistoryChart: View {
                 x: .value("Date", point.timestamp),
                 y: .value("Close", point.close)
             )
-            .foregroundStyle(tint.color)
+            .foregroundStyle(design.accent)
             .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
         }
         .chartXAxis {
@@ -176,8 +196,14 @@ struct MarketHistoryChart: View {
         .chartYAxis {
             AxisMarks(position: .leading)
         }
-        .frame(height: 190)
+        .frame(height: [.compact, .dense].contains(variant) ? 150 : 190)
         .accessibilityLabel("Price history for \(symbol)")
+        .accessibilityValue(chartAccessibilitySummary(points))
+    }
+
+    private func chartAccessibilitySummary(_ points: [MarketPricePoint]) -> String {
+        guard let first = points.first, let last = points.last else { return "No price points" }
+        return "From \(first.close.formatted()) to \(last.close.formatted()), \(points.count) points"
     }
 }
 
