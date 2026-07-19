@@ -34,7 +34,7 @@ immediately inside one trusted host, and change it later with another sentence?
 
 ## Try it
 
-MakeYour 1.0.0 build 2 is approved for public TestFlight testing:
+MakeYour 1.0.0 build 4 is approved for public TestFlight testing:
 https://testflight.apple.com/join/3Rnqg5Ds
 
 The twelve seeded tiny apps work without an OpenAI key. Bring your own key only
@@ -46,6 +46,8 @@ when you want GPT-5.6 to create or redesign a tiny app from a prompt.
 - Sends the builder prompt and current app document directly from the device to
   the OpenAI Responses API.
 - Uses GPT-5.6 Structured Outputs to produce a strict, versioned app document.
+- Automatically returns validator diagnostics to GPT-5.6 and continues repair
+  revisions until the document is valid or the user cancels.
 - Gives GPT-5.6 a catalog of 30 precompiled native blocks and 21 reviewed
   capabilities instead of arbitrary executable code.
 - Validates component count, identifiers, content limits, capabilities, and
@@ -79,7 +81,8 @@ MakeYour is a native SwiftUI app with three layers:
 ```text
 natural-language intent
   → GPT-5.6 strict JSON AppDocument
-  → validator + native SwiftUI runtime
+  → semantic validator + automatic repair
+  → capability review + native SwiftUI runtime
 ```
 
 The generated document is deliberately not arbitrary Swift, JavaScript, or
@@ -98,7 +101,8 @@ every side effect.
 
 Codex was used throughout the build to turn the product thesis into the
 architecture, SwiftUI implementation, validation boundary, tests, lint-clean
-refactors, and simulator verification. GPT-5.6 is used inside the product because
+refactors, simulator verification, demo capture, GitHub handoff, TestFlight
+release, and Devpost submission. GPT-5.6 is used inside the product because
 designing a coherent mini app requires understanding intent, preserving a
 working existing document, and producing a reliable structured replacement.
 
@@ -122,25 +126,32 @@ renderer-specific variants, and kept accessibility behavior under the native
 runtime's control. The same genome now powers both manual Design Studio edits
 and GPT-5.6 Design-only proposals.
 
+A fourth challenge was making generation failure recoverable. The first complex
+TripPilot candidate contained an incompatible expression. MakeYour retained the
+prompt, turned semantic validation failures into bounded repair diagnostics, and
+kept GPT-5.6 in the loop until revision 1 passed and opened successfully.
+
 ## Accomplishments
 
 - A coherent, runnable product rather than a static concept prototype.
 - Twelve functional native mini apps available on first launch, including two
   examples generated through MakeYour's own Builder: Live FX Watch and Use It First.
-- A real GPT-5.6 demo that creates Daily Focus from a prompt, evolves it from
-  Version 2 to Version 3 while preserving a completed task, and switches among
-  several distinct mini apps.
+- A real GPT-5.6 TripPilot run in which an invalid first candidate was repaired
+  automatically into a working 3-page app with 31 components and 21 reviewed
+  capabilities.
 - Real Responses API Structured Outputs integration.
 - Real in-mini-app Responses API text completion with per-request review.
 - Real Keychain round-trip and local-notification scheduling.
 - Persistent multi-app library with replacement versions.
 - Project-local, metadata-stripped image persistence with duplicate/delete lifecycle.
 - Design Genome v2, Design Studio, and a function-preserving AI Design-only path.
-- A signed MakeYour 1.0.0 build 2 approved for public external TestFlight testing.
-- The expanded source passes 221 unit tests, all 10 non-billable UI paths,
-  and strict SwiftLint across 165 Swift files with zero violations. A dedicated,
-  explicitly billable GPT-5.6 generation E2E remains available for a Simulator
-  with a saved review key.
+- A hardened generated currency runtime verified against the persisted TripPilot
+  project at `100 USD = 3,250.00 TWD` and `1 USD = 32.50 TWD`.
+- A signed MakeYour 1.0.0 build 4 approved for public external TestFlight testing.
+- The current source passes 244 unit tests, the persisted TripPilot currency UI
+  test, and strict SwiftLint across 173 Swift files with zero violations. A
+  dedicated, explicitly billable GPT-5.6 generation E2E remains available for a
+  Simulator with a saved review key.
 - Visual verification of editorial, split/card, and immersive treatments on an
   iPhone 17 Pro Simulator.
 
@@ -207,6 +218,12 @@ line use a held frame from the real app library rather than concept mockups.
 - [x] Upload build 2 to App Store Connect, receive external TestFlight approval,
   and attach it to the public `Devpost Judges` group without replacing build 1
   in App Store review.
+- [x] Add continuous validator-guided GPT-5.6 repair, prove it with the complex
+  TripPilot generation, and record the full generation-to-runtime session.
+- [x] Fix and harden generated currency conversion, pass 244 unit tests and the
+  persisted TripPilot UI test, and publish externally approved TestFlight build 4.
+- [x] Update the live Devpost project to version 7 and re-submit submission
+  `1094239`; Devpost returned `Submitted` while submissions remained open.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
 - [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at

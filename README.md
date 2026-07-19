@@ -22,12 +22,15 @@ renders it with a catalog of precompiled SwiftUI components and capabilities.
    canvas photo, then apply the complete design as one undoable app version.
 4. Open **AI Key**, add an OpenAI API key, and generate a real document with the
    Responses API. The key is stored in the device Keychain and requests go from
-   the device directly to OpenAI.
+   the device directly to OpenAI. If GPT-5.6 returns an invalid candidate, the
+   Builder keeps the prompt and automatically requests validator-guided repairs
+   until the document is valid or the user cancels.
 5. Add an AI assistant to a mini app. Each request has a review sheet showing
    the exact task and text before anything is sent.
 
 The sample apps work without an API key so reviewers can explore the runtime
-immediately.
+immediately. The externally approved public TestFlight build is available at
+https://testflight.apple.com/join/3Rnqg5Ds.
 
 ## Screens
 
@@ -78,14 +81,14 @@ xcodebuild \
   test
 ```
 
-On July 19, 2026, the current source passed 221 unit tests and all 10
-non-billable UI tests, strict SwiftLint across 165 Swift files with zero
-violations, `git diff --check`, a clean Release Simulator build, and a signed
-Release iOS build with strict code-signature verification. The separately gated
-live test creates, opens, and operates a validated stateful app; it requires an
-API key saved in the selected Simulator and is not counted in that snapshot. Do
-not run the live scheme repeatedly unless another billable end-to-end request is
-intended.
+On July 19, 2026, the current source passed 244 unit tests, the actual persisted
+TripPilot currency UI test, strict SwiftLint across 173 Swift files with zero
+violations, `git diff --check`, Apple package validation, and signed release
+verification. The live GPT-5.6 test produced an initially invalid TripPilot
+candidate, completed automatic repair revision 1, validated 3 pages, 31
+components, and 21 capabilities, and opened the result. It requires an API key
+saved in the selected Simulator and should not be run repeatedly unless another
+billable end-to-end request is intended.
 
 ## Architecture
 
@@ -94,7 +97,8 @@ Natural-language request
         ↓
 OpenAI Responses API + strict JSON schema
         ↓
-AppDocument validator + bounded logic/game compilers (untrusted input boundary)
+AppDocument validator + GPT-5.6 repair loop + bounded compilers
+        (untrusted input boundary)
         ↓
 Design Genome v2 + SwiftUI component runtime + capability broker
         ↓
