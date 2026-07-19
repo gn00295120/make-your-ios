@@ -15,6 +15,7 @@ final class OpenAIAppGenerationClientTests: XCTestCase {
 
         XCTAssertEqual(request.url?.absoluteString, "https://api.openai.com/v1/responses")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-key")
+        XCTAssertEqual(request.timeoutInterval, OpenAIAppGenerationClient.requestTimeout)
         let data = try XCTUnwrap(request.httpBody)
         let body = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(body["store"] as? Bool, false)
@@ -39,6 +40,25 @@ final class OpenAIAppGenerationClientTests: XCTestCase {
         XCTAssertTrue(instructions.contains("requires local device authentication"))
         XCTAssertTrue(instructions.contains("Opening from a shortcut behaves like opening the same tiny app"))
         XCTAssertTrue(instructions.contains("behavior may run"))
+    }
+
+    func testGenerationSessionWaitsForConnectivityAndAllowsLongResponses() {
+        let configuration = OpenAIAppGenerationClient.sessionConfiguration()
+
+        XCTAssertTrue(configuration.waitsForConnectivity)
+        XCTAssertEqual(
+            configuration.timeoutIntervalForRequest,
+            OpenAIAppGenerationClient.requestTimeout
+        )
+        XCTAssertEqual(
+            configuration.timeoutIntervalForResource,
+            OpenAIAppGenerationClient.resourceTimeout
+        )
+        XCTAssertGreaterThanOrEqual(OpenAIAppGenerationClient.requestTimeout, 15 * 60)
+        XCTAssertGreaterThan(
+            OpenAIAppGenerationClient.resourceTimeout,
+            OpenAIAppGenerationClient.requestTimeout
+        )
     }
 
     func testIncompleteResponseSurfacesSpecificRetryableError() {

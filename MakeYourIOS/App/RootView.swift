@@ -57,7 +57,19 @@ struct RootView: View {
                 }
             }
             .fullScreenCover(isPresented: $isPresentingDemo, onDismiss: presentPendingIntentRoute) {
-                if let demoProject {
+                if demoScreen == "generation-progress" {
+                    AppGenerationProgressView(
+                        mode: .full,
+                        progress: .generating,
+                        startedAt: Date().addingTimeInterval(-65),
+                        promptPreview: "Create a polished three-page travel companion with native tools.",
+                        failure: nil,
+                        onCancel: { isPresentingDemo = false },
+                        onRetry: {},
+                        onClose: { isPresentingDemo = false }
+                    )
+                    .interactiveDismissDisabled()
+                } else if let demoProject {
                     ImmersiveAppHostView(
                         project: demoProject,
                         openApps: { leaveDemo(for: .apps) },
@@ -211,6 +223,6 @@ struct RootView: View {
 
     private static let demoScreenNames: Set<String> = [
         "waterline", "star-garden", "converter", "tasks", "muse-journal", "news", "market",
-        "ledger", "platformer", "snake", "device", "shortcuts"
+        "ledger", "platformer", "snake", "device", "shortcuts", "generation-progress"
     ]
 }

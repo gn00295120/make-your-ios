@@ -1,25 +1,45 @@
 import Foundation
 
+enum OpenAIAppGenerationStage: Sendable {
+    case waitingForResponse
+    case validatingResponse
+}
+
 // swiftlint:disable:next type_body_length
 struct OpenAIAppGenerationClient: Sendable {
+    static let requestTimeout: TimeInterval = 30 * 60
+    static let resourceTimeout: TimeInterval = 60 * 60
+
     private let endpoint = URL(string: "https://api.openai.com/v1/responses")!
     private let session: URLSession
+    private static let defaultSession = URLSession(configuration: sessionConfiguration())
 
-    init(session: URLSession = .shared) {
-        self.session = session
+    init(session: URLSession? = nil) {
+        self.session = session ?? Self.defaultSession
+    }
+
+    static func sessionConfiguration() -> URLSessionConfiguration {
+        let configuration = URLSessionConfiguration.default
+        configuration.waitsForConnectivity = true
+        configuration.timeoutIntervalForRequest = requestTimeout
+        configuration.timeoutIntervalForResource = resourceTimeout
+        return configuration
     }
 
     func generate(
         prompt: String,
         currentDocument: AppDocument,
-        config: AIConnectionConfig
+        config: AIConnectionConfig,
+        onStage: @escaping @Sendable (OpenAIAppGenerationStage) async -> Void = { _ in }
     ) async throws -> AppDocument {
         let request = try makeRequest(
             prompt: prompt,
             currentDocument: currentDocument,
             config: config
         )
+        await onStage(.waitingForResponse)
         let (data, response) = try await session.data(for: request)
+        await onStage(.validatingResponse)
         try Self.validate(response: response, data: data)
         return try Self.decodeDocument(data, replacing: currentDocument)
     }
@@ -62,7 +82,7 @@ struct OpenAIAppGenerationClient: Sendable {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 90
+        request.timeoutInterval = Self.requestTimeout
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         return request
     }

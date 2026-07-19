@@ -2,6 +2,13 @@
 import SwiftUI
 
 struct BuilderView: View {
+    private struct GenerationRequestContext {
+        var projectID: UUID
+        var currentDocument: AppDocument
+        var prompt: String
+        var mode: GenerationMode
+    }
+
     private struct PendingGeneration: Identifiable {
         var id = UUID()
         var projectID: UUID
@@ -18,7 +25,7 @@ struct BuilderView: View {
     let openApps: () -> Void
     let openAISettings: () -> Void
 
-    @State private var prompt = ""
+    @AppStorage("builder.draftPrompt") private var prompt = ""
     @State private var generationMode = GenerationMode.full
     @State private var isGenerating = false
     @State private var isPresentingRuntime = false
@@ -26,6 +33,14 @@ struct BuilderView: View {
     @State private var generationNote: String?
     @State private var pendingGeneration: PendingGeneration?
     @State private var designStudioProject: WorkspaceProject?
+    @State private var isGenerationDialogPresented = false
+    @State private var generationProgress = AppGenerationProgress.preparing
+    @State private var generationStartedAt = Date()
+    @State private var generationFailure: AppGenerationFailure?
+    @State private var generationContext: GenerationRequestContext?
+    @State private var completedGeneration: PendingGeneration?
+    @State private var activeGenerationID: UUID?
+    @State private var generationTask: Task<Void, Never>?
 
     private let client = OpenAIAppGenerationClient()
     private let suggestions = [
@@ -85,6 +100,22 @@ struct BuilderView: View {
                     }
                 )
             }
+        }
+        .fullScreenCover(
+            isPresented: $isGenerationDialogPresented,
+            onDismiss: finishGenerationPresentation
+        ) {
+            AppGenerationProgressView(
+                mode: generationContext?.mode ?? generationMode,
+                progress: generationProgress,
+                startedAt: generationStartedAt,
+                promptPreview: generationContext?.prompt ?? prompt,
+                failure: generationFailure,
+                onCancel: cancelGeneration,
+                onRetry: retryGeneration,
+                onClose: closeGenerationDialog
+            )
+            .interactiveDismissDisabled()
         }
         .sheet(item: $pendingGeneration) { pending in
             if pending.mode == .designOnly {
@@ -191,53 +222,155 @@ struct BuilderView: View {
             Image(systemName: "arrow.triangle.2.circlepath")
         }
         .accessibilityLabel("Switch app")
+        .disabled(isGenerating)
     }
+}
 
+private extension BuilderView {
     private func generate(project: WorkspaceProject) {
         let request = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !request.isEmpty else { return }
-        let requestedMode = generationMode
+        beginGeneration(GenerationRequestContext(
+            projectID: project.id,
+            currentDocument: project.document,
+            prompt: request,
+            mode: generationMode
+        ))
+    }
 
+    private func beginGeneration(_ context: GenerationRequestContext) {
+        generationTask?.cancel()
+        let attemptID = UUID()
+        activeGenerationID = attemptID
+        generationContext = context
+        completedGeneration = nil
+        generationFailure = nil
+        generationProgress = .preparing
+        generationStartedAt = Date()
         isGenerating = true
+        isGenerationDialogPresented = true
         generationNote = nil
         errorMessage = nil
 
-        Task {
-            do {
-                let config = try aiSettings.connectionConfig()
-                let document = try await client.generate(
-                    prompt: requestedMode.promptPrefix + request,
-                    currentDocument: project.document,
-                    config: config
-                )
-                let mode = requestedMode
-                let finalDocument = mode == .designOnly
-                    ? AppDocumentDesignMerger().mergeDesign(from: document, into: project.document)
-                    : document
-                let existingCapabilities = Set(project.document.capabilities)
-                let addedCapabilities = Set(finalDocument.capabilities)
-                    .subtracting(existingCapabilities)
-                    .sorted(by: { $0.rawValue < $1.rawValue })
-                let pending = PendingGeneration(
-                    projectID: project.id,
-                    document: finalDocument,
-                    prompt: request,
-                    addedCapabilities: addedCapabilities,
-                    mode: mode,
-                    previousDocument: project.document,
-                    designSummary: mode == .designOnly
-                        ? DesignChangeSummary(before: project.document, after: finalDocument)
-                        : nil
-                )
-                if addedCapabilities.isEmpty && mode == .full {
-                    try applyImmediately(pending)
-                } else {
-                    pendingGeneration = pending
+        generationTask = Task { @MainActor in
+            await performGeneration(context, attemptID: attemptID)
+        }
+    }
+
+    private func performGeneration(
+        _ context: GenerationRequestContext,
+        attemptID: UUID
+    ) async {
+        do {
+            let config = try aiSettings.connectionConfig()
+            let document = try await client.generate(
+                prompt: context.mode.promptPrefix + context.prompt,
+                currentDocument: context.currentDocument,
+                config: config,
+                onStage: { stage in
+                    await MainActor.run {
+                        updateGenerationProgress(stage, attemptID: attemptID)
+                    }
                 }
+            )
+            try Task.checkCancellation()
+            guard activeGenerationID == attemptID else { return }
+            completedGeneration = makePendingGeneration(document, context: context)
+            try await completeGeneration(attemptID: attemptID)
+        } catch is CancellationError {
+            return
+        } catch {
+            handleGenerationError(error, attemptID: attemptID)
+        }
+    }
+
+    private func updateGenerationProgress(
+        _ stage: OpenAIAppGenerationStage,
+        attemptID: UUID
+    ) {
+        guard activeGenerationID == attemptID else { return }
+        generationProgress = stage == .waitingForResponse ? .generating : .validating
+    }
+
+    private func makePendingGeneration(
+        _ document: AppDocument,
+        context: GenerationRequestContext
+    ) -> PendingGeneration {
+        let finalDocument = context.mode == .designOnly
+            ? AppDocumentDesignMerger().mergeDesign(from: document, into: context.currentDocument)
+            : document
+        let existingCapabilities = Set(context.currentDocument.capabilities)
+        let addedCapabilities = Set(finalDocument.capabilities)
+            .subtracting(existingCapabilities)
+            .sorted(by: { $0.rawValue < $1.rawValue })
+        return PendingGeneration(
+            projectID: context.projectID,
+            document: finalDocument,
+            prompt: context.prompt,
+            addedCapabilities: addedCapabilities,
+            mode: context.mode,
+            previousDocument: context.currentDocument,
+            designSummary: context.mode == .designOnly
+                ? DesignChangeSummary(before: context.currentDocument, after: finalDocument)
+                : nil
+        )
+    }
+
+    private func completeGeneration(attemptID: UUID) async throws {
+        generationProgress = .ready
+        isGenerating = false
+        try await Task.sleep(for: .milliseconds(450))
+        guard activeGenerationID == attemptID else { return }
+        generationTask = nil
+        isGenerationDialogPresented = false
+    }
+
+    private func handleGenerationError(_ error: Error, attemptID: UUID) {
+        guard activeGenerationID == attemptID else { return }
+        if (error as? URLError)?.code == .cancelled { return }
+        generationFailure = AppGenerationFailure(error: error)
+        isGenerating = false
+        generationTask = nil
+    }
+
+    private func cancelGeneration() {
+        stopGenerationAndDismiss()
+    }
+
+    private func retryGeneration() {
+        guard let generationContext else { return }
+        beginGeneration(generationContext)
+    }
+
+    private func closeGenerationDialog() {
+        stopGenerationAndDismiss()
+    }
+
+    private func stopGenerationAndDismiss() {
+        activeGenerationID = nil
+        generationTask?.cancel()
+        generationTask = nil
+        isGenerating = false
+        isGenerationDialogPresented = false
+    }
+
+    private func finishGenerationPresentation() {
+        defer {
+            generationFailure = nil
+            generationContext = nil
+            activeGenerationID = nil
+        }
+        guard let completedGeneration else { return }
+        self.completedGeneration = nil
+
+        if completedGeneration.addedCapabilities.isEmpty && completedGeneration.mode == .full {
+            do {
+                try applyImmediately(completedGeneration)
             } catch {
                 errorMessage = error.localizedDescription
             }
-            isGenerating = false
+        } else {
+            pendingGeneration = completedGeneration
         }
     }
 
