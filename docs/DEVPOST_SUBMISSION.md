@@ -3,7 +3,8 @@
 Devpost project `1342394` is submitted to OpenAI Build Week as submission
 `1094239` at `https://devpost.com/software/makeyour`. The public demo is
 `https://youtu.be/gIKuI1H-lH4`, and the judging repository is
-`https://github.com/gn00295120/make-your-ios`.
+`https://github.com/gn00295120/make-your-ios`. The approved public TestFlight
+build is available at `https://testflight.apple.com/join/3Rnqg5Ds`.
 
 ## Project name
 
@@ -31,12 +32,22 @@ MakeYour asks a different question: what if those repeated apps were not separat
 products at all? What if a person could describe the tool they need, use it
 immediately inside one trusted host, and change it later with another sentence?
 
+## Try it
+
+MakeYour 1.0.0 build 2 is approved for public TestFlight testing:
+https://testflight.apple.com/join/3Rnqg5Ds
+
+The twelve seeded tiny apps work without an OpenAI key. Bring your own key only
+when you want GPT-5.6 to create or redesign a tiny app from a prompt.
+
 ## What it does
 
 - Stores a user's OpenAI API key in device-only iOS Keychain storage.
 - Sends the builder prompt and current app document directly from the device to
   the OpenAI Responses API.
 - Uses GPT-5.6 Structured Outputs to produce a strict, versioned app document.
+- Gives GPT-5.6 a catalog of 30 precompiled native blocks and 21 reviewed
+  capabilities instead of arbitrary executable code.
 - Validates component count, identifiers, content limits, capabilities, and
   schema version before activation.
 - Renders the result as native SwiftUI through a fixed component runtime.
@@ -72,8 +83,8 @@ natural-language intent
 ```
 
 The generated document is deliberately not arbitrary Swift, JavaScript, or
-WebAssembly. It selects from a catalog of precompiled components and declared
-capabilities. The current catalog covers hero content, text, metrics, inputs,
+WebAssembly. It selects from 30 precompiled native blocks and 21 declared,
+reviewed capabilities. The current catalog covers hero content, text, metrics, inputs,
 pickers, actions, checklists, typed date/list/object state, bounded collection and
 date operations, currency, tasks, generic records, news, markets, ledgers,
 deterministic games, private images, device inputs, MapKit place views, reviewed
@@ -125,6 +136,7 @@ and GPT-5.6 Design-only proposals.
 - Persistent multi-app library with replacement versions.
 - Project-local, metadata-stripped image persistence with duplicate/delete lifecycle.
 - Design Genome v2, Design Studio, and a function-preserving AI Design-only path.
+- A signed MakeYour 1.0.0 build 2 approved for public external TestFlight testing.
 - The expanded source passes 221 unit tests, all 10 non-billable UI paths,
   and strict SwiftLint across 165 Swift files with zero violations. A dedicated,
   explicitly billable GPT-5.6 generation E2E remains available for a Simulator
@@ -145,7 +157,7 @@ the execution boundary.
 - Versioned JSON Patch feature edits and cross-version rollback.
 - Per-project SQLite namespaces and migrations.
 - Broader automated accessibility and snapshot diagnostics fed back to the model.
-- Live microphone dictation, additional precompiled App Intents, and additional allowlisted
+- Richer precompiled App Intents, media workflows, and additional allowlisted
   HTTPS data sources with separately reviewed boundaries.
 - Early App Review guidance before broadening runtime programmability.
 
@@ -192,6 +204,9 @@ line use a held frame from the real app library rather than concept mockups.
 - [x] Add the 21st reviewed capability: an AI-selectable `shortcutAccess` opt-in
   backed by one authenticated foreground App Intent and a fail-closed dynamic
   Tiny App entity catalog.
+- [x] Upload build 2 to App Store Connect, receive external TestFlight approval,
+  and attach it to the public `Devpost Judges` group without replacing build 1
+  in App Store review.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
 - [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at
