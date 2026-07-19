@@ -1,12 +1,32 @@
 # MakeYour
 
-MakeYour is a personal app runtime for iPhone. Describe a small app, connect your
-own AI API key, and get a usable native mini app inside MakeYour — without
-rebuilding the same calculator, tracker, checklist, or reminder app from scratch.
+**Build the tiny app you need — inside one native iPhone app.**
 
-The host app never downloads or executes generated Swift code. The model produces
-a versioned, declarative `AppDocument`; MakeYour validates that document and
-renders it with a catalog of precompiled SwiftUI components and capabilities.
+MakeYour turns a plain-language request into a private, native tiny app. Connect
+your own OpenAI API key, describe a calculator, tracker, trip dashboard, reminder,
+camera tool, game, or something personal, and GPT-5.6 assembles it from MakeYour's
+precompiled SwiftUI runtime.
+
+**[Watch the 2:04 demo](https://youtu.be/Qjo_44nRUdg)** ·
+**[Try build 4 on TestFlight](https://testflight.apple.com/join/3Rnqg5Ds)** ·
+**[View the OpenAI Build Week project](https://devpost.com/software/makeyour)**
+
+[![Watch MakeYour turn a prompt into a native tiny app](artifacts/devpost/demo/MakeYour-YouTube-Thumbnail-v2.jpg)](https://youtu.be/Qjo_44nRUdg)
+
+`Prompt → GPT-5.6 → validation + repair → review → native tiny app`
+
+The demo records the real TripPilot build from start to finish. GPT-5.6's first
+candidate contains incompatible logic, MakeYour feeds exact validator diagnostics
+back to the model, and repair revision 1 produces a valid three-page app with 31
+components and 21 reviewed capabilities. The result then runs locally, including
+a working live currency conversion.
+
+MakeYour is an app runtime, not a generated-code loader. It never downloads or
+executes generated Swift. The model produces a versioned, declarative
+`AppDocument`; MakeYour validates it, brokers sensitive device capabilities, and
+renders it with signed, precompiled SwiftUI components. One host can hold many
+independently styled tiny apps, while API keys stay in Keychain and project data
+stays local by default.
 
 ## Demo flow
 
@@ -29,8 +49,9 @@ renders it with a catalog of precompiled SwiftUI components and capabilities.
    the exact task and text before anything is sent.
 
 The sample apps work without an API key so reviewers can explore the runtime
-immediately. The externally approved public TestFlight build is available at
-https://testflight.apple.com/join/3Rnqg5Ds.
+immediately. The [public TestFlight beta](https://testflight.apple.com/join/3Rnqg5Ds)
+includes the complete prompt, validation, automatic-repair, capability-review,
+and native-rendering flow shown in the video.
 
 ## Screens
 
@@ -150,7 +171,8 @@ its voice binding.
 A generated tiny app may also include one inert `shortcutAccess` block. That
 explicitly opts only that project into one precompiled **Open Tiny App** App
 Intent. The dynamic system picker receives only opted-in projects' stable IDs,
-display names, and validated icons—not prompts, state, media, provider keys, or generated code.
+display names, and validated icons—not prompts, state, media, provider keys, or
+generated code.
 The intent requires local device authentication, opens MakeYour in the
 foreground, and revalidates the project before routing. Removing the block or
 deleting the project makes a saved stale shortcut fail closed; a duplicated
@@ -191,7 +213,8 @@ request uses the user's Keychain-backed API key directly with the OpenAI
 Responses API.
 
 See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) for the complete Design
-Genome v2 contract, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the product boundary,
+Genome v2 contract, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the product
+boundary,
 [docs/RUNTIME_BLOCKS.md](docs/RUNTIME_BLOCKS.md) for the composable behavior and
 game vocabulary,
 [docs/CAPABILITY_CATALOG.md](docs/CAPABILITY_CATALOG.md) for the exact shipping
@@ -211,8 +234,9 @@ and the release checklist live in [docs/app-store](docs/app-store).
 - The runtime exposes local UI, calculations, fixed-provider news/market data,
   project data, selected or captured photos, user-initiated scanning, MapKit
   search, write-only calendar creation, reviewed document export, on-device
-  reviewed voice transcription, an opt-in authenticated Shortcuts opener, opt-in local
-  notifications, deterministic games, and reviewed text-only AI requests.
+  reviewed voice transcription, an opt-in authenticated Shortcuts opener,
+  opt-in local notifications, deterministic games, and reviewed text-only AI
+  requests.
   It does not execute Swift, JavaScript, WebAssembly, or plugins.
 - Mini apps are private workspaces inside one signed host app; they are not
   independent `.ipa` files.
