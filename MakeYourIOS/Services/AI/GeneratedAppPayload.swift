@@ -70,18 +70,30 @@ private extension GeneratedAppPayload {
             title: String(node.title.prefix(120)),
             subtitle: String(node.subtitle.prefix(320)),
             symbol: Self.allowedSymbols.contains(node.symbol) ? node.symbol : "sparkles",
-            value: String(node.value.prefix(800)),
-            placeholder: String(node.placeholder.prefix(160)),
-            binding: normalizedID(node.binding, fallback: "value-\(nodeIndex + 1)"),
-            options: Array(node.options.prefix(20)).map { String($0.prefix(40)) },
-            items: makeItems(node.items, pageID: pageID, nodeIndex: nodeIndex, kind: kind),
-            action: RuntimeAction(
-                type: RuntimeActionType(rawValue: node.action.type) ?? .none,
-                target: normalizedID(node.action.target, fallback: ""),
-                value: String(node.action.value.prefix(240))
+            value: kind == .shortcutAccess ? "" : String(node.value.prefix(800)),
+            placeholder: kind == .shortcutAccess ? "" : String(node.placeholder.prefix(160)),
+            binding: kind == .shortcutAccess ? "" : normalizedID(
+                node.binding,
+                fallback: "value-\(nodeIndex + 1)"
             ),
-            valueBinding: normalizedOptionalID(node.valueBinding),
-            events: makeEvents(node.events),
+            options: kind == .shortcutAccess ? [] : Array(node.options.prefix(20)).map {
+                String($0.prefix(40))
+            },
+            items: kind == .shortcutAccess ? [] : makeItems(
+                node.items,
+                pageID: pageID,
+                nodeIndex: nodeIndex,
+                kind: kind
+            ),
+            action: kind == .shortcutAccess
+                ? .none
+                : RuntimeAction(
+                    type: RuntimeActionType(rawValue: node.action.type) ?? .none,
+                    target: normalizedID(node.action.target, fallback: ""),
+                    value: String(node.action.value.prefix(240))
+                ),
+            valueBinding: kind == .shortcutAccess ? nil : normalizedOptionalID(node.valueBinding),
+            events: kind == .shortcutAccess ? [] : makeEvents(node.events),
             control: kind == .control ? makeControl(node.control) : nil,
             presentation: makePresentation(node.presentation, for: kind),
             image: makeImage(node.image, for: kind, fallbackTitle: node.title),
@@ -374,23 +386,6 @@ private extension GeneratedAppPayload {
         }
         guard (1...15).contains(normalized.count) else { return nil }
         return normalized
-    }
-
-    private func normalizedDay(_ value: String) -> String {
-        if value.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil {
-            return value
-        }
-        return String(ISO8601DateFormatter().string(from: .now).prefix(10))
-    }
-
-    private func nonEmpty(_ value: String?, fallback: String) -> String {
-        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return trimmed.isEmpty ? fallback : trimmed
-    }
-
-    private func safeFiniteValue(_ value: Double?) -> Double {
-        guard let value, value.isFinite else { return 0 }
-        return value
     }
 
 }

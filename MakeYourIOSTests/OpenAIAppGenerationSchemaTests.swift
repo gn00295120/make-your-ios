@@ -50,6 +50,7 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
         XCTAssertTrue(values.contains(AppCapability.codeScanner.rawValue))
         XCTAssertTrue(values.contains(AppCapability.microphoneRecordLocal.rawValue))
         XCTAssertTrue(values.contains(AppCapability.speechTranscribeOnDevice.rawValue))
+        XCTAssertTrue(values.contains(AppCapability.shortcutsOpenTinyApp.rawValue))
 
         let componentKinds = try XCTUnwrap(
             findEnums(named: "kind", in: root).first(where: {
@@ -68,6 +69,7 @@ final class OpenAIAppGenerationSchemaTests: XCTestCase {
         XCTAssertTrue(componentKinds.contains(ComponentKind.control.rawValue))
         XCTAssertTrue(componentKinds.contains(ComponentKind.voiceNote.rawValue))
         XCTAssertTrue(componentKinds.contains(ComponentKind.speechTranscript.rawValue))
+        XCTAssertTrue(componentKinds.contains(ComponentKind.shortcutAccess.rawValue))
 
         try assertRendererSchema(in: root)
         try assertLogicSchema(in: root)

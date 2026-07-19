@@ -13,11 +13,6 @@ final class WorkspaceStore {
         case failed
     }
 
-    private struct Archive: Codable {
-        var projects: [WorkspaceProject]
-        var selectedProjectID: UUID?
-    }
-
     private(set) var projects: [WorkspaceProject] = []
     private(set) var selectedProjectID: UUID?
     private(set) var lastPersistenceError: String?
@@ -228,6 +223,7 @@ final class WorkspaceStore {
         var document = source.document
         document.id = UUID()
         document.name += " Copy"
+        removeShortcutExposure(from: &document)
         document.version = 1
         document.updatedAt = .now
         let duplicateID = createProject(document: document, prompt: source.lastPrompt)
@@ -284,7 +280,7 @@ final class WorkspaceStore {
 
         do {
             let data = try Data(contentsOf: fileURL)
-            let archive = try decoder.decode(Archive.self, from: data)
+            let archive = try decoder.decode(WorkspaceArchive.self, from: data)
             projects = archive.projects
             selectedProjectID = archive.selectedProjectID
             lastPersistenceError = nil
@@ -307,8 +303,16 @@ final class WorkspaceStore {
     private func persistArchive() throws {
         let directory = fileURL.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let archive = Archive(projects: projects, selectedProjectID: selectedProjectID)
+        let archive = WorkspaceArchive(projects: projects, selectedProjectID: selectedProjectID)
         try encoder.encode(archive).write(to: fileURL, options: .atomic)
+    }
+
+    private func removeShortcutExposure(from document: inout AppDocument) {
+        for pageIndex in document.pages.indices {
+            document.pages[pageIndex].nodes.removeAll { $0.kind == .shortcutAccess }
+        }
+        document.capabilities = AppCapabilityResolver.requiredCapabilities(for: document)
+            .sorted(by: { $0.rawValue < $1.rawValue })
     }
 
     private func reconcilePhotoPickerCapability(in document: inout AppDocument) {
@@ -326,7 +330,7 @@ final class WorkspaceStore {
         }
     }
 
-    private static var defaultFileURL: URL {
+    nonisolated static var defaultFileURL: URL {
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return root.appendingPathComponent("MakeYour", isDirectory: true)
             .appendingPathComponent("projects.json")

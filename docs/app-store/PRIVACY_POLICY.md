@@ -111,6 +111,24 @@ writes configured text to the iOS clipboard and never reads clipboard contents.
 Other apps may be able to access clipboard content under iOS rules. A haptic
 action plays local tactile feedback and collects no sensor data.
 
+## Apple Shortcuts and Siri
+
+A generated tiny app is offered to Apple Shortcuts only when its active document
+contains one visible `shortcutAccess` block and the user has approved that new
+capability. The system's dynamic picker receives only opted-in projects' stable
+identifiers, display names, and validated SF Symbols. Prompts, state, records,
+photos, voice recordings, transcript text, provider keys, and generated
+documents are excluded.
+
+The fixed **Open Tiny App** action requires local device authentication and
+opens MakeYour in the foreground. It does not perform generated background work
+or expose a generated URL, phrase, or action. MakeYour verifies that the exact
+project still exists and remains opted in before presenting it; there is no
+fallback to another project. After the page becomes visible, its normal
+validated behavior is the same as when the user opens its app card. Apple may
+process the shortcut phrase and display representation under the device's Siri
+and Shortcuts settings and Apple's applicable policies.
+
 ## Data collection and tracking
 
 The developer of MakeYour does not receive or store user projects, photos, voice
@@ -138,7 +156,10 @@ host-level credential, or deletes MakeYour from the device. A user can:
 - remove the OpenAI API key from the AI Key screen;
 - remove the Twelve Data key from the market provider-key screen;
 - delete a tiny app from My Apps to remove its document, project-local runtime
-  state, images, and voice notes, and its pending or delivered local notifications; and
+  state, images, voice notes, pending or delivered local notifications, and
+  Shortcuts eligibility; and
+- remove the Shortcuts access block through regeneration to stop offering that
+  tiny app to new system queries; saved stale shortcuts then fail closed;
 - delete MakeYour from iPhone to remove the app's sandboxed projects, assets,
   caches, and runtime state.
 

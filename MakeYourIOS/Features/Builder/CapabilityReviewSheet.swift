@@ -13,7 +13,7 @@ struct CapabilityReviewSheet: View {
                         .font(.title2.bold())
                     Text(
                         "This version adds the following host-managed capabilities. Access still starts only "
-                            + "when you use the matching component."
+                            + "through the matching component or an approved system action."
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)

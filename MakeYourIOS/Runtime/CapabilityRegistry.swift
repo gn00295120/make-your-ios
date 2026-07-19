@@ -15,6 +15,7 @@ enum CapabilityCategory: String, CaseIterable, Sendable {
     case sharing
     case systemFeedback
     case calendar
+    case automation
 }
 
 enum CapabilityPrivacyRisk: String, CaseIterable, Comparable, Sendable {
@@ -89,6 +90,7 @@ enum CapabilityRegistry {
         case .calendarWrite: calendarWrite
         case .microphoneRecordLocal: microphoneRecordLocal
         case .speechTranscribeOnDevice: speechTranscribeOnDevice
+        case .shortcutsOpenTinyApp: shortcutsOpenTinyApp
         case .pedometer: pedometer
         case .shareSheet: shareSheet
         case .clipboardWrite: clipboardWrite

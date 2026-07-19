@@ -51,17 +51,18 @@ capability changes currently in the source tree.
 
 Current source verification snapshot (2026-07-19):
 
-- 211/211 unit tests and all 9/9 non-billable UI paths passed on an iPhone 17 Pro
+- 221/221 unit tests and all 10/10 non-billable UI paths passed on an iPhone 17 Pro
   Simulator. The separately gated live GPT-5.6 test requires an API key saved in
   that Simulator and was not counted after its app data was reset.
-- Strict SwiftLint checked 155 Swift files with zero violations; `git diff
+- Strict SwiftLint checked 165 Swift files with zero violations; `git diff
   --check`, a clean Release Simulator build, an Apple Development-signed Release
   iOS build, and strict local code-signature verification passed.
 - The built iPhone app contains camera, microphone, Speech Recognition, contact,
   When In Use location, motion, and write-only calendar usage descriptions plus
-  `PrivacyInfo.xcprivacy`.
+  `PrivacyInfo.xcprivacy`, and its extracted App Intents metadata contains the
+  fixed Open Tiny App action, dynamic Tiny App query, and two phrases.
 - An earlier expanded-capability build was installed on the connected iPhone,
-  but the exact 20-capability candidate has not yet had a fresh physical
+  but the exact 21-capability candidate has not yet had a fresh physical
   install. Camera/scanner and permission interaction gates below deliberately
   remain unchecked.
 - Live BBC RSS, live Twelve Data AAPL demo data, the generated `E2E Proof`
@@ -103,6 +104,10 @@ Current source verification snapshot (2026-07-19):
 - [ ] On the target iOS release, test contact cancellation/selection, bounded
   text/JSON/CSV import, share cancellation/destination choice, and tap-initiated
   clipboard write.
+- [ ] On a physical iPhone, generate one opted-in project and test its Shortcuts
+  picker entry, Siri phrase, local device authentication, cold and warm launch,
+  foreground routing while another tiny app is open, deletion/removal failure,
+  and confirmation that a duplicate is not listed automatically.
 - [ ] Verify that deleting a tiny app removes its document, runtime state,
   project images and voice notes, and pending/delivered local notifications while leaving
   host-level API keys available to other projects.

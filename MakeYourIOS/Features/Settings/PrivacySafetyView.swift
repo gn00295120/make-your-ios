@@ -53,11 +53,23 @@ struct PrivacySafetyView: View {
                 }
             }
 
+            Section("Shortcuts and Siri") {
+                Text(
+                    "A tiny app appears in Apple Shortcuts only after its generated version includes "
+                        + "the visible Shortcuts access block and you approve that capability. iOS receives "
+                        + "only opted-in apps' stable IDs, names, and safe icons—not prompts, state, media, or keys."
+                )
+                Text(
+                    "The fixed shortcut requires local device authentication and only opens MakeYour in "
+                        + "the foreground. Remove the block or delete the tiny app to revoke its listing."
+                )
+            }
+
             Section("Your controls") {
                 Text("Remove OpenAI and market-provider keys with their in-app Remove controls at any time.")
                 Text(
                     "Delete a mini app from My Apps to remove its document, project assets, runtime data, "
-                        + "and scheduled notifications."
+                        + "scheduled notifications, and Shortcuts eligibility."
                 )
                 Text("Deleting MakeYour from iPhone removes its sandboxed projects, assets, and runtime data.")
             }
@@ -154,6 +166,7 @@ private extension CapabilityCategory {
         case .sharing: "Sharing"
         case .systemFeedback: "System feedback"
         case .calendar: "Calendar"
+        case .automation: "Automation"
         }
     }
 }

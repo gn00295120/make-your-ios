@@ -31,6 +31,7 @@ AI generation is an optional bring-your-own-key feature. No MakeYour account, de
 3. Builder also offers Design only. GPT-5.6 proposes visual changes, then a host-owned merger preserves the current app name, pages, component identities, copy, values, actions, bindings, data configuration, capabilities, user-selectable image slots, and local canvas binding. The reviewer sees a native preview and change summary before applying one new version.
 4. Generated results open as native tiny apps. There is no downloaded executable, host back button, or bottom host tab bar; the upper-right four-dot menu returns to My Apps, Builder, or AI Key.
 5. In an aiAssistant component, enter text or review an explicitly configured text-state prefill. Before Send, the app shows the exact task, exact text, destination, and local-data disclosure. Photos, audio, records, captured device results, other projects, and general device data are never attached automatically.
+6. A generated app may include one visible Shortcuts access block. After approving `shortcuts.openTinyApp`, open Apple's Shortcuts app, add MakeYour's fixed Open Tiny App action, and choose that exact project. The action requires local device authentication and foregrounds MakeYour. It does not execute generated code, accept a generated URL, or run in the background.
 
 Device and data boundaries:
 
@@ -43,9 +44,10 @@ Device and data boundaries:
 - A generated document-export component shows the resolved content preview and opens Apple's destination chooser only after a tap. Plain text, JSON, and CSV exports are bounded to 2,000 characters/8 KB; the tiny app cannot choose a destination or overwrite a file silently.
 - A generated voice-note component requests microphone access only after the reviewer taps Record. It stores one validated mono AAC clip of 5–60 seconds (maximum 1 MiB) in that tiny app's protected local asset directory, always exposes play/pause/delete controls, and stops when the app loses the active foreground. Permission-sheet inactivity is handled separately so first-time approval resumes only after the app is active. Protected crash-staged files are swept on next launch, and regeneration deletes audio for removed bindings. Audio is never uploaded, automatically transcribed, or attached to an AI request. The build includes `NSMicrophoneUsageDescription`: “MakeYour records a local voice note only after you tap Record inside a tiny app.”
 - A generated speech-transcript component can reference only an existing voice-note binding and a distinct declared text-state destination. After the reviewer taps, it requests Speech Recognition permission, verifies the exact requested locale, requires `supportsOnDeviceRecognition`, and sets `requiresOnDeviceRecognition`. Unsupported or unavailable on-device recognition fails closed with no network fallback. Recognition cancels outside the foreground. The result is capped at 2,000 characters and shown in an editable review sheet; Cancel stores nothing, while Use Transcript atomically commits the accepted text before any `valueChanged` event. The build includes `NSSpeechRecognitionUsageDescription`: “MakeYour transcribes a linked local voice note only after you tap, using on-device recognition when available.”
+- The generated Shortcuts access component is an inert opt-in marker: it cannot contain an action, event, binding, value, arbitrary phrase, URL, or background work. Apple's dynamic entity query receives only valid opted-in project UUIDs, names, and allowlisted icons. The fixed intent revalidates the entity before execution, and the app revalidates again before presentation without falling back to another project. Removing the marker or deleting the app invalidates a stale shortcut; duplication strips the marker. Once visible, the tiny app behaves normally, including any already validated page-appearance behavior.
 - Pedometer access reads only today's aggregate step count after a tap, with no raw or background motion stream.
 - The share sheet sends nothing until the reviewer chooses a destination. Clipboard access is tap-initiated and write-only. Haptics collect no data.
-- Deleting a tiny app removes its document, local runtime state, project images and voice notes, and its local notifications. Host-level API keys must be removed separately because other tiny apps may use them.
+- Deleting a tiny app removes its document, local runtime state, project images and voice notes, local notifications, and Shortcuts eligibility. Host-level API keys must be removed separately because other tiny apps may use them.
 
 Privacy and storage:
 
@@ -53,7 +55,7 @@ Privacy and storage:
 - Requests go directly from the device to the named provider; the developer operates no account, analytics, or proxy server.
 - Projects, records, bookmarks, cached responses, and captured results stay on device unless the user deliberately shares text or opens an external article.
 - User-selected component images, Design Studio canvas photos, and voice notes stay in the tiny app's project-local asset store. Generated documents contain only semantic bindings and presentation or duration metadata; media bytes and local paths are not sent to GPT-5.6.
-- Privacy & Safety is accessible from the AI Key screen and contains a catalog of all 20 host capabilities.
+- Privacy & Safety is accessible from the AI Key screen and contains a catalog of all 21 host capabilities.
 
 Fixed network services:
 
@@ -82,6 +84,8 @@ Market and currency data may be delayed and are not trading advice. Notification
 - a physical-iPhone recording or review note confirming camera, scanner,
   pedometer, haptic, and write-only calendar behavior;
 - a current-build check of MapKit search/directions and the document-export
-  preview, cancellation, and successful destination flow; and
+  preview, cancellation, and successful destination flow;
+- a physical-iPhone check of Shortcuts discovery, Siri, local authentication,
+  cold/warm foreground routing, app-to-app switching, and stale-project failure; and
 - a clean-install check confirming all twelve seeded examples and honest hardware-denied,
   permission-denied, and offline states.

@@ -150,6 +150,19 @@ Create a one-page private mini app named “Voice to Notes”. Declare project-p
 Explain accurately that the voice clip is never uploaded, transcription starts only after another tap, requires a supported on-device language model, has no network fallback, and opens an editable review before storing at most 2,000 characters. Declare exactly storage.local, microphone.recordLocal, and speech.transcribeOnDevice. Do not add live dictation, automatic transcription, AI, HTTP, background recording or recognition, notifications, photos, or other device components.
 ```
 
+## Demo 15 — Open a Tiny App from Shortcuts
+
+This prompt exercises system discovery without letting generated content define
+system code. Verify the Shortcuts picker, Siri, cold and warm foreground launch,
+locked-device authentication, and a deleted or disabled stale shortcut on a
+physical iPhone.
+
+```text
+Create a one-page native personal utility named “Shortcut Shelf”. Add a centered hero titled “Your tiny app, one phrase away” with subtitle “Open this exact tiny app from Shortcuts without hunting through a folder.” Add exactly one full-width shortcutAccess component titled “Open with Shortcuts” with subtitle “Choose this tiny app in Apple’s Shortcuts app or ask Siri after setup.” Add a subtle infoBanner titled “Explicit and revocable” explaining that removing this block or deleting this tiny app makes its saved shortcut unavailable.
+
+Use plum tint, native preset, system appearance, rounded typography, plain canvas, soft corners, regular density, material default surface, subtle motion, and a story layout. Declare exactly storage.local and shortcuts.openTinyApp. The shortcutAccess node must have no binding, value, placeholder, options, items, valueBinding, action, or events. Do not define an Intent type, phrase, URL, deep link, background action, automation payload, API call, AI request, notification, or device sensor access. Explain accurately that the fixed host shortcut receives only this project’s stable ID, name, and validated icon, requires local device authentication, opens MakeYour in the foreground, and behaves like opening the same app card once visible.
+```
+
 ## Verification checklist
 
 For each prompt used in a release or competition demo:

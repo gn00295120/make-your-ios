@@ -151,6 +151,8 @@ struct ComponentRenderer: View {
                 speechHost: speechHost,
                 onValueChanged: { onEvent(.valueChanged, node) }
             )
+        case .shortcutAccess:
+            RuntimeShortcutAccessView(node: node)
         case .divider:
             Divider().padding(.vertical, 4)
         }

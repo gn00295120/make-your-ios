@@ -22,6 +22,7 @@ ship together.
 | Specialized data | task reminders, generic typed record collections, ledger, FX converter/watchlist, news, market watchlist | Each is a compiled adapter with isolated persistence; arbitrary SQL/HTTP is unavailable |
 | Media and device | private image and voice-note slots, reviewed on-device transcript, plus the 11 device actions in the capability catalog | Tap initiated, sanitized, bounded, foreground-only where applicable, and hardware-gated |
 | Native services | MapKit coordinate/place display and search, reviewed write-only calendar event, reviewed text/JSON/CSV export, local AAC voice note and on-device Speech transcription | Fixed host adapters; no location history, calendar reads, silent route/file handoff, background recording, audio upload, or speech network fallback |
+| Automation | one inert `shortcutAccess` opt-in for the fixed **Open Tiny App** App Intent | Authenticated foreground routing only; no generated Intent, phrase, URL, action, background work, or fallback project |
 | AI | reviewed text-only assistant with optional result binding | User confirms the exact payload; no automatic project/device context |
 | Games | Snake/platformer presets plus Tiny Game Program v3 | Deterministic fixed-step interpreter; no downloaded or executable game code; stored V2 programs remain compatible |
 
@@ -47,7 +48,7 @@ iOS scene is active. It is a UI automation primitive, not background execution:
 the host neither catches up missed ticks nor schedules silent work after the app
 leaves the foreground.
 
-## Native map, calendar, export, voice, and speech blocks
+## Native map, calendar, export, voice, speech, and Shortcuts blocks
 
 - `map` renders a bounded MapKit region for a configured coordinate or Apple
   Maps place query, keeps optional search visible, returns at most eight markers,
@@ -81,6 +82,14 @@ leaves the foreground.
   before firing `valueChanged`. Recognition cancels outside the foreground and
   never falls back to a network recognizer. An accepted transcript can drive
   text, metrics, templates, exports, events, or a visible editable AI prefill.
+- `shortcutAccess` may appear once and has no values, actions, bindings, items,
+  or events. It opts the exact project into one precompiled `OpenTinyAppIntent`.
+  Shortcuts receives only its UUID, name, and validated icon; execution requires
+  local device authentication, foregrounds MakeYour, and revalidates both in the
+  entity catalog and at presentation. Deleting the project or removing the
+  marker makes stale shortcuts fail closed, and duplication removes the marker.
+  Ordinary visible-page behavior may run after the route opens, just as with an
+  app-card tap.
 
 ## Tiny Game Program v3
 
@@ -136,7 +145,7 @@ graph cannot iterate a collection, represent nested or schemaful records in its
 flat list/object state, mutate specialized task/ledger records, run a background
 timer, call an arbitrary URL, load a plugin, or create a new Apple entitlement.
 Moving-platform or dynamic-solid game physics, live microphone dictation,
-App Intents or Shortcuts, and extension targets still require new
+additional system actions, and extension targets still require new
 typed host blocks, privacy boundaries, schema changes, and release tests before
 GPT may use them.
 

@@ -66,11 +66,25 @@ in iOS Settings.
 - Share presents Apple's destination chooser. Clipboard access writes configured
   text only after a tap and never reads the clipboard. Haptics collect no data.
 
+### How do I open a tiny app from Shortcuts or Siri?
+
+Generate or revise that tiny app with one Shortcuts access block and approve the
+new capability. In Apple's Shortcuts app, add MakeYour's **Open Tiny App** action
+and choose the project. Its picker receives only opted-in projects' stable IDs,
+names, and safe icons.
+The action requires local device authentication and opens MakeYour in the
+foreground; it does not receive project state, media, prompts, or API keys.
+
+If a saved shortcut says the tiny app is unavailable, the project was deleted,
+its access block was removed, or the local catalog cannot be read safely. Add
+the block again only if you want to re-enable access. Duplicated tiny apps do
+not inherit the source app's Shortcuts opt-in.
+
 ### How do I remove my data?
 
 Long-press an app in My Apps and choose Delete to remove its document and
 project-local runtime state, images, and voice notes, plus its pending and delivered local
-notifications. Remove the OpenAI key from AI Key and any Twelve Data key from
+notifications and Shortcuts eligibility. Remove the OpenAI key from AI Key and any Twelve Data key from
 the market provider-key screen before uninstalling. Deleting MakeYour from the
 iPhone removes its sandboxed projects, assets, caches, and runtime state, but
 iOS does not guarantee that uninstalling removes Keychain items.

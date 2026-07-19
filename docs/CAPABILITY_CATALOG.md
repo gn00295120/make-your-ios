@@ -11,7 +11,7 @@ permission copy, validation rules, tests, and review surface all ship together.
 
 ## Available to AI-generated tiny apps
 
-The current runtime has exactly 20 host capabilities. The host derives the
+The current runtime has exactly 21 host capabilities. The host derives the
 required set from the generated document and rejects both missing and unused
 declarations.
 
@@ -31,6 +31,7 @@ declarations.
 | `calendar.createEvent` | Creates one event after an editable review sheet and confirmation | EventKit write-only access; cannot enumerate, edit, or delete existing events |
 | `microphone.recordLocal` | Records and plays one project-local AAC voice note | Visible tap and microphone permission; 5–60 seconds, maximum 1 MiB, no background capture or upload |
 | `speech.transcribeOnDevice` | Transcribes one linked project-local voice note | Visible tap and Speech permission; requires supported on-device recognition, editable review before storage, and no network fallback |
+| `shortcuts.openTinyApp` | Offers one explicitly opted-in tiny app to Apple Shortcuts and Siri | One fixed foreground App Intent, local device authentication, stale-project revalidation, and only stable ID/name/safe icon metadata |
 | `motion.pedometer` | Reads today's aggregate step count once | Starts after a tap; no raw motion stream or background monitoring |
 | `share.present` | Presents configured text in Apple's share sheet | Nothing leaves MakeYour until the user selects a destination |
 | `clipboard.write` | Writes configured text to the system clipboard | Tap-initiated and write-only; no clipboard reads or background writes |
@@ -101,9 +102,9 @@ does not replace a real-device permission and accuracy test. Contact, document,
 and share flows use system-controlled UI and must also be smoke-tested on the
 target iOS release before shipping.
 
-## Current native map, calendar, export, voice, and speech blocks
+## Current native map, calendar, export, voice, speech, and Shortcuts blocks
 
-These five capabilities use dedicated generated component kinds rather than
+These six capabilities use dedicated generated component kinds rather than
 `deviceInput` actions:
 
 | Component | Capability | Current behavior |
@@ -113,6 +114,7 @@ These five capabilities use dedicated generated component kinds rather than
 | `documentExport` | `files.export` | Shows the resolved content preview, enforces size limits for text/JSON/CSV, validates JSON syntax, and opens Apple's `fileExporter` destination chooser after a tap |
 | `voiceNote` | `microphone.recordLocal` | Records one 5–60 second AAC clip after a tap, stops when the app leaves the foreground, and always exposes local play/pause/delete controls |
 | `speechTranscript` | `speech.transcribeOnDevice` | Reads only a linked local `voiceNote`, requires an exact supported locale and on-device model, then presents an editable transcript before committing at most 2,000 characters to text state |
+| `shortcutAccess` | `shortcuts.openTinyApp` | Opts this project into one precompiled authenticated foreground opener; the visible block provides a Siri tip and link to Apple's Shortcuts app |
 
 The map block does not request location permission. The calendar block uses
 `NSCalendarsWriteOnlyAccessUsageDescription` and never reads the user's existing
@@ -125,6 +127,13 @@ separate speech block uses `NSSpeechRecognitionUsageDescription`, verifies the
 requested locale rather than accepting recognizer fallback, requires
 `supportsOnDeviceRecognition`, sets `requiresOnDeviceRecognition`, cancels when
 it leaves the foreground, and fails closed instead of using network recognition.
+The Shortcuts block is inert and may appear at most once. It carries no action,
+binding, event, value, items, or arbitrary phrase. The system query exposes only
+the project UUID, name, and allowlisted icon, revalidates before execution, and
+never falls back to another project. Removing the block or deleting the project
+invalidates a stale shortcut; duplication strips the opt-in. Once the opened
+page is visible, its normal validated behavior runs just as it would after an
+app-card tap.
 
 ## Safe next candidates, not yet supported
 
@@ -132,7 +141,8 @@ These are plausible additions because each can be expressed as a narrow,
 separately reviewed host adapter. They remain roadmap items and are not in the
 AI schema today.
 
-- precompiled App Intent or Shortcuts actions with explicit input/output types.
+- additional precompiled App Intent actions for specific reviewed capabilities,
+  each with explicit input/output types and its own privacy boundary.
 
 Each candidate still needs a product-specific privacy boundary, availability
 fallback, permission timing, data-retention rule, validator support, tests, and

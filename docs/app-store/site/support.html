@@ -34,11 +34,15 @@
   <h2>What can device actions access?</h2>
   <p>Scanning returns inert text and never opens a URL automatically. Location is one-shot, contacts come only from Apple's single-contact picker, text-file import is bounded to one selected file, and pedometer access returns today's aggregate steps. Voice notes stay local and are never uploaded or automatically transcribed. A linked transcript requires on-device recognition, never falls back to the network, and remains editable until you accept it. Sharing uses Apple's destination chooser; clipboard access is tap-initiated and write-only. There is no background camera, microphone, speech, location, contact, file, or motion access.</p>
 
+  <h2>How do I open a tiny app from Shortcuts or Siri?</h2>
+  <p>Generate or revise that tiny app with one Shortcuts access block and approve the capability. In Apple's Shortcuts app, add MakeYour's Open Tiny App action and choose the project. Its picker receives only opted-in projects' stable IDs, names, and safe icons. Local device authentication is required, and the action only opens MakeYour in the foreground.</p>
+  <p>If a saved shortcut says the tiny app is unavailable, the project was deleted, its access block was removed, or the local catalog failed safe. Duplicates do not inherit the opt-in. Add the block again only when you want to re-enable access.</p>
+
   <h2>Does AI see photos or records?</h2>
   <p>No. A tiny-app AI helper sends only text entered or visibly prefilled into that helper after the exact task and text are shown for confirmation. An accepted transcript may become an editable prefill, but audio is never attached. Photos, records, scans, coordinates, contacts, imported files, step counts, other apps, and general device data are not attached automatically.</p>
 
   <h2>Delete my data</h2>
-  <p>Long-press an app in My Apps and choose Delete to remove its document, project-local state and images, and local notifications. Remove host-level OpenAI and Twelve Data keys with the in-app controls before uninstalling. Uninstall removes sandboxed projects, assets, caches, and runtime state, but does not guarantee deletion of Keychain items.</p>
+  <p>Long-press an app in My Apps and choose Delete to remove its document, project-local state and images, local notifications, and Shortcuts eligibility. Remove host-level OpenAI and Twelve Data keys with the in-app controls before uninstalling. Uninstall removes sandboxed projects, assets, caches, and runtime state, but does not guarantee deletion of Keychain items.</p>
 
   <p><a href="privacy.html">Read the Privacy Policy</a></p>
   <footer>MakeYour · Support for version 1.0</footer>

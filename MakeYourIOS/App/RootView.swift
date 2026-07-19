@@ -11,10 +11,18 @@ struct RootView: View {
         let id: UUID
     }
 
+    private struct IntentRouteError: Identifiable {
+        let id = UUID()
+        let message: String
+    }
+
     @Environment(WorkspaceStore.self) private var store
+    @State private var intentRouter = TinyAppIntentRouter.shared
     @State private var selectedTab: RootTab
     @State private var runtimeRoute: RuntimeRoute?
     @State private var isPresentingDemo: Bool
+    @State private var pendingIntentProjectID: UUID?
+    @State private var intentRouteError: IntentRouteError?
     private let demoScreen: String?
 
     init(arguments: [String] = ProcessInfo.processInfo.arguments) {
@@ -35,7 +43,7 @@ struct RootView: View {
 
     var body: some View {
         tabs
-            .fullScreenCover(item: $runtimeRoute) { route in
+            .fullScreenCover(item: $runtimeRoute, onDismiss: presentPendingIntentRoute) { route in
                 if let project = store.projects.first(where: { $0.id == route.id }) {
                     ImmersiveAppHostView(
                         project: project,
@@ -48,7 +56,7 @@ struct RootView: View {
                     )
                 }
             }
-            .fullScreenCover(isPresented: $isPresentingDemo) {
+            .fullScreenCover(isPresented: $isPresentingDemo, onDismiss: presentPendingIntentRoute) {
                 if let demoProject {
                     ImmersiveAppHostView(
                         project: demoProject,
@@ -65,6 +73,17 @@ struct RootView: View {
                         systemImage: "exclamationmark.triangle"
                     )
                 }
+            }
+            .onChange(of: intentRouter.pendingRequest, initial: true) { _, request in
+                guard let request else { return }
+                handleIntentRoute(request)
+            }
+            .alert(item: $intentRouteError) { error in
+                Alert(
+                    title: Text("Tiny app unavailable"),
+                    message: Text(error.message),
+                    dismissButton: .default(Text("OK"))
+                )
             }
     }
 
@@ -92,6 +111,7 @@ struct RootView: View {
         case "platformer": SampleDocuments.skybound
         case "snake": SampleDocuments.neonSnake
         case "device": SampleDocuments.captureKit
+        case "shortcuts": SampleDocuments.shortcutShelf
         default: nil
         }
     }
@@ -144,8 +164,53 @@ struct RootView: View {
         store.select(project.id)
     }
 
+    private func handleIntentRoute(_ request: TinyAppIntentRouter.Request) {
+        intentRouter.consume(requestID: request.id)
+        selectedTab = .apps
+
+        guard eligibleProject(id: request.projectID) != nil else {
+            pendingIntentProjectID = nil
+            intentRouteError = IntentRouteError(
+                message: "It may have been deleted or its Shortcuts access was removed."
+            )
+            return
+        }
+
+        if runtimeRoute?.id == request.projectID {
+            pendingIntentProjectID = nil
+            return
+        }
+
+        pendingIntentProjectID = request.projectID
+        if runtimeRoute != nil {
+            runtimeRoute = nil
+        } else if isPresentingDemo {
+            isPresentingDemo = false
+        } else {
+            presentPendingIntentRoute()
+        }
+    }
+
+    private func presentPendingIntentRoute() {
+        guard let projectID = pendingIntentProjectID else { return }
+        pendingIntentProjectID = nil
+        guard eligibleProject(id: projectID) != nil else {
+            intentRouteError = IntentRouteError(
+                message: "It may have been deleted or its Shortcuts access was removed."
+            )
+            return
+        }
+        runtimeRoute = RuntimeRoute(id: projectID)
+    }
+
+    private func eligibleProject(id: UUID) -> WorkspaceProject? {
+        store.projects.first {
+            $0.id == id && TinyAppShortcutEligibility.isEligible($0.document)
+        }
+    }
+
     private static let demoScreenNames: Set<String> = [
         "waterline", "star-garden", "converter", "tasks", "muse-journal", "news", "market",
-        "ledger", "platformer", "snake", "device"
+        "ledger", "platformer", "snake", "device", "shortcuts"
     ]
 }

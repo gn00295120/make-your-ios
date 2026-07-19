@@ -6,6 +6,7 @@ extension AppDocumentValidator {
             try validateNode(node)
         }
         try validateSpeechTranscriptReferences(document)
+        try validateShortcutAccess(document)
         try validateActions(document)
     }
 
@@ -249,6 +250,25 @@ extension AppDocumentValidator {
                   stateTypes[node.binding] == .text else {
                 throw AppDocumentValidationError.invalidComponentConfiguration(.speechTranscript)
             }
+        }
+    }
+
+    private func validateShortcutAccess(_ document: AppDocument) throws {
+        let nodes = document.pages.flatMap(\.nodes).filter { $0.kind == .shortcutAccess }
+        guard nodes.count <= 1 else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(.shortcutAccess)
+        }
+        guard let node = nodes.first else { return }
+        guard !node.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              node.binding.isEmpty,
+              node.value.isEmpty,
+              node.placeholder.isEmpty,
+              node.options.isEmpty,
+              node.items.isEmpty,
+              node.action == .none,
+              node.valueBinding?.isEmpty != false,
+              node.events?.isEmpty != false else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(.shortcutAccess)
         }
     }
 

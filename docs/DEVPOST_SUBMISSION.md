@@ -125,8 +125,8 @@ and GPT-5.6 Design-only proposals.
 - Persistent multi-app library with replacement versions.
 - Project-local, metadata-stripped image persistence with duplicate/delete lifecycle.
 - Design Genome v2, Design Studio, and a function-preserving AI Design-only path.
-- The expanded source passes 211 unit tests, all nine non-billable UI paths,
-  and strict SwiftLint across 155 Swift files with zero violations. A dedicated,
+- The expanded source passes 221 unit tests, all 10 non-billable UI paths,
+  and strict SwiftLint across 165 Swift files with zero violations. A dedicated,
   explicitly billable GPT-5.6 generation E2E remains available for a Simulator
   with a saved review key.
 - Visual verification of editorial, split/card, and immersive treatments on an
@@ -145,7 +145,7 @@ the execution boundary.
 - Versioned JSON Patch feature edits and cross-version rollback.
 - Per-project SQLite namespaces and migrations.
 - Broader automated accessibility and snapshot diagnostics fed back to the model.
-- Live microphone dictation, precompiled App Intents, and additional allowlisted
+- Live microphone dictation, additional precompiled App Intents, and additional allowlisted
   HTTPS data sources with separately reviewed boundaries.
 - Early App Review guidance before broadening runtime programmability.
 
@@ -189,6 +189,9 @@ line use a held frame from the real app library rather than concept mockups.
   non-billable UI tests.
 - [x] Add the 20th reviewed capability: tap-initiated, on-device-only transcription
   of a linked local voice note with editable review and atomic text-state commit.
+- [x] Add the 21st reviewed capability: an AI-selectable `shortcutAccess` opt-in
+  backed by one authenticated foreground App Intent and a fail-closed dynamic
+  Tiny App entity catalog.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
 - [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at

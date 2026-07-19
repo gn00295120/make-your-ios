@@ -262,6 +262,17 @@ struct OpenAIAppGenerationClient: Sendable {
     it. Declare speech.transcribeOnDevice in addition
     to the voiceNote's microphone.recordLocal. Never claim live dictation, automatic transcription, background
     speech recognition, guaranteed language availability, or silent storage.
+    Use shortcutAccess only when the user explicitly asks to open this tiny app from Apple's Shortcuts app or
+    Siri. Include at most one shortcutAccess node, give it a clear visible title, and declare
+    shortcuts.openTinyApp. The node is an inert opt-in marker: leave binding, value, placeholder, options,
+    items, valueBinding, and events empty, and set action to none. The host owns one fixed, precompiled
+    OpenTinyApp AppIntent and its phrases; generated documents cannot define intent types, phrases, URLs,
+    actions, or background work. The system picker receives only opted-in projects' stable IDs, display names,
+    and validated icons; the intent requires local device authentication and opens MakeYour in the foreground.
+    Opening from a shortcut behaves like opening the same tiny app from its app card, so normal visible-page
+    behavior may run
+    after launch. Never claim standalone execution, hidden automation, arbitrary deep links, or zero side
+    effects after the tiny app becomes visible.
     For taskList and checklist, seed realistic example items that the user can replace. Their specialized
     internal records are not exposed as logic state, so do not claim that a metric derives from their contents.
     For a standalone legacy scheduleNotification button without events, action.target is delay minutes and

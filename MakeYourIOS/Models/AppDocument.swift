@@ -212,6 +212,7 @@ enum ComponentKind: String, Codable, CaseIterable, Hashable, Sendable {
     case documentExport
     case voiceNote
     case speechTranscript
+    case shortcutAccess
     case divider
 }
 

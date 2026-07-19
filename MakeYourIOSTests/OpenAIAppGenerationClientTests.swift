@@ -34,6 +34,10 @@ final class OpenAIAppGenerationClientTests: XCTestCase {
         XCTAssertTrue(instructions.contains("requires Apple's on-device recognition"))
         XCTAssertTrue(instructions.contains("never falls back to a network recognizer"))
         XCTAssertTrue(instructions.contains("saved speechTranscript into the AI editor"))
+        XCTAssertTrue(instructions.contains("Use shortcutAccess only when the user explicitly asks"))
+        XCTAssertTrue(instructions.contains("one fixed, precompiled"))
+        XCTAssertTrue(instructions.contains("requires local device authentication"))
+        XCTAssertTrue(instructions.contains("normal visible-page behavior may run"))
     }
 
     func testIncompleteResponseSurfacesSpecificRetryableError() {

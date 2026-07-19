@@ -21,6 +21,7 @@ enum AppCapabilityResolver {
             .documentExport: .documentExport,
             .voiceNote: .microphoneRecordLocal,
             .speechTranscript: .speechTranscribeOnDevice,
+            .shortcutAccess: .shortcutsOpenTinyApp,
             .liveDataList: .network,
             .newsFeed: .network,
             .marketWatch: .network

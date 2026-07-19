@@ -29,6 +29,10 @@
   <p>A linked transcript block requests Apple's Speech Recognition permission, verifies the requested locale, and proceeds only when on-device recognition is supported. It never falls back to network recognition and cancels outside the foreground. The result is capped at 2,000 characters and remains editable in a review sheet. Cancel stores nothing; Use Transcript stores only the accepted text in that tiny app's local state.</p>
   <p>One selected UTF-8 text, JSON, or CSV file may be read up to 256 KB, with at most 2,000 characters stored. Contact selection stores the displayed name, first phone number, and first email when available. Sharing sends nothing until you choose a destination in Apple's share sheet. Clipboard access is tap-initiated and write-only; other apps may access clipboard content under iOS rules. Haptics collect no data.</p>
 
+  <h2>Apple Shortcuts and Siri</h2>
+  <p>A tiny app is offered to Apple Shortcuts only when its active version contains one visible Shortcuts access block and you approve that capability. The system's dynamic picker receives only opted-in projects' stable identifiers, display names, and validated icons—not their prompts, state, records, photos, voice recordings, transcript text, provider keys, or generated documents.</p>
+  <p>The fixed Open Tiny App action requires local device authentication and opens MakeYour in the foreground. It performs no generated background work and exposes no generated URL or action. MakeYour revalidates the exact project without falling back to another one. Removing the block or deleting the project makes stale shortcuts fail closed. Once the page is visible, it behaves normally, just as after opening its app card. Apple may process shortcut phrases and display representations under your Siri and Shortcuts settings and Apple's applicable policies.</p>
+
   <h2>Collection and tracking</h2>
   <p>The MakeYour developer does not receive user projects, photos, voice recordings, captured device results, keys, prompts, results, bookmarks, watchlists, analytics, advertising identifiers, or usage profiles on a MakeYour server. The app has no advertising SDK, analytics SDK, data broker integration, or cross-app tracking.</p>
   <p>Because reviewed text may be processed by OpenAI in connection with your account, the App Store label conservatively lists Other User Content for App Functionality, linked to you, and not used for tracking. Third-party processing is limited to providing a feature you request and must protect data consistently with published policies and applicable law.</p>
@@ -36,7 +40,8 @@
   <h2>Retention, deletion, and consent</h2>
   <ul>
     <li>Remove your OpenAI key from AI Key and your optional Twelve Data key from its market provider-key screen.</li>
-    <li>Delete a tiny app from My Apps to remove its document, local runtime state, images, voice notes, and local notifications.</li>
+    <li>Delete a tiny app from My Apps to remove its document, local runtime state, images, voice notes, local notifications, and Shortcuts eligibility.</li>
+    <li>Regenerate without the Shortcuts access block to stop offering that project to new system queries; saved stale shortcuts then fail closed.</li>
     <li>Regenerating a tiny app deletes a voice note when the resulting app no longer references that voice binding.</li>
     <li>Disable AI consent from AI Key to prevent new AI requests.</li>
     <li>Delete MakeYour from iPhone to remove sandboxed projects, assets, caches, and runtime state.</li>

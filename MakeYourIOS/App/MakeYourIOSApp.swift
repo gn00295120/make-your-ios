@@ -15,6 +15,7 @@ struct MakeYourIOSApp: App {
         _assetStore = State(initialValue: assets)
         _workspaceStore = State(initialValue: WorkspaceStore(assetStore: assets))
         _aiSettings = State(initialValue: AISettingsStore())
+        TinyAppShortcuts.updateAppShortcutParameters()
     }
 
     var body: some Scene {
@@ -43,5 +44,8 @@ struct MakeYourIOSApp: App {
             .environment(aiSettings)
             .environment(assetStore)
             .tint(MakeYourTheme.brand)
+            .onChange(of: workspaceStore.projects) {
+                TinyAppShortcuts.updateAppShortcutParameters()
+            }
     }
 }

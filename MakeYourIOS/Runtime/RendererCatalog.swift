@@ -44,6 +44,7 @@ enum RendererCatalog {
         .documentExport: [.automatic, .compact, .cards, .framed],
         .voiceNote: [.automatic, .compact, .cards, .framed],
         .speechTranscript: [.automatic, .compact, .cards, .framed],
+        .shortcutAccess: [.automatic, .compact, .cards, .framed],
         .divider: [.automatic, .compact]
     ]
 }

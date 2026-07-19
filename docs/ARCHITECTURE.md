@@ -30,7 +30,7 @@ testable, accessible, and bounded.
 ## Capability catalog
 
 Capabilities are host intents, not raw Apple frameworks. The current document
-vocabulary declares exactly 20 capabilities:
+vocabulary declares exactly 21 capabilities:
 
 - `storage.local`
 - `calculation.safe`
@@ -46,6 +46,7 @@ vocabulary declares exactly 20 capabilities:
 - `calendar.createEvent`
 - `microphone.recordLocal`
 - `speech.transcribeOnDevice`
+- `shortcuts.openTinyApp`
 - `motion.pedometer`
 - `share.present`
 - `clipboard.write`
@@ -69,7 +70,8 @@ Apple's single-contact picker, bounded text-file import, one-time pedometer
 reads, reviewed sharing, clipboard writes, haptic feedback, MapKit display and
 place search, reviewed write-only calendar creation, and bounded text/JSON/CSV
 export through Apple's save panel, plus a bounded foreground-only local voice
-note and reviewed on-device transcription of that note. Permission- or gesture-gated operations start
+note, reviewed on-device transcription of that note, and a fixed authenticated
+App Intent that opens an explicitly opted-in tiny app. Permission- or gesture-gated operations start
 only at the documented user action, check availability, and sanitize and bound
 their inputs and outputs. Maps do not request the user's location, calendar
 creation cannot read existing events, exports cannot choose a destination, and
@@ -79,6 +81,28 @@ an editable review, commits accepted text atomically, and has no network fallbac
 Scanned URLs are never opened or forwarded to AI by default. Adding a generated
 version that needs a new capability first presents a host-controlled review
 sheet.
+
+## Shortcuts foreground-routing boundary
+
+`shortcutAccess` is a generated opt-in marker, not generated automation code.
+The host compiles one `OpenTinyAppIntent`, one dynamic `TinyAppEntity` query, and
+one `AppShortcutsProvider`. The query reads the bounded workspace archive and
+returns only projects that still contain exactly one valid marker. Its display
+representation contains only the project UUID, name, and allowlisted SF Symbol.
+
+The intent requires local device authentication and foreground launch. It
+re-resolves the entity immediately before execution, while `RootView`
+independently checks the exact project and capability before presenting it. A
+missing, deleted, invalid, or no-longer-opted-in project has no fallback to the
+first project. Routing is transient and does not rewrite the user's selected
+project. Duplicating a project strips the marker so system exposure is never
+copied implicitly.
+
+The shortcut itself only navigates into the existing signed runtime. Once the
+page is visible, its ordinary validated `appear` events and other interactions
+behave exactly as if the user had opened the same app card. Generated documents
+cannot define Intent types, phrases, URLs, background work, or arbitrary system
+actions.
 
 `CapabilityRegistry` is the platform ledger for every compiled host ability. It
 records category, privacy risk, availability mode, user-action requirement,
@@ -279,7 +303,7 @@ and small credentials are stored using
   platform games, bounded custom rule-driven games, image slots, camera and code/text scanning, one-time location,
   contact/file pickers, MapKit place views, reviewed write-only calendar events,
   reviewed document export, foreground local voice notes, reviewed on-device
-  speech transcripts, pedometer,
+  speech transcripts, an authenticated opt-in Shortcuts opener, pedometer,
   share/clipboard/haptics, text-only AI
   assistants, banners, dividers, navigation, page layouts, and presentation
   tokens.
@@ -294,4 +318,4 @@ Future releases should add schemaful record relationships and bounded collection
 filter/sort/iteration primitives, moving-platform and dynamic-solid game
 physics, versioned JSON Patch editing, per-project SQLite namespaces, automated
 accessibility and snapshot checks, live microphone dictation, and additional
-narrowly reviewed capabilities such as precompiled App Intents.
+narrowly reviewed precompiled system actions.

@@ -13,7 +13,7 @@ renders it with a catalog of precompiled SwiftUI components and capabilities.
 1. Open **My Apps** and switch between working examples for composable state and
    calculations, a rule-driven original game, live news, market quotes, personal
    accounting, a platform game, Snake, camera/QR capture, foreign exchange,
-   task reminders, private photos, and reviewed AI.
+   task reminders, private photos, reviewed AI, and an opt-in Shortcuts surface.
 2. Open **Builder**, choose **Full app** to create features or **Design only** to
    restyle an existing tiny app without changing its behavior, then review the
    generated result before applying it.
@@ -78,8 +78,8 @@ xcodebuild \
   test
 ```
 
-On July 19, 2026, the current source passed 211 unit tests and all nine
-non-billable UI tests, strict SwiftLint across 155 Swift files with zero
+On July 19, 2026, the current source passed 221 unit tests and all 10
+non-billable UI tests, strict SwiftLint across 165 Swift files with zero
 violations, `git diff --check`, a clean Release Simulator build, and a signed
 Release iOS build with strict code-signature verification. The separately gated
 live test creates, opens, and operates a validated stateful app; it requires an
@@ -123,7 +123,7 @@ project-local asset store, and keeps the bytes outside the generated document
 and AI prompt. Media metadata can safely describe role, focal point, mask,
 overlay, aspect, and content mode without exposing the underlying asset.
 
-Device features use the same bounded 20-capability model. A generated document
+Device features use the same bounded 21-capability model. A generated document
 may request host-owned camera, QR/barcode/text scanner, one-time location, Apple
 contact picker, bounded text-file import, today's pedometer count, share sheet,
 clipboard write, or haptic components. It can also use a bounded MapKit
@@ -142,6 +142,15 @@ reviews and accepts the editable result.
 The host rejects incomplete audio, protects temporary recording files, removes
 crash leftovers on the next launch, and deletes a clip when regeneration removes
 its voice binding.
+
+A generated tiny app may also include one inert `shortcutAccess` block. That
+explicitly opts only that project into one precompiled **Open Tiny App** App
+Intent. The dynamic system picker receives only opted-in projects' stable IDs,
+display names, and validated icons—not prompts, state, media, provider keys, or generated code.
+The intent requires local device authentication, opens MakeYour in the
+foreground, and revalidates the project before routing. Removing the block or
+deleting the project makes a saved stale shortcut fail closed; a duplicated
+project does not inherit the opt-in.
 
 ## Composable runtime blocks
 
@@ -198,7 +207,7 @@ and the release checklist live in [docs/app-store](docs/app-store).
 - The runtime exposes local UI, calculations, fixed-provider news/market data,
   project data, selected or captured photos, user-initiated scanning, MapKit
   search, write-only calendar creation, reviewed document export, on-device
-  reviewed voice transcription, opt-in local
+  reviewed voice transcription, an opt-in authenticated Shortcuts opener, opt-in local
   notifications, deterministic games, and reviewed text-only AI requests.
   It does not execute Swift, JavaScript, WebAssembly, or plugins.
 - Mini apps are private workspaces inside one signed host app; they are not
