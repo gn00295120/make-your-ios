@@ -126,6 +126,7 @@
 		B7E303CCC72C2247DB643994 /* LedgerRuntimeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B8E26DCE5656BF60B5446B /* LedgerRuntimeModels.swift */; };
 		B8BF3E6A9FE5B55D4E7D9946 /* GeneratedAppPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94970B43E9AFD028878AB8D2 /* GeneratedAppPayload.swift */; };
 		BA4415B6F5A534E27E6E8A9D /* GeneratedAppPayload+Logic.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE90C0B96C3016F8D4C67334 /* GeneratedAppPayload+Logic.swift */; };
+		BB9B2907B103B16C0F44C948 /* AISettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC743D98011451E89A185675 /* AISettingsUITests.swift */; };
 		BC538FC8032168ED27B9CB77 /* UniversalRuntimeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09EC10132C94F25AF3BF5DC4 /* UniversalRuntimeUITests.swift */; };
 		BEA0EC83A92C2EB2C02A98F5 /* GeneratedAppPayload+DTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41CEA34A4E2A4CF7E767C19A /* GeneratedAppPayload+DTO.swift */; };
 		C07FD46418E6A4244D4BBFBF /* GameRuntimeModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4959A0AB64FE92A2A9ED39BB /* GameRuntimeModelsTests.swift */; };
@@ -333,6 +334,7 @@
 		CAE4E699C508E7DB80F07F68 /* MarketDataClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketDataClientTests.swift; sourceTree = "<group>"; };
 		CB908FB6A7C28B4A609AE3C2 /* MarketWatchRuntimeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketWatchRuntimeComponents.swift; sourceTree = "<group>"; };
 		CB94299AC43B58ED9279BEA6 /* GeneratedAppPayloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedAppPayloadTests.swift; sourceTree = "<group>"; };
+		CC743D98011451E89A185675 /* AISettingsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsUITests.swift; sourceTree = "<group>"; };
 		CCCB1F5A50BD152A29E36283 /* LocalVoiceRecordingValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalVoiceRecordingValidator.swift; sourceTree = "<group>"; };
 		CCD79BCDDD8A8C6A8F615039 /* DeviceInputCaptureSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInputCaptureSheets.swift; sourceTree = "<group>"; };
 		CE5C86BA7EF528C0355A8F74 /* DesignStudioCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignStudioCard.swift; sourceTree = "<group>"; };
@@ -603,6 +605,7 @@
 		969D04364980021B0FA4F0ED /* MakeYourIOSUITests */ = {
 			isa = PBXGroup;
 			children = (
+				CC743D98011451E89A185675 /* AISettingsUITests.swift */,
 				C8E12D3F49E78172F5C41C03 /* AppIntentsUITests.swift */,
 				71CDD848D6242EE8B9B7DDFC /* DesignStudioUITests.swift */,
 				64D4E8274133797830F984AD /* GameRuntimeUITests.swift */,
@@ -954,6 +957,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB9B2907B103B16C0F44C948 /* AISettingsUITests.swift in Sources */,
 				00677C9A565443885D150163 /* AppIntentsUITests.swift in Sources */,
 				626459FF138F44D9C577DF77 /* DesignStudioUITests.swift in Sources */,
 				D634DF42A6F793299EEFCF10 /* GameRuntimeUITests.swift in Sources */,

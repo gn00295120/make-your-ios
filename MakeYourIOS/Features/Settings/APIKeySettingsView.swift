@@ -104,14 +104,24 @@ struct APIKeySettingsView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Model").font(.subheadline.weight(.semibold))
-                TextField("Model", text: $bindableSettings.model)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .padding(14)
+                Picker("OpenAI model", selection: $bindableSettings.selectedModel) {
+                    ForEach(OpenAIResponsesModel.allCases) { model in
+                        Text(model.displayName).tag(model)
+                    }
+                }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .tint(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
                     .background(.quaternary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .accessibilityLabel("OpenAI model")
+                    .accessibilityValue(bindableSettings.selectedModel.displayName)
+                    .accessibilityIdentifier("settings.model-picker")
                 Text(
-                    "The default favors fast, lower-cost app generation. "
-                        + "You can enter another Responses API model available to your account."
+                    bindableSettings.selectedModel.detail
+                        + " Model ID: \(bindableSettings.selectedModel.rawValue)."
                 )
                     .font(.caption)
                     .foregroundStyle(.secondary)

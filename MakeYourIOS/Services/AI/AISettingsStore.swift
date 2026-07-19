@@ -7,6 +7,35 @@ struct AIConnectionConfig: Sendable {
     let safetyIdentifier: String
 }
 
+enum OpenAIResponsesModel: String, CaseIterable, Identifiable, Sendable {
+    case gpt56 = "gpt-5.6"
+    case sol = "gpt-5.6-sol"
+    case terra = "gpt-5.6-terra"
+    case luna = "gpt-5.6-luna"
+
+    static let defaultSelection: Self = .luna
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .gpt56: "GPT-5.6 (Recommended)"
+        case .sol: "GPT-5.6 Sol"
+        case .terra: "GPT-5.6 Terra"
+        case .luna: "GPT-5.6 Luna"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .gpt56: "Flagship alias for the latest GPT-5.6 Sol model."
+        case .sol: "Pinned flagship model for the highest capability."
+        case .terra: "Strong capability with balanced cost and latency."
+        case .luna: "Efficient model for frequent app generation."
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class AISettingsStore {
@@ -20,9 +49,11 @@ final class AISettingsStore {
         static let keychainAccount = "openai.apiKey"
     }
 
-    var model: String {
-        didSet { defaults.set(model, forKey: Keys.model) }
+    var selectedModel: OpenAIResponsesModel {
+        didSet { defaults.set(selectedModel.rawValue, forKey: Keys.model) }
     }
+
+    var model: String { selectedModel.rawValue }
 
     var disclosureAccepted: Bool {
         didSet { defaults.set(disclosureAccepted, forKey: Keys.disclosureAccepted) }
@@ -42,7 +73,9 @@ final class AISettingsStore {
     ) {
         self.defaults = defaults
         self.keychain = keychain
-        model = defaults.string(forKey: Keys.model) ?? "gpt-5.6-luna"
+        let storedModel = defaults.string(forKey: Keys.model)
+        selectedModel = storedModel
+            .flatMap(OpenAIResponsesModel.init(rawValue:)) ?? .defaultSelection
         disclosureAccepted = defaults.bool(forKey: Keys.disclosureAccepted)
         runtimeDisclosureVersion = defaults.integer(forKey: Keys.runtimeDisclosureVersion)
 
@@ -52,6 +85,10 @@ final class AISettingsStore {
             let newIdentifier = "makeyour_\(UUID().uuidString.lowercased())"
             defaults.set(newIdentifier, forKey: Keys.safetyIdentifier)
             safetyIdentifier = newIdentifier
+        }
+
+        if storedModel != selectedModel.rawValue {
+            defaults.set(selectedModel.rawValue, forKey: Keys.model)
         }
 
         do {
@@ -66,11 +103,11 @@ final class AISettingsStore {
     }
 
     var isReady: Bool {
-        hasAPIKey && disclosureAccepted && !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        hasAPIKey && disclosureAccepted
     }
 
     var canStartRuntimeAI: Bool {
-        hasAPIKey && !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        hasAPIKey
     }
 
     var runtimeDisclosureAccepted: Bool {
@@ -97,12 +134,9 @@ final class AISettingsStore {
     func connectionConfig() throws -> AIConnectionConfig {
         guard hasAPIKey else { throw AIConfigurationError.missingKey }
         guard disclosureAccepted else { throw AIConfigurationError.disclosureRequired }
-        guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw AIConfigurationError.missingModel
-        }
         return AIConnectionConfig(
             apiKey: apiKey,
-            model: model.trimmingCharacters(in: .whitespacesAndNewlines),
+            model: selectedModel.rawValue,
             safetyIdentifier: safetyIdentifier
         )
     }
@@ -115,12 +149,9 @@ final class AISettingsStore {
     func runtimeConnectionConfig() throws -> AIConnectionConfig {
         guard hasAPIKey else { throw AIConfigurationError.missingKey }
         guard runtimeDisclosureAccepted else { throw AIConfigurationError.runtimeDisclosureRequired }
-        guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw AIConfigurationError.missingModel
-        }
         return AIConnectionConfig(
             apiKey: apiKey,
-            model: model.trimmingCharacters(in: .whitespacesAndNewlines),
+            model: selectedModel.rawValue,
             safetyIdentifier: safetyIdentifier
         )
     }
