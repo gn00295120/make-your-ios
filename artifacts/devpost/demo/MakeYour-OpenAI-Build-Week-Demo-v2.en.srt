@@ -1,0 +1,164 @@
+1
+00:00:00,000 --> 00:00:02,760
+This is MakeYour, one iPhone app
+
+2
+00:00:02,760 --> 00:00:05,990
+where GPT-5.6 creates
+the tiny apps you need.
+
+3
+00:00:06,100 --> 00:00:08,550
+My Apps keeps every creation.
+
+4
+00:00:08,650 --> 00:00:11,450
+Builder is where you create
+or change them.
+
+5
+00:00:11,550 --> 00:00:16,450
+AI Key connects your own OpenAI key
+and GPT-5.6.
+
+6
+00:00:16,550 --> 00:00:20,400
+Together, they become one home
+for your personal tiny apps.
+
+7
+00:00:21,000 --> 00:00:26,880
+Now I ask GPT-5.6 for TripPilot,
+a three-page travel command center with currency,
+
+8
+00:00:27,280 --> 00:00:32,860
+budget, itinerary, device tools, and AI.
+This is the real generation run; only the
+
+9
+00:00:32,860 --> 00:00:36,940
+waiting time is accelerated. The first
+document fails semantic validation.
+
+10
+00:00:37,560 --> 00:00:42,220
+Instead of timing out or asking me to
+start over, MakeYour keeps my prompt,
+
+11
+00:00:42,220 --> 00:00:48,400
+sends precise diagnostics back to GPT-5.6
+and automatically repairs revision one.
+
+12
+00:00:48,400 --> 00:00:53,560
+After capability review, the validated app
+opens with 31 native components and 21 reviewed
+
+13
+00:00:53,560 --> 00:00:59,760
+capabilities. Its generated converter works too:
+100 U.S. dollars becomes 3,250
+
+14
+00:00:59,760 --> 00:01:04,580
+Taiwan dollars. That entire interface came
+from the prompt, not a hard-coded
+
+15
+00:01:04,580 --> 00:01:05,320
+TripPilot template.
+
+16
+00:01:06,800 --> 00:01:09,100
+A useful app should also feel like yours.
+
+17
+00:01:09,550 --> 00:01:11,700
+I complete a task, return to Builder,
+
+18
+00:01:11,700 --> 00:01:14,900
+and ask for a calm green design
+with a short evening reflection.
+
+19
+00:01:15,600 --> 00:01:19,300
+GPT-5.6 creates Version 3
+with a new style and a new feature,
+
+20
+00:01:19,300 --> 00:01:22,400
+while my completed task is still there.
+
+21
+00:01:22,700 --> 00:01:25,550
+The app changes with me,
+without starting over.
+
+22
+00:01:25,800 --> 00:01:28,200
+Back in My Apps, Daily Focus
+
+23
+00:01:28,200 --> 00:01:30,200
+is only one of many.
+
+24
+00:01:30,400 --> 00:01:33,300
+I can switch to a travel budget
+converter,
+
+25
+00:01:33,300 --> 00:01:35,850
+live currency alerts,
+or a private food journal.
+
+26
+00:01:36,100 --> 00:01:39,600
+Every tiny app can have
+its own interface, capabilities, and data,
+
+27
+00:01:39,600 --> 00:01:43,100
+while they all live inside MakeYour.
+
+28
+00:01:43,400 --> 00:01:45,000
+No new Xcode project.
+
+29
+00:01:45,200 --> 00:01:46,800
+No separate build pipeline.
+
+30
+00:01:47,000 --> 00:01:48,650
+No starting from scratch.
+
+31
+00:01:48,900 --> 00:01:52,500
+Codex helped us build and test
+the schema, validator,
+
+32
+00:01:52,550 --> 00:01:56,850
+safety boundary, and native SwiftUI
+runtime that make this possible.
+
+33
+00:01:57,100 --> 00:02:00,000
+The next tiny app you need
+is one prompt away.
+
+34
+00:02:00,400 --> 00:02:01,100
+One app.
+
+35
+00:02:01,450 --> 00:02:02,650
+Your tiny apps.
+
+36
+00:02:02,800 --> 00:02:03,750
+Make yours.

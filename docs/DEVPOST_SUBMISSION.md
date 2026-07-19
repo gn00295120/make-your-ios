@@ -172,7 +172,33 @@ the execution boundary.
   HTTPS data sources with separately reviewed boundaries.
 - Early App Review guidance before broadening runtime programmability.
 
-## Final demo storyboard (1:35.30)
+## Replacement demo storyboard (ready for upload, 2:04.20)
+
+- **0:00** — Tour the real My Apps, Builder, and AI Key screens. The OpenAI key
+  remains hidden.
+- **0:21** — Show the complete TripPilot prompt, then accelerate only the real
+  model-wait intervals.
+- **0:33** — Preserve the visible semantic-validation failure and automatic
+  `Repairing revision 1` transition instead of hiding the first invalid result.
+- **0:49** — Complete capability review, enable the generated version, and open
+  the real three-page TripPilot runtime.
+- **0:54** — Enter the persisted generated app, scroll through its rate data,
+  and show the working `100 USD = 3,250.00 TWD` converter.
+- **1:06** — Show another tiny app evolving its style and behavior while local
+  task state remains intact.
+- **1:26** — Switch among several differently designed tiny apps.
+- **1:49** — Credit Codex for the schema, validator, repair loop, safety
+  boundary, tests, release, and native SwiftUI runtime.
+
+The replacement is `artifacts/devpost/demo/MakeYour-OpenAI-Build-Week-Demo-v2.mp4`.
+It is 124.20 seconds, H.264 1080p at constant 30 fps with normalized AAC
+narration. Full decode and black-frame scans pass. The source generation run is
+210.70 seconds; the edit keeps the prompt, first validation failure, automatic
+repair, capability review, and final runtime while accelerating only the two
+model-wait intervals. The existing public YouTube video remains submitted until
+the replacement upload is published and verified.
+
+## Currently submitted demo storyboard (1:35.30)
 
 - **0:00** — Tour the real My Apps, Builder, and AI Key screens. The OpenAI key
   remains hidden.
@@ -224,6 +250,11 @@ line use a held frame from the real app library rather than concept mockups.
   persisted TripPilot UI test, and publish externally approved TestFlight build 4.
 - [x] Update the live Devpost project to version 7 and re-submit submission
   `1094239`; Devpost returned `Submitted` while submissions remained open.
+- [x] Produce a 2:04.20 replacement demo with the real TripPilot generation,
+  automatic repair, working generated currency conversion, natural OpenAI TTS
+  narration, English subtitles, and no black-frame transition.
+- [ ] Publish and verify the replacement YouTube upload, then replace the live
+  Devpost video URL and re-confirm submission `1094239` is `Submitted`.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
 - [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at
