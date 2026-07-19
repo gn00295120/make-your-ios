@@ -140,6 +140,19 @@ final class GeneratedAppPayloadTests: XCTestCase {
         XCTAssertNoThrow(try AppDocumentValidator().validate(document))
     }
 
+    func testPayloadUsesCurrencyTitlesWhenGeneratedItemIDsAreInvalid() throws {
+        var payload = GeneratedAppPayloadTestFixtures.personalMoney()
+        payload.pages[0].nodes[0].items[0].id = "home-node-6-item-1"
+        payload.pages[0].nodes[0].items[0].title = "USD"
+        payload.pages[0].nodes[0].items[1].id = "home-node-6-item-2"
+        payload.pages[0].nodes[0].items[1].title = "TWD"
+
+        let document = payload.makeDocument(existingID: UUID(), version: 2)
+
+        XCTAssertEqual(document.pages[0].nodes[0].items.map(\.id), ["USD", "TWD"])
+        XCTAssertNoThrow(try AppDocumentValidator().validate(document))
+    }
+
     func testPayloadCanonicalizesPaletteRendererAndBackgroundBindingBeforeValidation() throws {
         var payload = GeneratedAppPayloadTestFixtures.personalMoney()
         payload.theme.palette.primaryHex = "#abcdef"

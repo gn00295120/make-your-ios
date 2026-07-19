@@ -1,6 +1,6 @@
 import Foundation
 
-struct GeneratedAppPayload: Decodable {
+struct GeneratedAppPayload: Codable {
     var name: String
     var summary: String
     var symbol: String
@@ -122,8 +122,12 @@ private extension GeneratedAppPayload {
     ) -> [ComponentItem] {
         items.prefix(30).enumerated().map { itemIndex, item in
             let generatedID = "\(pageID)-node-\(nodeIndex + 1)-item-\(itemIndex + 1)"
+            let titleCurrencyCode = normalizedCurrencyCode(item.title, fallback: "")
             let itemID = kind == .currencyConverter
-                ? normalizedCurrencyCode(item.id, fallback: generatedID)
+                ? normalizedCurrencyCode(
+                    item.id,
+                    fallback: titleCurrencyCode.isEmpty ? generatedID : titleCurrencyCode
+                )
                 : normalizedID(item.id, fallback: generatedID)
             return ComponentItem(
                 id: itemID,

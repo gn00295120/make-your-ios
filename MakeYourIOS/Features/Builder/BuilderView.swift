@@ -35,6 +35,7 @@ struct BuilderView: View {
     @State private var designStudioProject: WorkspaceProject?
     @State private var isGenerationDialogPresented = false
     @State private var generationProgress = AppGenerationProgress.preparing
+    @State private var generationRepairPass = 0
     @State private var generationStartedAt = Date()
     @State private var generationFailure: AppGenerationFailure?
     @State private var generationContext: GenerationRequestContext?
@@ -108,6 +109,7 @@ struct BuilderView: View {
             AppGenerationProgressView(
                 mode: generationContext?.mode ?? generationMode,
                 progress: generationProgress,
+                repairPass: generationRepairPass,
                 startedAt: generationStartedAt,
                 promptPreview: generationContext?.prompt ?? prompt,
                 failure: generationFailure,
@@ -246,6 +248,7 @@ private extension BuilderView {
         completedGeneration = nil
         generationFailure = nil
         generationProgress = .preparing
+        generationRepairPass = 0
         generationStartedAt = Date()
         isGenerating = true
         isGenerationDialogPresented = true
@@ -289,7 +292,16 @@ private extension BuilderView {
         attemptID: UUID
     ) {
         guard activeGenerationID == attemptID else { return }
-        generationProgress = stage == .waitingForResponse ? .generating : .validating
+        switch stage {
+        case .waitingForResponse:
+            generationProgress = .generating
+        case .validatingResponse(let repairPass):
+            generationRepairPass = repairPass
+            generationProgress = repairPass == 0 ? .validating : .repairing
+        case .repairingResponse(let pass):
+            generationRepairPass = pass
+            generationProgress = .repairing
+        }
     }
 
     private func makePendingGeneration(

@@ -1,7 +1,7 @@
 import Foundation
 
 extension GeneratedAppPayload {
-    struct Theme: Decodable {
+    struct Theme: Codable {
         var preset: String
         var appearance: String
         var typography: String
@@ -19,7 +19,7 @@ extension GeneratedAppPayload {
         var backgroundAssetBinding: String
     }
 
-    struct Palette: Decodable {
+    struct Palette: Codable {
         var primaryHex: String
         var secondaryHex: String
         var accentHex: String
@@ -29,31 +29,31 @@ extension GeneratedAppPayload {
         var surfaceDarkHex: String
     }
 
-    struct PageDesign: Decodable {
+    struct PageDesign: Codable {
         var layout: String
         var showsNavigationTitle: Bool
         var navigationStyle: String
     }
 
-    struct Page: Decodable {
+    struct Page: Codable {
         var id: String
         var title: String
         var nodes: [Node]
         var presentation: PageDesign
     }
 
-    struct Logic: Decodable {
+    struct Logic: Codable {
         var state: [StateDefinition]
     }
 
-    struct StateDefinition: Decodable {
+    struct StateDefinition: Codable {
         var key: String
         var type: String
         var persistence: String
         var initialValue: String
     }
 
-    struct Event: Decodable {
+    struct Event: Codable {
         var trigger: String
         var steps: [Step]
         var intervalSeconds: Int?
@@ -65,30 +65,30 @@ extension GeneratedAppPayload {
         }
     }
 
-    struct Step: Decodable {
+    struct Step: Codable {
         var kind: String
         var target: String
         var expression: Expression
         var condition: Condition?
     }
 
-    struct Expression: Decodable {
+    struct Expression: Codable {
         var operation: String
         var operands: [Operand]
     }
 
-    struct Operand: Decodable {
+    struct Operand: Codable {
         var source: String
         var value: String
     }
 
-    struct Condition: Decodable {
+    struct Condition: Codable {
         var lhs: Operand
         var comparison: String
         var rhs: Operand
     }
 
-    struct Control: Decodable {
+    struct Control: Codable {
         var kind: String
         var minimum: Double
         var maximum: Double
@@ -96,7 +96,7 @@ extension GeneratedAppPayload {
         var unit: String
     }
 
-    struct NodeDesign: Decodable {
+    struct NodeDesign: Codable {
         var surface: String
         var span: String
         var alignment: String
@@ -104,7 +104,7 @@ extension GeneratedAppPayload {
         var variant: String
     }
 
-    struct Image: Decodable {
+    struct Image: Codable {
         var aspect: String
         var contentMode: String
         var altText: String
@@ -116,7 +116,7 @@ extension GeneratedAppPayload {
         var overlay: String
     }
 
-    struct Collection: Decodable {
+    struct Collection: Codable {
         var itemName: String
         var titleLabel: String
         var noteLabel: String
@@ -130,7 +130,7 @@ extension GeneratedAppPayload {
         var allowsReminders: Bool
     }
 
-    struct LiveData: Decodable {
+    struct LiveData: Codable {
         var resource: String
         var primaryValue: String
         var initialSymbols: [String]
@@ -139,7 +139,7 @@ extension GeneratedAppPayload {
         var allowsThresholds: Bool
     }
 
-    struct NewsFeed: Decodable {
+    struct NewsFeed: Codable {
         var sources: [String]
         var topics: [String]
         var allowsTopicEditing: Bool
@@ -147,7 +147,7 @@ extension GeneratedAppPayload {
         var maximumItems: Int
     }
 
-    struct MarketWatch: Decodable {
+    struct MarketWatch: Codable {
         var provider: String
         var initialSymbols: [String]
         var allowsSymbolEditing: Bool
@@ -155,7 +155,7 @@ extension GeneratedAppPayload {
         var range: String
     }
 
-    struct Ledger: Decodable {
+    struct Ledger: Codable {
         var currencyCode: String
         var categories: [String]
         var period: String
@@ -164,7 +164,7 @@ extension GeneratedAppPayload {
         var initialEntries: [LedgerEntry]
     }
 
-    struct LedgerEntry: Decodable {
+    struct LedgerEntry: Codable {
         var title: String
         var note: String
         var amount: Double
@@ -173,7 +173,7 @@ extension GeneratedAppPayload {
         var date: String
     }
 
-    struct Game: Decodable {
+    struct Game: Codable {
         var kind: String
         var difficulty: String
         var palette: String
@@ -185,14 +185,14 @@ extension GeneratedAppPayload {
         var program: TinyGameProgram?
     }
 
-    struct DeviceInput: Decodable {
+    struct DeviceInput: Codable {
         var kind: String
         var buttonLabel: String
         var resultLabel: String
         var allowsRepeat: Bool
     }
 
-    struct Map: Decodable {
+    struct Map: Codable {
         var mode: String
         var query: String
         var latitude: Double
@@ -202,7 +202,7 @@ extension GeneratedAppPayload {
         var allowsDirections: Bool
     }
 
-    struct CalendarEvent: Decodable {
+    struct CalendarEvent: Codable {
         var eventTitle: String
         var notes: String
         var location: String
@@ -211,25 +211,25 @@ extension GeneratedAppPayload {
         var allowsEditing: Bool
     }
 
-    struct DocumentExport: Decodable {
+    struct DocumentExport: Codable {
         var fileName: String
         var format: String
         var contentTemplate: String
         var buttonLabel: String
     }
 
-    struct VoiceNote: Decodable {
+    struct VoiceNote: Codable {
         var maximumDurationSeconds: Int
         var recordButtonLabel: String
     }
 
-    struct SpeechTranscript: Decodable {
+    struct SpeechTranscript: Codable {
         var sourceBinding: String
         var localeIdentifier: String
         var buttonLabel: String
     }
 
-    struct Node: Decodable {
+    struct Node: Codable {
         var id: String
         var kind: String
         var title: String
@@ -260,7 +260,7 @@ extension GeneratedAppPayload {
         var speechTranscript: SpeechTranscript?
     }
 
-    struct Item: Decodable {
+    struct Item: Codable {
         var id: String
         var title: String
         var subtitle: String
@@ -269,13 +269,13 @@ extension GeneratedAppPayload {
         var isComplete: Bool
     }
 
-    struct Action: Decodable {
+    struct Action: Codable {
         var type: String
         var target: String
         var value: String
     }
 
-    struct StateEntry: Decodable {
+    struct StateEntry: Codable {
         var key: String
         var value: String
     }

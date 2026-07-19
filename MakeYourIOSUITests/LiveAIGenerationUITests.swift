@@ -62,6 +62,59 @@ final class LiveAIGenerationUITests: XCTestCase {
         attachScreenshot(app, name: "live-generation-success")
     }
 
+    func testSavedTripPilotPromptRepairsUntilRuntimeOpens() throws {
+        guard ProcessInfo.processInfo.arguments.contains("-run-live-ai-e2e") else {
+            throw XCTSkip("Run the dedicated MakeYourIOSLiveE2E scheme to authorize live requests.")
+        }
+
+        let app = XCUIApplication()
+        app.launchArguments = ["--demo-screen=builder"]
+        app.launch()
+
+        let prompt = app.textViews["builder.prompt"]
+        XCTAssertTrue(prompt.waitForExistence(timeout: 10))
+        XCTAssertTrue(
+            (prompt.value as? String)?.contains("TripPilot") == true,
+            "The saved complex TripPilot prompt is unavailable."
+        )
+
+        let generateButton = app.buttons["builder.generate"]
+        scrollToHittable(generateButton, in: app)
+        XCTAssertTrue(generateButton.isEnabled)
+        generateButton.tap()
+
+        let generationSucceeded = waitForGeneratedRuntime(in: app, timeout: 1_800)
+        if !generationSucceeded {
+            attachScreenshot(app, name: "trip-pilot-generation-failure")
+        }
+        XCTAssertTrue(generationSucceeded, visibleFailure(in: app))
+        attachScreenshot(app, name: "trip-pilot-generation-success")
+    }
+
+    private func waitForGeneratedRuntime(in app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        let hostMenu = app.buttons["runtime.host-menu"]
+        let capabilityApproval = app.buttons["capability-review.approve"]
+
+        while Date() < deadline {
+            if hostMenu.exists {
+                return true
+            }
+            if capabilityApproval.exists && capabilityApproval.isHittable {
+                capabilityApproval.tap()
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(2))
+        }
+        return false
+    }
+
+    private func scrollToHittable(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<8 where !element.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.isHittable)
+    }
+
     private func visibleFailure(in app: XCUIApplication) -> String {
         let alerts = app.alerts.allElementsBoundByIndex
         let alertText = alerts.first?.staticTexts.allElementsBoundByIndex

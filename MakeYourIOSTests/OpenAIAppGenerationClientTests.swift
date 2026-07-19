@@ -40,6 +40,8 @@ final class OpenAIAppGenerationClientTests: XCTestCase {
         XCTAssertTrue(instructions.contains("requires local device authentication"))
         XCTAssertTrue(instructions.contains("Opening from a shortcut behaves like opening the same tiny app"))
         XCTAssertTrue(instructions.contains("behavior may run"))
+        XCTAssertTrue(instructions.contains("Expression result types are exact"))
+        XCTAssertTrue(instructions.contains("Expressions cannot nest"))
     }
 
     func testGenerationSessionWaitsForConnectivityAndAllowsLongResponses() {
@@ -98,4 +100,191 @@ final class OpenAIAppGenerationClientTests: XCTestCase {
             )
         }
     }
+
+    func testGenerationContinuouslyRepairsSemanticCandidatesUntilValidationPasses() async throws {
+        let invalidResponse = try responseData(for: invalidExpressionPayload())
+        let validResponse = try responseData(for: GeneratedAppPayloadTestFixtures.personalMoney())
+        let queue = GenerationResponseQueue(responses: [
+            invalidResponse,
+            invalidResponse,
+            validResponse
+        ])
+        let stages = GenerationStageRecorder()
+        let client = OpenAIAppGenerationClient(dataLoader: { request in
+            try await queue.load(request)
+        })
+        let base = SampleDocuments.blank
+
+        let document = try await client.generate(
+            prompt: "Build a complex travel dashboard",
+            currentDocument: base,
+            config: AIConnectionConfig(
+                apiKey: "private-test-key",
+                model: "gpt-test",
+                safetyIdentifier: "test-safety"
+            ),
+            onStage: { stage in
+                await stages.append(stage)
+            }
+        )
+
+        XCTAssertEqual(document.name, "Personal Money")
+        XCTAssertEqual(document.version, base.version + 1)
+        let capturedRequests = await queue.capturedRequests()
+        let recordedStages = await stages.snapshot()
+        XCTAssertEqual(capturedRequests.count, 3)
+        XCTAssertEqual(recordedStages, [
+            .waitingForResponse,
+            .validatingResponse(repairPass: 0),
+            .repairingResponse(pass: 1),
+            .validatingResponse(repairPass: 1),
+            .repairingResponse(pass: 2),
+            .validatingResponse(repairPass: 2)
+        ])
+
+        let firstRepairBody = try requestBody(capturedRequests[1])
+        let secondRepairBody = try requestBody(capturedRequests[2])
+        XCTAssertEqual(firstRepairBody["store"] as? Bool, false)
+        XCTAssertFalse(String(describing: firstRepairBody).contains("private-test-key"))
+        let firstRepairInput = try XCTUnwrap(firstRepairBody["input"] as? String)
+        let secondRepairInput = try XCTUnwrap(secondRepairBody["input"] as? String)
+        XCTAssertTrue(firstRepairInput.contains("AUTOMATIC REPAIR PASS 1"))
+        XCTAssertTrue(firstRepairInput.contains("VALIDATION CODE: invalid_runtime_expression"))
+        XCTAssertTrue(firstRepairInput.contains("expectedResultType=text"))
+        XCTAssertTrue(firstRepairInput.contains("PREVIOUS COMPLETE CANDIDATE JSON"))
+        XCTAssertTrue(secondRepairInput.contains("AUTOMATIC REPAIR PASS 2"))
+    }
+
+    func testRefusalDoesNotEnterAutomaticRepairLoop() async throws {
+        let refusal = Data(
+            """
+            {
+              "status": "completed",
+              "output": [{"content": [{"type": "refusal", "refusal": "Cannot comply."}]}]
+            }
+            """.utf8
+        )
+        let queue = GenerationResponseQueue(responses: [refusal])
+        let client = OpenAIAppGenerationClient(dataLoader: { request in
+            try await queue.load(request)
+        })
+
+        do {
+            _ = try await client.generate(
+                prompt: "Create an app",
+                currentDocument: SampleDocuments.blank,
+                config: AIConnectionConfig(
+                    apiKey: "test-key",
+                    model: "gpt-test",
+                    safetyIdentifier: "test-safety"
+                )
+            )
+            XCTFail("Expected the refusal to surface without repair.")
+        } catch {
+            XCTAssertEqual(error as? AppGenerationError, .refused("Cannot comply."))
+        }
+        let requestCount = await queue.requestCount()
+        XCTAssertEqual(requestCount, 1)
+    }
+
+    private func invalidExpressionPayload() -> GeneratedAppPayload {
+        var payload = GeneratedAppPayloadTestFixtures.personalMoney()
+        payload.logic = GeneratedAppPayload.Logic(state: [
+            GeneratedAppPayload.StateDefinition(
+                key: "trip-total",
+                type: "number",
+                persistence: "project",
+                initialValue: "42"
+            ),
+            GeneratedAppPayload.StateDefinition(
+                key: "trip-summary",
+                type: "text",
+                persistence: "project",
+                initialValue: ""
+            )
+        ])
+        var node = payload.pages[0].nodes[0]
+        node.id = "invalid-summary"
+        node.kind = "button"
+        node.title = "Save summary"
+        node.action = GeneratedAppPayload.Action(type: "none", target: "", value: "")
+        node.events = [GeneratedAppPayload.Event(
+            trigger: "tap",
+            steps: [GeneratedAppPayload.Step(
+                kind: "setState",
+                target: "trip-summary",
+                expression: GeneratedAppPayload.Expression(
+                    operation: "copy",
+                    operands: [GeneratedAppPayload.Operand(source: "state", value: "trip-total")]
+                ),
+                condition: nil
+            )]
+        )]
+        payload.pages[0].nodes = [node]
+        return payload
+    }
+
+    private func responseData(for payload: GeneratedAppPayload) throws -> Data {
+        let payloadData = try JSONEncoder().encode(payload)
+        let output = try XCTUnwrap(String(data: payloadData, encoding: .utf8))
+        return try JSONSerialization.data(withJSONObject: [
+            "status": "completed",
+            "output": [[
+                "content": [["type": "output_text", "text": output]]
+            ]]
+        ])
+    }
+
+    private func requestBody(_ request: URLRequest) throws -> [String: Any] {
+        let data = try XCTUnwrap(request.httpBody)
+        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    }
+}
+
+private actor GenerationResponseQueue {
+    private var responses: [Data]
+    private var requests: [URLRequest] = []
+
+    init(responses: [Data]) {
+        self.responses = responses
+    }
+
+    func load(_ request: URLRequest) throws -> (Data, URLResponse) {
+        requests.append(request)
+        guard let url = request.url,
+              !responses.isEmpty,
+              let response = HTTPURLResponse(
+                url: url,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+              ) else {
+            throw GenerationResponseQueueError.missingResponse
+        }
+        return (responses.removeFirst(), response)
+    }
+
+    func capturedRequests() -> [URLRequest] {
+        requests
+    }
+
+    func requestCount() -> Int {
+        requests.count
+    }
+}
+
+private actor GenerationStageRecorder {
+    private var stages: [OpenAIAppGenerationStage] = []
+
+    func append(_ stage: OpenAIAppGenerationStage) {
+        stages.append(stage)
+    }
+
+    func snapshot() -> [OpenAIAppGenerationStage] {
+        stages
+    }
+}
+
+private enum GenerationResponseQueueError: Error {
+    case missingResponse
 }

@@ -7,6 +7,8 @@ final class AppGenerationProgressTests: XCTestCase {
         XCTAssertEqual(AppGenerationProgress.elapsedDescription(seconds: 0), "0:00")
         XCTAssertEqual(AppGenerationProgress.elapsedDescription(seconds: 65), "1:05")
         XCTAssertEqual(AppGenerationProgress.elapsedDescription(seconds: 3_661), "61:01")
+        XCTAssertEqual(AppGenerationProgress.repairing.label, "Repair")
+        XCTAssertTrue(AppGenerationProgress.repairing.detail.contains("correcting"))
     }
 
     func testTimeoutIsPresentedAsRetryableWithoutLosingPrompt() {

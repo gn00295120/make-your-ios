@@ -1,16 +1,50 @@
 import SwiftUI
 
 struct CurrencyCalculator: Sendable {
+    static func normalizedCurrencyCodes(_ values: [String]) -> [String] {
+        var seen = Set<String>()
+        return values.compactMap { value in
+            let code = normalizedCurrencyCode(value)
+            guard !code.isEmpty, seen.insert(code).inserted else { return nil }
+            return code
+        }
+    }
+
+    static func rateTable(
+        items: [ComponentItem],
+        currencies: [String]
+    ) -> [String: Double] {
+        let allowedCodes = Set(normalizedCurrencyCodes(currencies))
+
+        return items.reduce(into: [:]) { result, item in
+            guard let rate = Double(item.value), rate.isFinite, rate > 0 else { return }
+
+            let code = [item.id, item.title]
+                .map(normalizedCurrencyCode)
+                .first(where: allowedCodes.contains)
+            guard let code else { return }
+            result[code] = rate
+        }
+    }
+
     static func convert(
         amount: Double,
         from source: String,
         to destination: String,
         rates: [String: Double]
     ) -> Double {
-        let sourceRate = rates[source] ?? 1
-        let destinationRate = rates[destination] ?? 1
-        guard sourceRate != 0 else { return 0 }
+        guard let sourceRate = rates[source],
+              let destinationRate = rates[destination],
+              sourceRate.isFinite,
+              destinationRate.isFinite,
+              sourceRate > 0,
+              destinationRate > 0 else { return 0 }
         return amount / sourceRate * destinationRate
+    }
+
+    private static func normalizedCurrencyCode(_ value: String) -> String {
+        let code = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        return code.count == 3 && code.allSatisfy(\.isLetter) ? code : ""
     }
 }
 
@@ -25,14 +59,12 @@ struct CurrencyConverterRuntimeView: View {
     @State private var toCurrency = "TWD"
 
     private var currencies: [String] {
-        node.options.isEmpty ? ["USD", "TWD"] : node.options
+        let normalized = CurrencyCalculator.normalizedCurrencyCodes(node.options)
+        return normalized.isEmpty ? ["USD", "TWD"] : normalized
     }
 
     private var rates: [String: Double] {
-        Dictionary(uniqueKeysWithValues: node.items.compactMap { item in
-            guard let rate = Double(item.value) else { return nil }
-            return (item.id, rate)
-        })
+        CurrencyCalculator.rateTable(items: node.items, currencies: currencies)
     }
 
     private var convertedAmount: Double {
@@ -46,7 +78,12 @@ struct CurrencyConverterRuntimeView: View {
     }
 
     private var exchangeRate: Double {
-        (rates[toCurrency] ?? 1) / (rates[fromCurrency] ?? 1)
+        CurrencyCalculator.convert(
+            amount: 1,
+            from: fromCurrency,
+            to: toCurrency,
+            rates: rates
+        )
     }
 
     private var variant: ComponentVariant {
@@ -128,6 +165,10 @@ struct CurrencyConverterRuntimeView: View {
         .overlay { fieldBorder }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Converted amount")
+        .accessibilityValue(
+            "\(convertedAmount.formatted(.number.precision(.fractionLength(2)))) \(toCurrency)"
+        )
+        .accessibilityIdentifier("currency.converted-amount")
     }
 
     private var swapButton: some View {

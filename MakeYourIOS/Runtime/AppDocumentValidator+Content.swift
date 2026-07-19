@@ -50,7 +50,18 @@ extension AppDocumentValidator {
         case .documentExport: try validateDocumentExport(node)
         case .voiceNote: try validateVoiceNote(node)
         case .speechTranscript: try validateSpeechTranscript(node)
+        case .currencyConverter: try validateCurrencyConverter(node)
         default: break
+        }
+    }
+
+    private func validateCurrencyConverter(_ node: ComponentNode) throws {
+        let currencies = CurrencyCalculator.normalizedCurrencyCodes(node.options)
+        let rates = CurrencyCalculator.rateTable(items: node.items, currencies: currencies)
+        guard (2...20).contains(currencies.count),
+              currencies.count == node.options.count,
+              rates.count == currencies.count else {
+            throw AppDocumentValidationError.invalidComponentConfiguration(.currencyConverter)
         }
     }
 

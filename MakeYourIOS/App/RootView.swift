@@ -57,10 +57,12 @@ struct RootView: View {
                 }
             }
             .fullScreenCover(isPresented: $isPresentingDemo, onDismiss: presentPendingIntentRoute) {
-                if demoScreen == "generation-progress" {
+                if demoScreen == "generation-progress" || demoScreen == "generation-repair" {
+                    let isRepairDemo = demoScreen == "generation-repair"
                     AppGenerationProgressView(
                         mode: .full,
-                        progress: .generating,
+                        progress: isRepairDemo ? .repairing : .generating,
+                        repairPass: isRepairDemo ? 3 : 0,
                         startedAt: Date().addingTimeInterval(-65),
                         promptPreview: "Create a polished three-page travel companion with native tools.",
                         failure: nil,
@@ -115,6 +117,7 @@ struct RootView: View {
         case "waterline": SampleDocuments.waterline
         case "star-garden": SampleDocuments.starGarden
         case "converter": SampleDocuments.quickConvert
+        case "converter-generated": Self.generatedConverterDemo
         case "tasks": SampleDocuments.gentleTasks
         case "muse-journal": SampleDocuments.museJournal
         case "news": SampleDocuments.dailyBrief
@@ -222,7 +225,26 @@ struct RootView: View {
     }
 
     private static let demoScreenNames: Set<String> = [
-        "waterline", "star-garden", "converter", "tasks", "muse-journal", "news", "market",
-        "ledger", "platformer", "snake", "device", "shortcuts", "generation-progress"
+        "waterline", "star-garden", "converter", "converter-generated", "tasks", "muse-journal",
+        "news", "market", "ledger", "platformer", "snake", "device", "shortcuts",
+        "generation-progress", "generation-repair"
     ]
+
+    private static var generatedConverterDemo: AppDocument {
+        var document = SampleDocuments.quickConvert
+        guard let index = document.pages[0].nodes.firstIndex(where: {
+            $0.kind == .currencyConverter
+        }) else { return document }
+
+        let codes = document.pages[0].nodes[index].options
+        document.pages[0].nodes[index].items = codes.enumerated().map { itemIndex, code in
+            let rates = ["USD": "1", "TWD": "32.5", "JPY": "150", "EUR": "0.92", "GBP": "0.78"]
+            return ComponentItem(
+                id: "home-node-6-item-\(itemIndex + 1)",
+                title: code,
+                value: rates[code] ?? "1"
+            )
+        }
+        return document
+    }
 }

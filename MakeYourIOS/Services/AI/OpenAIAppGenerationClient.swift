@@ -1,8 +1,15 @@
 import Foundation
 
-enum OpenAIAppGenerationStage: Sendable {
+enum OpenAIAppGenerationStage: Equatable, Sendable {
     case waitingForResponse
-    case validatingResponse
+    case validatingResponse(repairPass: Int)
+    case repairingResponse(pass: Int)
+}
+
+struct AppGenerationRepairContext: Equatable, Sendable {
+    let pass: Int
+    let previousOutput: String
+    let diagnostic: String
 }
 
 // swiftlint:disable:next type_body_length
@@ -11,11 +18,20 @@ struct OpenAIAppGenerationClient: Sendable {
     static let resourceTimeout: TimeInterval = 60 * 60
 
     private let endpoint = URL(string: "https://api.openai.com/v1/responses")!
-    private let session: URLSession
+    private let dataLoader: @Sendable (URLRequest) async throws -> (Data, URLResponse)
     private static let defaultSession = URLSession(configuration: sessionConfiguration())
 
     init(session: URLSession? = nil) {
-        self.session = session ?? Self.defaultSession
+        let resolvedSession = session ?? Self.defaultSession
+        dataLoader = { request in
+            try await resolvedSession.data(for: request)
+        }
+    }
+
+    init(
+        dataLoader: @escaping @Sendable (URLRequest) async throws -> (Data, URLResponse)
+    ) {
+        self.dataLoader = dataLoader
     }
 
     static func sessionConfiguration() -> URLSessionConfiguration {
@@ -32,16 +48,42 @@ struct OpenAIAppGenerationClient: Sendable {
         config: AIConnectionConfig,
         onStage: @escaping @Sendable (OpenAIAppGenerationStage) async -> Void = { _ in }
     ) async throws -> AppDocument {
-        let request = try makeRequest(
-            prompt: prompt,
-            currentDocument: currentDocument,
-            config: config
-        )
-        await onStage(.waitingForResponse)
-        let (data, response) = try await session.data(for: request)
-        await onStage(.validatingResponse)
-        try Self.validate(response: response, data: data)
-        return try Self.decodeDocument(data, replacing: currentDocument)
+        var repairContext: AppGenerationRepairContext?
+
+        while true {
+            try Task.checkCancellation()
+            let request = try makeRequest(
+                prompt: prompt,
+                currentDocument: currentDocument,
+                config: config,
+                repairContext: repairContext
+            )
+            if let repairContext {
+                await onStage(.repairingResponse(pass: repairContext.pass))
+            } else {
+                await onStage(.waitingForResponse)
+            }
+
+            let (data, response) = try await dataLoader(request)
+            try Task.checkCancellation()
+            let repairPass = repairContext?.pass ?? 0
+            await onStage(.validatingResponse(repairPass: repairPass))
+            try Self.validate(response: response, data: data)
+
+            do {
+                return try Self.decodeDocument(data, replacing: currentDocument)
+            } catch {
+                guard let nextRepair = Self.makeRepairContext(
+                    after: error,
+                    responseData: data,
+                    replacing: currentDocument,
+                    pass: repairPass + 1
+                ) else {
+                    throw error
+                }
+                repairContext = nextRepair
+            }
+        }
     }
 
     func makeRequest(
@@ -49,16 +91,26 @@ struct OpenAIAppGenerationClient: Sendable {
         currentDocument: AppDocument,
         config: AIConnectionConfig
     ) throws -> URLRequest {
+        try makeRequest(
+            prompt: prompt,
+            currentDocument: currentDocument,
+            config: config,
+            repairContext: nil
+        )
+    }
+
+    func makeRequest(
+        prompt: String,
+        currentDocument: AppDocument,
+        config: AIConnectionConfig,
+        repairContext: AppGenerationRepairContext?
+    ) throws -> URLRequest {
         let currentJSON = try Self.encodedDocument(currentDocument)
-        let input = """
-        USER REQUEST:
-        \(prompt)
-
-        CURRENT APP DOCUMENT:
-        \(currentJSON)
-
-        Return a complete replacement document. Preserve what already works unless the user asks to change it.
-        """
+        let input = Self.requestInput(
+            prompt: prompt,
+            currentJSON: currentJSON,
+            repairContext: repairContext
+        )
 
         let body: [String: Any] = [
             "model": config.model,
@@ -194,9 +246,24 @@ struct OpenAIAppGenerationClient: Sendable {
     with number operands; use concatenate for text. Use listAppend/listRemove/listCount/listContains/listJoin
     only with a list state. Use objectSet/objectRemove/objectGet/objectCount only with a flat object state. Use
     dateAddDays with a date and integer day count, and dateDaysBetween with two dates.
-    Never divide by a literal zero. Optional conditions compare two operands with equals, notEquals, less,
-    lessOrEqual, greater, greaterOrEqual, isEmpty, or isNotEmpty. Ordered comparisons require numbers.
-    For currencyConverter, provide currency codes in options and item values as numeric rates relative to USD.
+    Before emitting events, build a key-to-type table for every logic.state key. Every binding, valueBinding,
+    state operand, condition reference, and setState target must reference a declared key. Return initialState
+    as an empty array for newly generated typed apps; logic.state is the authoritative typed state source.
+    Expression result types are exact: literal and copy preserve the requested or operand type and never convert;
+    numeric operations return number; concatenate returns text; listAppend/listRemove return list; listCount
+    returns number; listContains returns boolean; listJoin returns text; objectSet/objectRemove return object;
+    objectGet returns text; objectCount returns number; dateAddDays returns date; dateDaysBetween returns number.
+    Every setState expression result must exactly match its target state type. To display a number or date as
+    text, use concatenate or a {{state-key}} template; never copy it into a text state. Expressions cannot nest;
+    split dependent calculations into ordered steps with intermediate typed state. For navigate and playHaptic,
+    supply the harmless empty expression: literal with exactly one empty-string literal operand.
+    Never divide by a literal zero. Guard a state-derived divisor with a greater-than-zero condition. Optional
+    conditions compare two operands with equals, notEquals, less, lessOrEqual, greater, greaterOrEqual, isEmpty,
+    or isNotEmpty. Ordered comparisons require matching types and support either two numbers or two dates.
+    isEmpty and isNotEmpty inspect only lhs; use an empty-string literal as the unused rhs placeholder.
+    For currencyConverter, provide two to twenty unique ISO currency codes in options. Give every option exactly
+    one matching item whose ID is that exact currency code and whose value is a positive finite numeric rate
+    relative to USD. Do not omit an option's rate or use descriptive text as an item ID.
     Use recordCollection for any user-editable, persistent set of personal records such as expenses,
     subscriptions, pantry items, inventory, reading logs, medications, or contacts. Configure its typed
     title, note, number/currency, date, aggregate, completion, and reminder fields. Its aggregate is computed
@@ -318,57 +385,5 @@ struct OpenAIAppGenerationClient: Sendable {
             return .api(statusCode: statusCode, message: envelope.error.message)
         }
         return .api(statusCode: statusCode, message: "The provider returned an error.")
-    }
-}
-
-private struct ResponsesAPIResponse: Decodable {
-    struct IncompleteDetails: Decodable {
-        var reason: String
-    }
-
-    struct Output: Decodable {
-        var content: [Content]?
-    }
-
-    struct Content: Decodable {
-        var type: String
-        var text: String?
-        var refusal: String?
-    }
-
-    var status: String?
-    var incompleteDetails: IncompleteDetails?
-    var output: [Output]
-
-    enum CodingKeys: String, CodingKey {
-        case status
-        case incompleteDetails = "incomplete_details"
-        case output
-    }
-}
-
-private struct APIErrorEnvelope: Decodable {
-    struct Body: Decodable { var message: String }
-    var error: Body
-}
-
-enum AppGenerationError: LocalizedError, Equatable {
-    case invalidResponse
-    case invalidDocumentEncoding
-    case missingOutput
-    case refused(String)
-    case incomplete(String)
-    case api(statusCode: Int, message: String)
-
-    var errorDescription: String? {
-        switch self {
-        case .invalidResponse: "OpenAI returned an invalid response."
-        case .invalidDocumentEncoding: "The current app could not be encoded for generation."
-        case .missingOutput: "The model did not return an app document."
-        case .refused(let reason): reason
-        case .incomplete(let reason):
-            "OpenAI stopped before the app document was complete (\(reason)). Try again."
-        case .api(let statusCode, let message): "OpenAI error \(statusCode): \(message)"
-        }
     }
 }

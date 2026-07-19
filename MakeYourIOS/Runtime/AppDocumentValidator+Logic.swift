@@ -205,7 +205,6 @@ extension AppDocumentValidator {
             guard pageIDs.contains(step.target) else {
                 throw AppDocumentValidationError.invalidRuntimeLogic
             }
-            _ = try validateExpression(step.expression, expectedType: nil, stateTypes: stateTypes)
         case .showMessage:
             _ = try validateExpression(step.expression, expectedType: .text, stateTypes: stateTypes)
             try validateNonEmptyLiteralMessage(step.expression)
@@ -216,7 +215,7 @@ extension AppDocumentValidator {
             _ = try validateExpression(step.expression, expectedType: .text, stateTypes: stateTypes)
             try validateNonEmptyLiteralMessage(step.expression)
         case .playHaptic:
-            _ = try validateExpression(step.expression, expectedType: nil, stateTypes: stateTypes)
+            break
         }
     }
 
@@ -224,6 +223,15 @@ extension AppDocumentValidator {
         _ condition: RuntimeCondition,
         stateTypes: [String: RuntimeValueType]
     ) throws {
+        if condition.comparison == .isEmpty || condition.comparison == .isNotEmpty {
+            _ = try operandType(
+                condition.lhs,
+                expectedLiteralType: nil,
+                stateTypes: stateTypes
+            )
+            return
+        }
+
         let lhsExpected = stateType(for: condition.rhs, stateTypes: stateTypes)
         let lhsType = try operandType(
             condition.lhs,

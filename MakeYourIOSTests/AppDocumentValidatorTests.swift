@@ -24,6 +24,36 @@ final class AppDocumentValidatorTests: XCTestCase {
         }
     }
 
+    func testConverterRejectsAnIncompleteRateTable() {
+        var document = SampleDocuments.quickConvert
+        let converterIndex = document.pages[0].nodes.firstIndex {
+            $0.kind == .currencyConverter
+        }!
+        document.pages[0].nodes[converterIndex].items.removeAll { $0.id == "TWD" }
+
+        XCTAssertThrowsError(try AppDocumentValidator().validate(document)) { error in
+            XCTAssertEqual(
+                error as? AppDocumentValidationError,
+                .invalidComponentConfiguration(.currencyConverter)
+            )
+        }
+    }
+
+    func testConverterRejectsAZeroRate() {
+        var document = SampleDocuments.quickConvert
+        let converterIndex = document.pages[0].nodes.firstIndex {
+            $0.kind == .currencyConverter
+        }!
+        document.pages[0].nodes[converterIndex].items[0].value = "0"
+
+        XCTAssertThrowsError(try AppDocumentValidator().validate(document)) { error in
+            XCTAssertEqual(
+                error as? AppDocumentValidationError,
+                .invalidComponentConfiguration(.currencyConverter)
+            )
+        }
+    }
+
     func testDuplicateNodeIdentifiersAreRejected() {
         var document = SampleDocuments.blank
         let duplicate = ComponentNode(id: "duplicate", kind: .text, title: "One")

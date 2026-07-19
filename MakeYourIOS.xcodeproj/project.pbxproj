@@ -15,6 +15,7 @@
 		078088C9DE74A7954B56F088 /* GeneratedAppPayload+Symbols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD693A2FC413A0B408B5EBE /* GeneratedAppPayload+Symbols.swift */; };
 		07A87FC9B7B1C3E9A044275A /* AISettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE034BD862F54586D1BD0D20 /* AISettingsStore.swift */; };
 		08500BC9492F15B2518FA97A /* GeneratedAppPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB94299AC43B58ED9279BEA6 /* GeneratedAppPayloadTests.swift */; };
+		0EBDA629C3B26EE9AC259F96 /* OpenAIAppGenerationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18EA4F3883F9F0F22E58D29B /* OpenAIAppGenerationResponse.swift */; };
 		10A2DA110AF9B8E020865D75 /* CapabilityReviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0763A3FD8B8668BD2DF806A4 /* CapabilityReviewSheet.swift */; };
 		118CC4AEEE4A43247BE82BAB /* GenerationProgressUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C03827EDEBF69D33C9441AA /* GenerationProgressUITests.swift */; };
 		16A5709C1F059DFB43EA36A4 /* NewsFeedClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACA4978774C243301423165 /* NewsFeedClient.swift */; };
@@ -34,6 +35,7 @@
 		288EC43514567E1BCFF03B89 /* NativeCapabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7289A67618511D088F6FFD /* NativeCapabilityTests.swift */; };
 		2B4391B055FFE99F5BD07087 /* AISettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BD6ED8D0D4E6490C29443F /* AISettingsStoreTests.swift */; };
 		2B5213A9223A937562DD032E /* RuntimeVisualDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E99919FC054AAF7B0EE6422 /* RuntimeVisualDesign.swift */; };
+		2BF0769742210B0A14FAB501 /* OpenAIAppGenerationClient+Repair.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CA08C891F9ACF8EB16B245 /* OpenAIAppGenerationClient+Repair.swift */; };
 		2CF3097A8775E7737716E36E /* GameRuntimeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A5D8A173F496AAFD31FFEF /* GameRuntimeModels.swift */; };
 		2E2705FBAA9BB60D04EEE7B5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C4228FEBF204D8491A92E907 /* PrivacyInfo.xcprivacy */; };
 		2F27B513A02EADDA034B6D3A /* TaskListRuntimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A409209338B69C65DCE1041 /* TaskListRuntimeView.swift */; };
@@ -45,6 +47,7 @@
 		3B640BC751202D6E45251288 /* CapabilityRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681D39AB1078087AC2FF1B81 /* CapabilityRegistryTests.swift */; };
 		3B8B5B06148FE7D4ABD2B8DF /* VoiceRecordingTestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10EE0BDFB66279637C239616 /* VoiceRecordingTestFixtures.swift */; };
 		3C97924C3E4CF5C690FAECAC /* MakeYourIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC95B4BA8160F16EACD52757 /* MakeYourIOSApp.swift */; };
+		3E65A5089958B3ED0F150804 /* RuntimeLogicSemanticAlignmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA1072DCDABE271C5D0F9DD /* RuntimeLogicSemanticAlignmentTests.swift */; };
 		40AD69812A5A6C23244CFAF2 /* LocalAssetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2136345C4494895841F7ED /* LocalAssetStore.swift */; };
 		4417F89D9008CB80D0175A7C /* CurrencyConverterRuntimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F764BBEB619E52D05337A262 /* CurrencyConverterRuntimeView.swift */; };
 		4749B95E0C11BF59B86E1DD5 /* DesignStudioCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5C86BA7EF528C0355A8F74 /* DesignStudioCard.swift */; };
@@ -114,6 +117,7 @@
 		9F4AE5C3936F9AA46B547400 /* AppDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 480E7D75FB6E29ADE7E1DA73 /* AppDocument.swift */; };
 		9F4F9188FDF175256977F920 /* ImageNodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B025F14A9DB6609CD5210826 /* ImageNodeView.swift */; };
 		9FAB0162DE300E6A30C1A8F9 /* VisualDesignTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC91C9424D0C68FFD008225F /* VisualDesignTests.swift */; };
+		A16B2A911EC2A549109D465E /* AppDocumentValidationFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F6436B8587047CB932E2DC /* AppDocumentValidationFeedback.swift */; };
 		A27CD318D95F9DEB986C0FC8 /* NewsFeedRuntimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 723B965D118981D5D54D17C5 /* NewsFeedRuntimeView.swift */; };
 		A376BB5726B65591ABB72373 /* MarketWatchRuntimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D12F74B6ED9EBD58961536 /* MarketWatchRuntimeView.swift */; };
 		A3AFA0562C678CC7A17F75BB /* OpenAIAppGenerationSchema+TinyGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = F325913F94B70FADCBB45BD0 /* OpenAIAppGenerationSchema+TinyGame.swift */; };
@@ -213,6 +217,7 @@
 		15110833F1212115C240C6CF /* SampleDocuments+CapabilityShowcase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SampleDocuments+CapabilityShowcase.swift"; sourceTree = "<group>"; };
 		160733C280FAB06AC64E0E64 /* TinyGameRuntimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyGameRuntimeView.swift; sourceTree = "<group>"; };
 		18B505428D1AE184E9A88448 /* SampleDocuments+Muse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SampleDocuments+Muse.swift"; sourceTree = "<group>"; };
+		18EA4F3883F9F0F22E58D29B /* OpenAIAppGenerationResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAppGenerationResponse.swift; sourceTree = "<group>"; };
 		19AE405D2249D0D08B1E6B81 /* MarketWatchRuntimeEditors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketWatchRuntimeEditors.swift; sourceTree = "<group>"; };
 		19FEA72A250408435C7EC02F /* APIKeySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeySettingsView.swift; sourceTree = "<group>"; };
 		1E9DD72083E96BC967CE1A8D /* LedgerRuntimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerRuntimeView.swift; sourceTree = "<group>"; };
@@ -310,10 +315,12 @@
 		90CE496E50FA7F66865BF443 /* LiveDataListRuntimeContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveDataListRuntimeContent.swift; sourceTree = "<group>"; };
 		94970B43E9AFD028878AB8D2 /* GeneratedAppPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedAppPayload.swift; sourceTree = "<group>"; };
 		94EFF5352A6D0B75D735B297 /* OpenAIAppGenerationSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAppGenerationSchema.swift; sourceTree = "<group>"; };
+		95F6436B8587047CB932E2DC /* AppDocumentValidationFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDocumentValidationFeedback.swift; sourceTree = "<group>"; };
 		96339C3BA9FA00A21EF34F84 /* TinyGameCompiler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyGameCompiler.swift; sourceTree = "<group>"; };
 		96BC080C4FB10746F658C0C7 /* RuntimeSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeSessionState.swift; sourceTree = "<group>"; };
 		97E2CB252C04E1ADE43552F1 /* WorkspaceStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceStoreTests.swift; sourceTree = "<group>"; };
 		989FCFE6A20CD0A8C47C35E6 /* RuntimeLogicValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeLogicValidatorTests.swift; sourceTree = "<group>"; };
+		9CA1072DCDABE271C5D0F9DD /* RuntimeLogicSemanticAlignmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeLogicSemanticAlignmentTests.swift; sourceTree = "<group>"; };
 		A2C305638B7012AC8F9C2E03 /* SampleDocuments+CustomGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SampleDocuments+CustomGame.swift"; sourceTree = "<group>"; };
 		A4A018F00CFAA9AE97CB3572 /* WorkspaceProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceProject.swift; sourceTree = "<group>"; };
 		A83E7F3982149D0B0AFB3BB9 /* TinyGameEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyGameEngineTests.swift; sourceTree = "<group>"; };
@@ -332,6 +339,7 @@
 		BFF4954C290EBDD678AF7257 /* RuntimeSpeechHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeSpeechHost.swift; sourceTree = "<group>"; };
 		C1D12F74B6ED9EBD58961536 /* MarketWatchRuntimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketWatchRuntimeView.swift; sourceTree = "<group>"; };
 		C221CA8FF7C259D6DB5F08BC /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		C3CA08C891F9ACF8EB16B245 /* OpenAIAppGenerationClient+Repair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OpenAIAppGenerationClient+Repair.swift"; sourceTree = "<group>"; };
 		C4228FEBF204D8491A92E907 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		C5FB1A53FA629966BD01CB21 /* TinyGameProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyGameProgram.swift; sourceTree = "<group>"; };
 		C68FD2278BF44586EB258886 /* WorkspaceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceStore.swift; sourceTree = "<group>"; };
@@ -415,6 +423,7 @@
 				F373E177299BC96BB5F12299 /* ProjectRuntimeStateStoreTests.swift */,
 				ED978A227F8540FC0D407E27 /* RuntimeDesignV2Tests.swift */,
 				2D9B17B7D175702D4D80A1BE /* RuntimeLogicEngineTests.swift */,
+				9CA1072DCDABE271C5D0F9DD /* RuntimeLogicSemanticAlignmentTests.swift */,
 				989FCFE6A20CD0A8C47C35E6 /* RuntimeLogicValidatorTests.swift */,
 				31A77D588EE0F3D051029E4D /* RuntimeSessionStateTests.swift */,
 				210D58F78FC4230225CC6F84 /* RuntimeVoiceRecordingFilesTests.swift */,
@@ -495,6 +504,8 @@
 				8FD693A2FC413A0B408B5EBE /* GeneratedAppPayload+Symbols.swift */,
 				D930BFD869AAE38469B921FE /* GeneratedAppPayload+VoiceNote.swift */,
 				805778B768F0DACFB13ACC74 /* OpenAIAppGenerationClient.swift */,
+				C3CA08C891F9ACF8EB16B245 /* OpenAIAppGenerationClient+Repair.swift */,
+				18EA4F3883F9F0F22E58D29B /* OpenAIAppGenerationResponse.swift */,
 				94EFF5352A6D0B75D735B297 /* OpenAIAppGenerationSchema.swift */,
 				F325913F94B70FADCBB45BD0 /* OpenAIAppGenerationSchema+TinyGame.swift */,
 				5E18181F880B5BC042C1A75E /* OpenAISpeechClient.swift */,
@@ -550,6 +561,7 @@
 				DBF082A5EC8C2020DA3C941A /* AIRequestConfirmationView.swift */,
 				2926189176256044CB681027 /* AITextRuntimeView.swift */,
 				0E3AF0C390181185ABCDE22B /* AppCapabilityResolver.swift */,
+				95F6436B8587047CB932E2DC /* AppDocumentValidationFeedback.swift */,
 				8FB6A3B7536D9FF36E40FAF1 /* AppDocumentValidator.swift */,
 				B36602658022DA13E9F31059 /* AppDocumentValidator+Content.swift */,
 				B8E508365DDE7A501D73D169 /* AppDocumentValidator+Expressions.swift */,
@@ -850,6 +862,7 @@
 				A7E19E591BFF3B98CE56ED81 /* AppCapabilityResolver.swift in Sources */,
 				9F4AE5C3936F9AA46B547400 /* AppDocument.swift in Sources */,
 				C7F04FB121FC9D4D26E29C07 /* AppDocumentDesignMerger.swift in Sources */,
+				A16B2A911EC2A549109D465E /* AppDocumentValidationFeedback.swift in Sources */,
 				96A7243E1F3C5BC22ABEE31B /* AppDocumentValidator+Content.swift in Sources */,
 				17A22B53524DA88B0588473B /* AppDocumentValidator+Expressions.swift in Sources */,
 				C0AB028E1CE14A943F67BED0 /* AppDocumentValidator+Logic.swift in Sources */,
@@ -908,7 +921,9 @@
 				16A5709C1F059DFB43EA36A4 /* NewsFeedClient.swift in Sources */,
 				E267E85F86A7FC1A5C171420 /* NewsFeedRuntimeComponents.swift in Sources */,
 				A27CD318D95F9DEB986C0FC8 /* NewsFeedRuntimeView.swift in Sources */,
+				2BF0769742210B0A14FAB501 /* OpenAIAppGenerationClient+Repair.swift in Sources */,
 				697A910FEAB1B23B2DDB9D70 /* OpenAIAppGenerationClient.swift in Sources */,
+				0EBDA629C3B26EE9AC259F96 /* OpenAIAppGenerationResponse.swift in Sources */,
 				A3AFA0562C678CC7A17F75BB /* OpenAIAppGenerationSchema+TinyGame.swift in Sources */,
 				69DC8DCD8060BBACB89A31E1 /* OpenAIAppGenerationSchema.swift in Sources */,
 				7EC064AE7F50F050BC92D7F3 /* OpenAISpeechClient.swift in Sources */,
@@ -1010,6 +1025,7 @@
 				B6312C54F29F88B05F72A349 /* ProjectRuntimeStateStoreTests.swift in Sources */,
 				955EC56946D11CBC6BA01C36 /* RuntimeDesignV2Tests.swift in Sources */,
 				C2EEFB374F3E4C19B624585C /* RuntimeLogicEngineTests.swift in Sources */,
+				3E65A5089958B3ED0F150804 /* RuntimeLogicSemanticAlignmentTests.swift in Sources */,
 				19E523F5524C0C2BBB06372A /* RuntimeLogicValidatorTests.swift in Sources */,
 				71B9AB3FE2311642E173AE5E /* RuntimeSessionStateTests.swift in Sources */,
 				FFC685AA67135D93213CE124 /* RuntimeVoiceRecordingFilesTests.swift in Sources */,

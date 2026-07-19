@@ -24,4 +24,18 @@ final class GenerationProgressUITests: XCTestCase {
 
         XCTAssertTrue(app.buttons["library.create"].waitForExistence(timeout: 5))
     }
+
+    func testGenerationDialogShowsAutomaticRepairPass() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--demo-screen=generation-repair"]
+        app.launch()
+
+        let dialog = app.descendants(matching: .any)["builder.generation-dialog"]
+        XCTAssertTrue(dialog.waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Repairing revision 3"].exists)
+        XCTAssertTrue(
+            app.staticTexts["Automatic repair pass 3 is running. MakeYour will continue until it validates."].exists
+        )
+        XCTAssertTrue(app.buttons["builder.generation.cancel"].exists)
+    }
 }

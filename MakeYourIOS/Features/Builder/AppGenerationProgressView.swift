@@ -5,6 +5,7 @@ enum AppGenerationProgress: Int, CaseIterable, Hashable, Sendable {
     case preparing
     case generating
     case validating
+    case repairing
     case ready
 
     static let visibleSteps: [Self] = [.preparing, .generating, .validating]
@@ -14,6 +15,7 @@ enum AppGenerationProgress: Int, CaseIterable, Hashable, Sendable {
         case .preparing: "Prepare"
         case .generating: "Compose"
         case .validating: "Verify"
+        case .repairing: "Repair"
         case .ready: "Ready"
         }
     }
@@ -26,6 +28,8 @@ enum AppGenerationProgress: Int, CaseIterable, Hashable, Sendable {
             "OpenAI is composing native pages, data, actions, and visual design."
         case .validating:
             "MakeYour is checking every component, action, and device capability."
+        case .repairing:
+            "OpenAI is correcting the candidate with MakeYour’s validation feedback."
         case .ready:
             "Your validated next version is ready for review."
         }
@@ -135,6 +139,7 @@ struct AppGenerationFailure: Equatable, Sendable {
 struct AppGenerationProgressView: View {
     let mode: GenerationMode
     let progress: AppGenerationProgress
+    let repairPass: Int
     let startedAt: Date
     let promptPreview: String
     let failure: AppGenerationFailure?
@@ -241,7 +246,7 @@ struct AppGenerationProgressView: View {
                 .font(.title.bold())
                 .multilineTextAlignment(.center)
 
-            Text(failure?.message ?? progress.detail)
+            Text(failure?.message ?? progressDetail)
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -259,10 +264,18 @@ struct AppGenerationProgressView: View {
     }
 
     private var title: String {
-        switch mode {
+        if progress == .repairing {
+            return "Repairing revision \(max(1, repairPass))"
+        }
+        return switch mode {
         case .full: "Building your tiny app"
         case .designOnly: "Designing your next look"
         }
+    }
+
+    private var progressDetail: String {
+        guard progress == .repairing else { return progress.detail }
+        return "OpenAI is correcting revision \(max(1, repairPass)) with exact feedback from MakeYour’s validator."
     }
 
     private var progressSteps: some View {
@@ -325,10 +338,13 @@ struct AppGenerationProgressView: View {
     }
 
     private func waitingHint(elapsed: TimeInterval) -> String {
+        if repairPass > 0 {
+            return "Automatic repair pass \(repairPass) is running. MakeYour will continue until it validates."
+        }
         if elapsed >= 120 {
-            "Still working normally — complex apps need more time to compose and verify."
+            return "Still working normally — complex apps need more time to compose and verify."
         } else {
-            "Larger apps can take a few minutes. Keep MakeYour open."
+            return "Larger apps can take a few minutes. Keep MakeYour open."
         }
     }
 
