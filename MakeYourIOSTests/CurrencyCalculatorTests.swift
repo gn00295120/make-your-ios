@@ -67,4 +67,62 @@ final class CurrencyCalculatorTests: XCTestCase {
 
         XCTAssertEqual(result, 0)
     }
+
+    func testDuplicateRateRowsCannotOverwriteTheFirstValue() {
+        let items = [
+            ComponentItem(id: "USD", title: "US Dollar", value: "1"),
+            ComponentItem(id: "TWD", title: "New Taiwan Dollar", value: "32"),
+            ComponentItem(id: "USD", title: "Duplicate", value: "999")
+        ]
+
+        let rates = CurrencyCalculator.rateTable(items: items, currencies: ["USD", "TWD"])
+
+        XCTAssertEqual(rates, ["USD": 1, "TWD": 32])
+    }
+
+    func testCurrencyNormalizationOnlyKeepsISOCodes() {
+        XCTAssertEqual(
+            CurrencyCalculator.normalizedCurrencyCodes([" usd ", "ZZZ", "台灣幣", "TWD"]),
+            ["USD", "TWD"]
+        )
+    }
+
+    func testPreferredPairAlwaysUsesTwoDifferentAvailableCurrencies() {
+        let usdLast = CurrencyCalculator.preferredPair(
+            currencies: ["EUR", "USD"],
+            source: "USD",
+            destination: "TWD"
+        )
+        XCTAssertEqual(usdLast.source, "USD")
+        XCTAssertEqual(usdLast.destination, "EUR")
+
+        let noDefaults = CurrencyCalculator.preferredPair(
+            currencies: ["TWD", "JPY"],
+            source: "USD",
+            destination: "TWD"
+        )
+        XCTAssertEqual(noDefaults.source, "TWD")
+        XCTAssertEqual(noDefaults.destination, "JPY")
+    }
+
+    func testNonFiniteInputsAndOverflowReturnZero() {
+        XCTAssertEqual(
+            CurrencyCalculator.convert(
+                amount: .infinity,
+                from: "USD",
+                to: "TWD",
+                rates: ["USD": 1, "TWD": 32]
+            ),
+            0
+        )
+        XCTAssertEqual(
+            CurrencyCalculator.convert(
+                amount: .greatestFiniteMagnitude,
+                from: "USD",
+                to: "TWD",
+                rates: ["USD": 1, "TWD": .greatestFiniteMagnitude]
+            ),
+            0
+        )
+    }
 }

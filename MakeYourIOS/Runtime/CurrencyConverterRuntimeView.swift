@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct CurrencyCalculator: Sendable {
+    private static let isoCurrencyCodes = Set(
+        Locale.Currency.isoCurrencies.map(\.identifier)
+    )
+
     static func normalizedCurrencyCodes(_ values: [String]) -> [String] {
         var seen = Set<String>()
         return values.compactMap { value in
@@ -22,9 +26,22 @@ struct CurrencyCalculator: Sendable {
             let code = [item.id, item.title]
                 .map(normalizedCurrencyCode)
                 .first(where: allowedCodes.contains)
-            guard let code else { return }
+            guard let code, result[code] == nil else { return }
             result[code] = rate
         }
+    }
+
+    static func preferredPair(
+        currencies: [String],
+        source: String,
+        destination: String
+    ) -> (source: String, destination: String) {
+        let available = normalizedCurrencyCodes(currencies)
+        let resolvedSource = available.contains(source) ? source : available.first ?? "USD"
+        let resolvedDestination = available.contains(destination) && destination != resolvedSource
+            ? destination
+            : available.first(where: { $0 != resolvedSource }) ?? resolvedSource
+        return (resolvedSource, resolvedDestination)
     }
 
     static func convert(
@@ -33,18 +50,21 @@ struct CurrencyCalculator: Sendable {
         to destination: String,
         rates: [String: Double]
     ) -> Double {
-        guard let sourceRate = rates[source],
+        guard amount.isFinite,
+              let sourceRate = rates[source],
               let destinationRate = rates[destination],
               sourceRate.isFinite,
               destinationRate.isFinite,
               sourceRate > 0,
               destinationRate > 0 else { return 0 }
-        return amount / sourceRate * destinationRate
+        let converted = amount / sourceRate * destinationRate
+        return converted.isFinite ? converted : 0
     }
 
     private static func normalizedCurrencyCode(_ value: String) -> String {
         let code = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        return code.count == 3 && code.allSatisfy(\.isLetter) ? code : ""
+        let isASCII = code.utf8.allSatisfy { (65...90).contains($0) }
+        return code.count == 3 && isASCII && isoCurrencyCodes.contains(code) ? code : ""
     }
 }
 
@@ -122,10 +142,13 @@ struct CurrencyConverterRuntimeView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .onAppear {
-            if !currencies.contains(fromCurrency) { fromCurrency = currencies.first ?? "USD" }
-            if !currencies.contains(toCurrency) {
-                toCurrency = currencies.dropFirst().first ?? currencies.first ?? "TWD"
-            }
+            let pair = CurrencyCalculator.preferredPair(
+                currencies: currencies,
+                source: fromCurrency,
+                destination: toCurrency
+            )
+            fromCurrency = pair.source
+            toCurrency = pair.destination
         }
     }
 

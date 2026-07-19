@@ -54,6 +54,23 @@ final class AppDocumentValidatorTests: XCTestCase {
         }
     }
 
+    func testConverterRejectsAnExtraDuplicateRateRow() {
+        var document = SampleDocuments.quickConvert
+        let converterIndex = document.pages[0].nodes.firstIndex {
+            $0.kind == .currencyConverter
+        }!
+        document.pages[0].nodes[converterIndex].items.append(
+            ComponentItem(id: "extra-usd", title: "USD", value: "999")
+        )
+
+        XCTAssertThrowsError(try AppDocumentValidator().validate(document)) { error in
+            XCTAssertEqual(
+                error as? AppDocumentValidationError,
+                .invalidComponentConfiguration(.currencyConverter)
+            )
+        }
+    }
+
     func testDuplicateNodeIdentifiersAreRejected() {
         var document = SampleDocuments.blank
         let duplicate = ComponentNode(id: "duplicate", kind: .text, title: "One")

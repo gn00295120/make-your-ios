@@ -60,6 +60,7 @@ extension AppDocumentValidator {
         let rates = CurrencyCalculator.rateTable(items: node.items, currencies: currencies)
         guard (2...20).contains(currencies.count),
               currencies.count == node.options.count,
+              node.items.count == currencies.count,
               rates.count == currencies.count else {
             throw AppDocumentValidationError.invalidComponentConfiguration(.currencyConverter)
         }
