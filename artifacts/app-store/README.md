@@ -1,6 +1,35 @@
 # MakeYour 1.0 App Store handoff
 
-This folder contains the reviewed visual assets for MakeYour 1.0.0 (build 1).
+This folder contains the reviewed visual assets and release evidence for
+MakeYour 1.0.0.
+
+## Public TestFlight build 4 - 2026-07-19
+
+The currency-conversion and generation-repair release was archived as MakeYour
+`1.0.0 (4)`, validated, uploaded, and approved for external TestFlight testing.
+It is attached to the existing `Devpost Judges` public group:
+
+- Public link: `https://testflight.apple.com/join/3Rnqg5Ds`
+- External state: `BETA_APPROVED`
+- Build ID: `d653563f-78da-4cda-a648-41a64e5bf291`
+- Archive: `build/MakeYourIOS-1.0.0-build4.xcarchive.zip`
+- Archive SHA-256: `1f7a7f5c8809d8f948b78dacf3242afdd5877597e673899860aca8a618938209`
+- IPA: `build/MakeYourIOS-1.0.0-build4-TestFlight.ipa`
+- IPA SHA-256: `16cb216cf8324737fab911eea3f280d3ad8a3ad33e50642b144fe7be76e04a82`
+
+This build fixes generated currency tables that use opaque component IDs,
+rejects duplicate, unknown, zero, non-finite, or incomplete rates, guarantees a
+distinct initial currency pair, and keeps GPT-5.6 generation in a
+validator-guided repair loop until the document is valid or the user cancels.
+The persisted TripPilot project was verified at `100 USD = 3,250.00 TWD` and
+`1 USD = 32.50 TWD`.
+
+Verification passed with 244/244 unit tests, the persisted TripPilot currency UI
+test, strict SwiftLint with zero violations across 173 Swift files, Apple package
+validation, upload processing, Beta App Review, and a final live App Store
+Connect state check. The formal App Store submission intentionally remains
+`WAITING_FOR_REVIEW` with release type `AFTER_APPROVAL` and build 1 selected.
+See `build/UPLOAD_RECEIPT-build4.md` for the operational receipt.
 
 ## Public TestFlight build 2 - 2026-07-19
 

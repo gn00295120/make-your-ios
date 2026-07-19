@@ -1,5 +1,31 @@
 # MakeYour release checklist
 
+## Public TestFlight build 4 snapshot (2026-07-19)
+
+- [x] Fixed the persisted TripPilot currency calculator so generated rows with
+  opaque component IDs resolve their ISO currency codes from their titles
+- [x] Hardened rate-table validation against duplicate, unknown, missing, zero,
+  non-finite, and incomplete rates and guaranteed distinct starting currencies
+- [x] Kept GPT-5.6 generation in a validator-guided repair loop until the tiny
+  app is valid or the user explicitly cancels
+- [x] Verified 244/244 unit tests and the actual persisted TripPilot UI flow,
+  including `100 USD = 3,250.00 TWD` and `1 USD = 32.50 TWD`
+- [x] Ran strict SwiftLint with zero violations across 173 Swift files and
+  passed `git diff --check`
+- [x] Archived, signed, package-validated, and uploaded MakeYour `1.0.0 (4)`
+- [x] Added build 4 to `Devpost Judges`, updated What to Test and review notes,
+  and received Beta App Review approval
+- [x] Verified build 4 is `VALID` and `BETA_APPROVED` on the public link
+- [x] Reconfirmed the formal App Store version remains `WAITING_FOR_REVIEW`,
+  uses `AFTER_APPROVAL`, and still selects build 1
+
+- Public TestFlight link: `https://testflight.apple.com/join/3Rnqg5Ds`
+- App Store Connect build ID: `d653563f-78da-4cda-a648-41a64e5bf291`
+- Preserved archive: `artifacts/app-store/build/MakeYourIOS-1.0.0-build4.xcarchive.zip`
+- Archive SHA-256: `1f7a7f5c8809d8f948b78dacf3242afdd5877597e673899860aca8a618938209`
+- Distribution IPA: `artifacts/app-store/build/MakeYourIOS-1.0.0-build4-TestFlight.ipa`
+- IPA SHA-256: `16cb216cf8324737fab911eea3f280d3ad8a3ad33e50642b144fe7be76e04a82`
+
 ## Public TestFlight build 2 snapshot (2026-07-19)
 
 - [x] Archived and exported MakeYour `1.0.0 (2)` without changing the App Store
