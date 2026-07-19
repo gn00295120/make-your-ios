@@ -240,3 +240,21 @@ and the release checklist live in [docs/app-store](docs/app-store).
   It does not execute Swift, JavaScript, WebAssembly, or plugins.
 - Mini apps are private workspaces inside one signed host app; they are not
   independent `.ipa` files.
+
+## License
+
+The current source is available under the
+[PolyForm Shield License 1.0.0](LICENSE). You may use, change, and distribute it
+for purposes other than providing a product that competes with MakeYour or
+another product provided by the licensor. This is a source-available license,
+not an OSI open-source license.
+
+OpenAI, Devpost, and the OpenAI Build Week judges have an additional free and
+unrestricted evaluation grant through the end of the judging period. See
+[NOTICE.md](NOTICE.md) for the exact grant, brand exclusions, and third-party
+notices. Competing commercial uses require a separate written license; see
+[COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
+
+Versions published through commit `4a8f26d` were previously offered under MIT.
+Those terms are preserved in the
+[historical MIT license](docs/legal/MIT-LICENSE-HISTORICAL.md).

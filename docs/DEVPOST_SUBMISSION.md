@@ -35,7 +35,7 @@ immediately inside one trusted host, and change it later with another sentence?
 ## Try it
 
 MakeYour 1.0.0 build 4 is approved for public TestFlight testing:
-https://testflight.apple.com/join/3Rnqg5Ds
+[Join the public TestFlight](https://testflight.apple.com/join/3Rnqg5Ds).
 
 The twelve seeded tiny apps work without an OpenAI key. Bring your own key only
 when you want GPT-5.6 to create or redesign a tiny app from a prompt.
@@ -223,7 +223,8 @@ line use a held frame from the real app library rather than concept mockups.
 
 ## Submission status
 
-- [x] Add the public repository URL and MIT license.
+- [x] Add the public repository URL, PolyForm Shield license, and unrestricted
+  OpenAI Build Week judging grant through the end of the judging period.
 - [x] Record and verify a clear, narrated 1:35.30 video covering Codex and GPT-5.6.
 - [x] Upload it publicly to YouTube and verify the submitted link.
 - [x] Show Codex and GPT-5.6 usage explicitly in the voiceover.
