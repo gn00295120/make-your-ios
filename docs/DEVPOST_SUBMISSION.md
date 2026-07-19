@@ -1,8 +1,8 @@
 # OpenAI Build Week submission
 
 Devpost project `1342394` is submitted to OpenAI Build Week as submission
-`1094239` at `https://devpost.com/software/makeyour`. The public demo is
-`https://youtu.be/gIKuI1H-lH4`, and the judging repository is
+`1094239` at `https://devpost.com/software/makeyour`. The updated public demo is
+`https://youtu.be/Qjo_44nRUdg`, and the judging repository is
 `https://github.com/gn00295120/make-your-ios`. The approved public TestFlight
 build is available at `https://testflight.apple.com/join/3Rnqg5Ds`.
 
@@ -195,10 +195,12 @@ It is 124.20 seconds, H.264 1080p at constant 30 fps with normalized AAC
 narration. Full decode and black-frame scans pass. The source generation run is
 210.70 seconds; the edit keeps the prompt, first validation failure, automatic
 repair, capability review, and final runtime while accelerating only the two
-model-wait intervals. The existing public YouTube video remains submitted until
-the replacement upload is published and verified.
+model-wait intervals. The replacement is public at
+`https://youtu.be/Qjo_44nRUdg`, and Devpost project version 8 now uses it. Public
+metadata verification confirmed a 2:04 duration, 1920 × 1080 rendition, correct
+title, and public availability before the entry was re-submitted.
 
-## Currently submitted demo storyboard (1:35.30)
+## Previous demo storyboard (1:35.30)
 
 - **0:00** — Tour the real My Apps, Builder, and AI Key screens. The OpenAI key
   remains hidden.
@@ -253,8 +255,8 @@ line use a held frame from the real app library rather than concept mockups.
 - [x] Produce a 2:04.20 replacement demo with the real TripPilot generation,
   automatic repair, working generated currency conversion, natural OpenAI TTS
   narration, English subtitles, and no black-frame transition.
-- [ ] Publish and verify the replacement YouTube upload, then replace the live
-  Devpost video URL and re-confirm submission `1094239` is `Submitted`.
+- [x] Publish and verify the replacement YouTube upload, update live Devpost
+  project version 8, and re-confirm submission `1094239` is `Submitted`.
 - Replace any placeholder project name only after updating the bundle display
   name, README, screenshots, and narration together.
 - [x] Submit to OpenAI Build Week; Devpost returned `Submitted` at

@@ -2,6 +2,7 @@
 
 ## Files
 
+- Public video: `https://youtu.be/Qjo_44nRUdg`
 - Video: `MakeYour-OpenAI-Build-Week-Demo-v2.mp4`
 - Thumbnail: `MakeYour-YouTube-Thumbnail-v2.jpg`
 - English subtitles: `MakeYour-OpenAI-Build-Week-Demo-v2.en.srt`
@@ -73,3 +74,15 @@ be at least ten seconds long.
 After publishing, open the public watch URL in a signed-out/private window and
 confirm the video, audio, 1080p rendition, thumbnail, chapters, English captions,
 and embedding. Replace the Devpost project video only after every check passes.
+
+## Post-publish audit — 2026-07-19
+
+- [x] Public availability and playback metadata verified.
+- [x] Correct title and 2:04 duration verified.
+- [x] 1920 × 1080 rendition verified.
+- [x] Devpost project `1342394` updated to version 8 with the new video URL.
+- [x] OpenAI Build Week submission `1094239` re-submitted; Devpost returned
+  `Submitted`.
+- [ ] Change the YouTube category from `Gaming` to `Science & Technology`.
+- [ ] Change the uploaded manual caption track language from `Chinese (Taiwan)`
+  to `English`; the supplied caption file itself contains English text.
