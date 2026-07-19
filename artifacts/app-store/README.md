@@ -2,6 +2,24 @@
 
 This folder contains the reviewed visual assets for MakeYour 1.0.0 (build 1).
 
+## Public TestFlight build 2 - 2026-07-19
+
+The expanded runtime was archived as MakeYour `1.0.0 (2)`, validated, uploaded,
+and approved for external TestFlight testing. It is attached to the existing
+`Devpost Judges` public group together with build 1:
+
+- Public link: `https://testflight.apple.com/join/3Rnqg5Ds`
+- External state: `BETA_APPROVED`
+- Build ID: `9578d2af-dda3-482e-ac7f-16fb450d582c`
+- Archive: `build/MakeYourIOS-1.0.0-build2.xcarchive.zip`
+- Archive SHA-256: `4f646caf3d43691e57ffbffe5310d8648563364b2bb6f87ec15433289646f8c6`
+- IPA: `build/MakeYourIOS-1.0.0-build2-TestFlight.ipa`
+- IPA SHA-256: `e2c73674be2a7dad57a745392f8ee279fe54689f7a16d02727a82106badc7555`
+
+The App Store review submission was intentionally left unchanged: version
+`1.0.0` remains `WAITING_FOR_REVIEW`, release type `AFTER_APPROVAL`, with build 1
+selected. See `build/UPLOAD_RECEIPT-build2.md` for the operational receipt.
+
 ## App Store screenshots
 
 Upload the JPEG files in `screenshots/upload/` in this order. All eight files are

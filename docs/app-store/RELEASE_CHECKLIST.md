@@ -1,5 +1,32 @@
 # MakeYour release checklist
 
+## Public TestFlight build 2 snapshot (2026-07-19)
+
+- [x] Archived and exported MakeYour `1.0.0 (2)` without changing the App Store
+  version's selected build 1
+- [x] Validated and uploaded the Apple Distribution-signed IPA
+- [x] App Store Connect finished processing build 2 as `VALID`
+- [x] Added build 2 to the existing external group `Devpost Judges`
+- [x] Updated the English beta description, What to Test text, and Beta App
+  Review notes for the expanded runtime
+- [x] Submitted build 2 to Beta App Review; Apple returned `APPROVED`
+- [x] Verified external build state `BETA_APPROVED` and the existing public link
+  remains enabled with both builds in the group
+- [x] Reconfirmed App Store version `1.0.0` remains `WAITING_FOR_REVIEW`, uses
+  `AFTER_APPROVAL`, and still selects build 1
+
+- Public TestFlight link: `https://testflight.apple.com/join/3Rnqg5Ds`
+- App Store Connect build ID: `9578d2af-dda3-482e-ac7f-16fb450d582c`
+- Preserved archive: `artifacts/app-store/build/MakeYourIOS-1.0.0-build2.xcarchive.zip`
+- Archive SHA-256: `4f646caf3d43691e57ffbffe5310d8648563364b2bb6f87ec15433289646f8c6`
+- Distribution IPA: `artifacts/app-store/build/MakeYourIOS-1.0.0-build2-TestFlight.ipa`
+- IPA SHA-256: `e2c73674be2a7dad57a745392f8ee279fe54689f7a16d02727a82106badc7555`
+- Verification: 221/221 unit tests passed, strict SwiftLint reported zero
+  violations across 165 Swift files, `git diff --check` passed, Apple package
+  validation and upload passed, and strict distribution code-signature,
+  provisioning, privacy-manifest, permission-description, and App Intents
+  metadata checks passed.
+
 ## Submitted build 1 snapshot
 
 The checked items in this section describe the preserved MakeYour 1.0.0 build 1
@@ -68,14 +95,14 @@ Current source verification snapshot (2026-07-19):
 - Live BBC RSS, live Twelve Data AAPL demo data, the generated `E2E Proof`
   document, and its rendered runtime were observed on the Simulator.
 
-- [ ] Increment `CURRENT_PROJECT_VERSION` above build `1`; do not overwrite or
+- [x] Increment `CURRENT_PROJECT_VERSION` above build `1`; do not overwrite or
   relabel the preserved build 1 archive.
-- [ ] Generate the Xcode project from the committed `project.yml`, archive the
+- [x] Generate the Xcode project from the committed `project.yml`, archive the
   current source, and export a newly signed IPA.
-- [ ] Run the full unit suite, strict SwiftLint, `git diff --check`, release
+- [x] Run the full unit suite, strict SwiftLint, `git diff --check`, release
   build, archive validation, and strict code-signature verification; record the
   actual results without copying the historical 43-test count.
-- [ ] Confirm the archive contains camera, microphone, Speech Recognition,
+- [x] Confirm the archive contains camera, microphone, Speech Recognition,
   contact, When In Use location, motion, and calendar usage descriptions, plus
   the current privacy manifest.
 - [ ] Fresh-install the exact candidate on TestFlight and confirm all twelve seeded
@@ -124,7 +151,7 @@ Current source verification snapshot (2026-07-19):
   account identifiers/retention; update `PrivacyInfo.xcprivacy` if needed.
 - [ ] Publish the July 18 privacy/support text at the production HTTPS URLs and
   verify those public pages from a logged-out browser.
-- [ ] Submit the new build to internal TestFlight, then external Beta App Review,
+- [x] Submit the new build to internal TestFlight, then external Beta App Review,
   before replacing or updating the App Store review submission.
 
 ## Historical build 1 pre-submission items

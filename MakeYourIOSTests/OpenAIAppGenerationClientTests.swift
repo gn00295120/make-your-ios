@@ -37,7 +37,8 @@ final class OpenAIAppGenerationClientTests: XCTestCase {
         XCTAssertTrue(instructions.contains("Use shortcutAccess only when the user explicitly asks"))
         XCTAssertTrue(instructions.contains("one fixed, precompiled"))
         XCTAssertTrue(instructions.contains("requires local device authentication"))
-        XCTAssertTrue(instructions.contains("normal visible-page behavior may run"))
+        XCTAssertTrue(instructions.contains("Opening from a shortcut behaves like opening the same tiny app"))
+        XCTAssertTrue(instructions.contains("behavior may run"))
     }
 
     func testIncompleteResponseSurfacesSpecificRetryableError() {
