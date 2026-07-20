@@ -231,6 +231,10 @@ line use a held frame from the real app library rather than concept mockups.
 - [x] Enter Codex Session ID `019f6ea0-c425-7813-b991-2cccb37d8c1e`.
 - [x] Publish the judging repository at
   `https://github.com/gn00295120/make-your-ios`.
+- [x] Verify judging access: the repository is public as of 2026-07-20. If its
+  visibility changes to private, share it with `testing@devpost.com` and
+  `build-week-event@openai.com` before 2026-07-21 5:00 PM PT, and retain access
+  through the end of judging on 2026-08-05 5:00 PM PT.
 - [x] Submit as `Individual` from `Taiwan` to `Apps for Your Life`.
 - [x] Clone the public repository, regenerate the Xcode project, and pass all 43
   tests using the README instructions.
